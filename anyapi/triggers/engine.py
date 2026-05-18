@@ -61,14 +61,55 @@ class TriggerEngine:
 
     # ── Trigger Management ───────────────────────────────────────────
 
-    async def register(self, config: TriggerConfig) -> TriggerConfig:
-        """Register a new trigger."""
+    async def register(
+        self,
+        config: TriggerConfig,
+        skip_baseline: bool = False,
+    ) -> TriggerConfig:
+        """Register a new trigger.
+
+        If skip_baseline=False (default), runs an initial poll to set
+        last_seen_id WITHOUT delivering events. This prevents old
+        messages from flooding your webhook on first registration.
+        """
         await self._store.save_trigger(config)
         logger.info(
             f"[trigger.engine] Registered | id={config.id} "
             f"type={config.trigger_type} connection={config.connection_id}"
         )
+
+        if not skip_baseline and not config.last_seen_id:
+            await self._baseline_trigger(config)
+
         return config
+
+    async def _baseline_trigger(self, trigger: TriggerConfig) -> None:
+        """Run initial poll to set last_seen_id without delivering events."""
+        try:
+            poller = get_poller(trigger.trigger_type)
+        except ValueError:
+            return
+
+        events = await poller(self._api, trigger)
+        if events:
+            newest_id = events[0].data.get("message_id", "")
+            await self._store.update_state(
+                trigger.id,
+                last_seen_id=newest_id,
+                last_poll_at=datetime.now(timezone.utc),
+            )
+            logger.info(
+                f"[trigger.engine] Baselined | id={trigger.id} | "
+                f"skipped {len(events)} existing messages | "
+                f"last_seen={newest_id}"
+            )
+        else:
+            await self._store.update_state(
+                trigger.id,
+                last_seen_id="",
+                last_poll_at=datetime.now(timezone.utc),
+            )
+            logger.info(f"[trigger.engine] Baselined | id={trigger.id} | no existing messages")
 
     async def unregister(self, trigger_id: str) -> None:
         """Remove a trigger."""
