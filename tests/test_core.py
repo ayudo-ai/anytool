@@ -149,3 +149,106 @@ def test_standalone_mode_init():
 def test_no_args_raises():
     with pytest.raises(ValueError, match="nango_secret_key or token_store"):
         AnyAPI()
+
+
+# ── DocuSign Specs ───────────────────────────────────────────────────
+
+
+def test_docusign_specs_registered():
+    actions = AnyAPI.list_actions("docusign")
+    names = [a["name"] for a in actions]
+    assert "docusign_create_envelope" in names
+    assert "docusign_get_envelope" in names
+    assert "docusign_void_envelope" in names
+    assert len(actions) == 6
+
+
+def test_docusign_tools_generated():
+    api = AnyAPI(nango_secret_key="fake-key")
+    tools = api.get_tools("docusign", connection_id="test")
+    assert len(tools) == 6
+    tool_names = [t.name for t in tools]
+    assert "docusign_create_envelope" in tool_names
+
+
+def test_docusign_envelope_builder():
+    """The exact scenario that was broken on Composio.
+
+    Composio turned templateRoles: [{roleName: 'Signer', ...}] into [{}]
+    Our builder must preserve the nested objects exactly.
+    """
+    from anyapi.executor import APIExecutor
+    from anyapi.auth.nango import NangoClient
+
+    nango = NangoClient(secret_key="fake")
+    executor = APIExecutor(nango=nango)
+
+    result = executor._build_docusign_envelope({
+        "template_id": "2184100d-b91c-42cc-adb7-d90664d7ee43",
+        "template_roles": [
+            {
+                "roleName": "Signer",
+                "name": "Sarah Mitchell",
+                "email": "sarah@example.com",
+            },
+            {
+                "roleName": "CC",
+                "name": "Manager",
+                "email": "manager@example.com",
+            },
+        ],
+        "status": "sent",
+        "email_subject": "1099 Partner Onboarding Agreement - Sarah Mitchell",
+    })
+
+    # Verify the exact payload DocuSign expects
+    assert result["templateId"] == "2184100d-b91c-42cc-adb7-d90664d7ee43"
+    assert result["status"] == "sent"
+    assert result["emailSubject"] == "1099 Partner Onboarding Agreement - Sarah Mitchell"
+
+    # THE KEY TEST: templateRoles must have full data, NOT [{}]
+    roles = result["templateRoles"]
+    assert len(roles) == 2
+    assert roles[0]["roleName"] == "Signer"
+    assert roles[0]["name"] == "Sarah Mitchell"
+    assert roles[0]["email"] == "sarah@example.com"
+    assert roles[1]["roleName"] == "CC"
+    assert roles[1]["name"] == "Manager"
+
+
+def test_docusign_envelope_builder_handles_snake_case():
+    """LLM might use snake_case instead of camelCase."""
+    from anyapi.executor import APIExecutor
+    from anyapi.auth.nango import NangoClient
+
+    executor = APIExecutor(nango=NangoClient(secret_key="fake"))
+
+    result = executor._build_docusign_envelope({
+        "template_id": "abc-123",
+        "template_roles": [
+            {"role_name": "Signer", "name": "John", "email": "john@test.com"},
+        ],
+        "status": "sent",
+    })
+
+    roles = result["templateRoles"]
+    assert roles[0]["roleName"] == "Signer"  # Converted from role_name
+
+
+def test_docusign_envelope_builder_handles_json_string():
+    """LLM might pass template_roles as a JSON string."""
+    from anyapi.executor import APIExecutor
+    from anyapi.auth.nango import NangoClient
+
+    executor = APIExecutor(nango=NangoClient(secret_key="fake"))
+
+    result = executor._build_docusign_envelope({
+        "template_id": "abc-123",
+        "template_roles": '[{"roleName": "Signer", "name": "Jane", "email": "jane@test.com"}]',
+        "status": "sent",
+    })
+
+    roles = result["templateRoles"]
+    assert len(roles) == 1
+    assert roles[0]["roleName"] == "Signer"
+    assert roles[0]["name"] == "Jane"

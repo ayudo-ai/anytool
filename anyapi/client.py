@@ -20,12 +20,13 @@ from anyapi.specs.base import ActionSpec
 
 # Import all spec modules
 from anyapi.specs.google import GOOGLE_SPECS
+from anyapi.specs.docusign import DOCUSIGN_SPECS
 
 # Spec registry
 _ALL_SPECS: Dict[str, ActionSpec] = {}
 _APP_SPECS: Dict[str, List[ActionSpec]] = {}
 
-for spec in GOOGLE_SPECS:
+for spec in GOOGLE_SPECS + DOCUSIGN_SPECS:
     _ALL_SPECS[spec.name] = spec
     _APP_SPECS.setdefault(spec.app, []).append(spec)
 

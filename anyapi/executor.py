@@ -160,6 +160,15 @@ class APIExecutor:
         if spec.request_transform == "gmail_mime":
             return self._build_gmail_mime(params)
 
+        if spec.request_transform == "docusign_envelope":
+            return self._build_docusign_envelope(params)
+
+        if spec.request_transform == "docusign_void":
+            return {"status": "voided", "voidedReason": params.get("voided_reason", "")}
+
+        if spec.request_transform == "docusign_resend":
+            return {"resend_envelope": "true"}
+
         if spec.body_template:
             body = {}
             for key, template in spec.body_template.items():
@@ -197,5 +206,57 @@ class APIExecutor:
         body: Dict[str, Any] = {"raw": raw}
         if params.get("thread_id"):
             body["threadId"] = params["thread_id"]
+
+        return body
+
+    def _build_docusign_envelope(self, params: Dict[str, Any]) -> dict:
+        """Build DocuSign create envelope payload.
+
+        This is the exact payload that Composio broke by turning
+        templateRoles: [{roleName: 'Signer', ...}] into [{}].
+
+        We build it directly — no intermediate Pydantic models,
+        no serialization that drops nested data.
+        """
+        body: Dict[str, Any] = {
+            "templateId": params["template_id"],
+            "status": params.get("status", "sent"),
+        }
+
+        # templateRoles — the field that Composio broke
+        # We pass it EXACTLY as the LLM constructed it.
+        template_roles = params.get("template_roles", [])
+        if isinstance(template_roles, str):
+            import json
+            try:
+                template_roles = json.loads(template_roles)
+            except (json.JSONDecodeError, TypeError):
+                template_roles = []
+
+        # Ensure each role has the required camelCase keys DocuSign expects
+        formatted_roles = []
+        for role in template_roles:
+            if not isinstance(role, dict):
+                continue
+            formatted_role = {
+                "roleName": role.get("roleName", role.get("role_name", "")),
+                "name": role.get("name", ""),
+                "email": role.get("email", ""),
+            }
+            # Optional fields
+            if role.get("clientUserId") or role.get("client_user_id"):
+                formatted_role["clientUserId"] = role.get("clientUserId", role.get("client_user_id", ""))
+            if role.get("routingOrder") or role.get("routing_order"):
+                formatted_role["routingOrder"] = str(role.get("routingOrder", role.get("routing_order", "")))
+            if role.get("tabs"):
+                formatted_role["tabs"] = role["tabs"]
+            formatted_roles.append(formatted_role)
+
+        body["templateRoles"] = formatted_roles
+
+        if params.get("email_subject"):
+            body["emailSubject"] = params["email_subject"]
+        if params.get("email_body"):
+            body["emailBlurb"] = params["email_body"]
 
         return body
