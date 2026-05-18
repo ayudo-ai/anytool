@@ -1,0 +1,51 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "anyapi"
+version = "0.1.0"
+description = "Agent-native API execution. No wrappers, no Composio. OAuth + API specs + direct HTTP."
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.10"
+authors = [
+    { name = "Ayudo", email = "hi@ayudo.ai" },
+]
+keywords = ["ai", "agent", "api", "oauth", "integrations", "langchain"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Topic :: Software Development :: Libraries",
+]
+
+dependencies = [
+    "httpx>=0.25.0",
+    "pydantic>=2.0.0",
+    "cryptography>=41.0.0",
+]
+
+[project.optional-dependencies]
+langchain = ["langchain-core>=0.2.0"]
+all = ["anyapi[langchain]"]
+dev = [
+    "pytest>=7.0",
+    "pytest-asyncio>=0.21",
+    "ruff>=0.1.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/ayudo-ai/anyapi"
+Documentation = "https://github.com/ayudo-ai/anyapi#readme"
+
+[tool.hatch.build.targets.wheel]
+packages = ["anyapi"]
+
+[tool.ruff]
+target-version = "py310"
+line-length = 100
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
