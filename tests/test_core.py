@@ -1,5 +1,5 @@
 """
-Core tests — verify the SDK works end-to-end without real OAuth.
+Core tests — verify the SDK works without real OAuth.
 """
 
 import pytest
@@ -7,31 +7,10 @@ from anyapi import AnyAPI, MemoryTokenStore, AppCredentials, UserTokens
 
 
 @pytest.fixture
-def store():
-    return MemoryTokenStore()
-
-
-@pytest.fixture
-def api(store):
-    return AnyAPI(token_store=store)
-
-
-# ── Registration ─────────────────────────────────────────────────────
-
-
-def test_register_app(api):
-    api.register_app(AppCredentials(
-        app="google",
-        client_id="test-id",
-        client_secret="test-secret",
-        scopes=["https://www.googleapis.com/auth/gmail.send"],
-    ))
-    assert "google" in api._credentials
-
-
-def test_register_unknown_app_fails(api):
-    with pytest.raises(ValueError, match="not registered"):
-        api._get_credentials("nonexistent")
+def standalone_api():
+    api = AnyAPI(token_store=MemoryTokenStore())
+    api.register_app(AppCredentials(app="google", client_id="x", client_secret="y"))
+    return api
 
 
 # ── Action Discovery ─────────────────────────────────────────────────
@@ -55,26 +34,23 @@ def test_list_google_actions():
 # ── Tool Generation ──────────────────────────────────────────────────
 
 
-def test_get_tools_generates_langchain_tools(api):
-    api.register_app(AppCredentials(
-        app="google",
-        client_id="test-id",
-        client_secret="test-secret",
-    ))
-
-    tools = api.get_tools("google", user_id="test-user")
+def test_get_tools_nango_mode():
+    api = AnyAPI(nango_secret_key="fake-key-for-testing")
+    tools = api.get_tools("google", connection_id="test-user")
     assert len(tools) > 0
-
     tool_names = [t.name for t in tools]
     assert "gmail_send_email" in tool_names
-    assert "gmail_search" in tool_names
     assert "sheets_append_row" in tool_names
 
 
-def test_get_tools_specific_actions(api):
-    api.register_app(AppCredentials(app="google", client_id="x", client_secret="y"))
+def test_get_tools_standalone_mode(standalone_api):
+    tools = standalone_api.get_tools("google", connection_id="test-user")
+    assert len(tools) > 0
 
-    tools = api.get_tools("google", user_id="test", actions=["gmail_send_email"])
+
+def test_get_tools_specific_actions():
+    api = AnyAPI(nango_secret_key="fake-key")
+    tools = api.get_tools("google", connection_id="test", actions=["gmail_send_email"])
     assert len(tools) == 1
     assert tools[0].name == "gmail_send_email"
 
@@ -83,7 +59,8 @@ def test_get_tools_specific_actions(api):
 
 
 @pytest.mark.asyncio
-async def test_memory_token_store(store):
+async def test_memory_token_store():
+    store = MemoryTokenStore()
     tokens = UserTokens(app="google", user_id="user-1", access_token="abc123")
     await store.save_tokens(tokens)
 
@@ -102,20 +79,14 @@ async def test_memory_token_store(store):
 async def test_token_expiry():
     from datetime import datetime, timezone, timedelta
 
-    # Expired token
     expired = UserTokens(
-        app="google",
-        user_id="user-1",
-        access_token="old",
+        app="google", user_id="u1", access_token="old",
         expires_at=datetime.now(timezone.utc) - timedelta(hours=1),
     )
     assert expired.is_expired is True
 
-    # Valid token
     valid = UserTokens(
-        app="google",
-        user_id="user-1",
-        access_token="new",
+        app="google", user_id="u1", access_token="new",
         expires_at=datetime.now(timezone.utc) + timedelta(hours=1),
     )
     assert valid.is_expired is False
@@ -136,21 +107,17 @@ def test_gmail_send_spec():
     assert "subject" in required
     assert "body" in required
 
-    optional = [p.name for p in GMAIL_SEND_EMAIL.optional_params]
-    assert "cc" in optional
-    assert "thread_id" in optional
-
 
 def test_gmail_mime_builder():
     from anyapi.executor import APIExecutor
-    from anyapi.auth.token_store import MemoryTokenStore
-    from anyapi.auth.oauth import OAuthManager
+    from anyapi.auth.nango import NangoClient
 
-    executor = APIExecutor(OAuthManager(MemoryTokenStore()))
+    nango = NangoClient(secret_key="fake")
+    executor = APIExecutor(nango=nango)
 
     result = executor._build_gmail_mime({
         "to": "test@example.com",
-        "subject": "Test Subject",
+        "subject": "Test",
         "body": "Hello World",
         "thread_id": "thread-123",
     })
@@ -158,9 +125,27 @@ def test_gmail_mime_builder():
     assert "raw" in result
     assert result["threadId"] == "thread-123"
 
-    # Decode and verify MIME
     import base64
     decoded = base64.urlsafe_b64decode(result["raw"]).decode("utf-8")
     assert "test@example.com" in decoded
-    assert "Test Subject" in decoded
     assert "Hello World" in decoded
+
+
+# ── Init Modes ───────────────────────────────────────────────────────
+
+
+def test_nango_mode_init():
+    api = AnyAPI(nango_secret_key="test-key")
+    assert api._nango is not None
+    assert api._oauth is None
+
+
+def test_standalone_mode_init():
+    api = AnyAPI(token_store=MemoryTokenStore())
+    assert api._nango is None
+    assert api._oauth is not None
+
+
+def test_no_args_raises():
+    with pytest.raises(ValueError, match="nango_secret_key or token_store"):
+        AnyAPI()

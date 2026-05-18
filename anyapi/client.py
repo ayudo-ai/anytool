@@ -1,32 +1,13 @@
 """
-AnyAPI client — the single entry point for the SDK.
+AnyAPI client — the single entry point.
 
-Usage:
-    from anyapi import AnyAPI, MemoryTokenStore, AppCredentials
+Two modes:
+  1. Nango mode (recommended):
+     api = AnyAPI(nango_secret_key="nango-xxx")
 
-    api = AnyAPI(token_store=MemoryTokenStore())
-
-    # Register your OAuth credentials
-    api.register_app(AppCredentials(
-        app="google",
-        client_id="xxx.apps.googleusercontent.com",
-        client_secret="GOCSPX-xxx",
-        scopes=["https://www.googleapis.com/auth/gmail.send",
-                "https://www.googleapis.com/auth/gmail.readonly"],
-    ))
-
-    # Get OAuth URL for user to click
-    url = await api.get_auth_url("google", user_id="workspace-123")
-
-    # After OAuth callback
-    tokens = await api.handle_callback("google", code="xxx", state="yyy")
-
-    # Get LangChain tools
-    tools = api.get_tools("google", user_id="workspace-123")
-
-    # Or call directly
-    result = await api.call("gmail_send_email", user_id="workspace-123",
-                            to="vendor@co.com", subject="Hi", body="Hello")
+  2. Standalone mode:
+     api = AnyAPI(token_store=MemoryTokenStore())
+     api.register_app(AppCredentials(app="google", ...))
 """
 
 from __future__ import annotations
@@ -35,17 +16,12 @@ from typing import Any, Dict, List, Optional
 
 from loguru import logger
 
-from anyapi.auth.models import AppCredentials, UserTokens
-from anyapi.auth.oauth import OAuthManager
-from anyapi.auth.token_store import TokenStore
-from anyapi.executor import APIExecutor
 from anyapi.specs.base import ActionSpec
-
 
 # Import all spec modules
 from anyapi.specs.google import GOOGLE_SPECS
 
-# Spec registry: action_name → ActionSpec
+# Spec registry
 _ALL_SPECS: Dict[str, ActionSpec] = {}
 _APP_SPECS: Dict[str, List[ActionSpec]] = {}
 
@@ -54,111 +30,149 @@ for spec in GOOGLE_SPECS:
     _APP_SPECS.setdefault(spec.app, []).append(spec)
 
 
+# Provider → Nango provider config key mapping
+# (Nango uses "google" for Google, same as us, but some differ)
+_NANGO_PROVIDERS = {
+    "google": "google",
+    "freshdesk": "freshdesk",
+    "docusign": "docusign",
+    "slack": "slack",
+    "microsoft": "microsoft",
+    "github": "github",
+    "hubspot": "hubspot",
+}
+
+
 class AnyAPI:
-    """Main client for anyapi.
+    """Main client for anyapi."""
 
-    Manages OAuth, executes API calls, and generates LangChain tools.
-    """
-
-    def __init__(self, token_store: TokenStore):
-        self._store = token_store
-        self._oauth = OAuthManager(token_store)
-        self._executor = APIExecutor(self._oauth)
-        self._credentials: Dict[str, AppCredentials] = {}
-
-    # ── App Registration ─────────────────────────────────────────────
-
-    def register_app(self, credentials: AppCredentials) -> None:
-        """Register OAuth credentials for an app.
-
-        Call once per app at startup. Example:
-            api.register_app(AppCredentials(
-                app="google",
-                client_id="xxx",
-                client_secret="yyy",
-                scopes=["https://www.googleapis.com/auth/gmail.send"],
-            ))
-        """
-        self._credentials[credentials.app] = credentials
-        logger.info(f"[anyapi] Registered app: {credentials.app}")
-
-    def register_api_key_app(
+    def __init__(
         self,
-        app: str,
-        user_id: str,
-        api_key: str,
-        domain: str = "",
-    ) -> None:
-        """Register an API-key based app (e.g. Freshdesk).
-
-        No OAuth needed — just store the key directly.
+        nango_secret_key: str = "",
+        nango_base_url: str = "",
+        token_store=None,
+    ):
         """
-        import asyncio
+        Args:
+            nango_secret_key: Nango Secret Key (enables Nango mode)
+            nango_base_url: Override Nango API URL (for self-hosted)
+            token_store: TokenStore instance (standalone mode, no Nango)
+        """
+        self._nango = None
+        self._oauth = None
+        self._executor = None
+        self._credentials = {}
 
-        tokens = UserTokens(
-            app=app,
-            user_id=user_id,
-            api_key=api_key,
-            domain=domain,
+        if nango_secret_key:
+            # Nango mode
+            from anyapi.auth.nango import NangoClient
+            self._nango = NangoClient(
+                secret_key=nango_secret_key,
+                base_url=nango_base_url,
+            )
+            from anyapi.executor import APIExecutor
+            self._executor = APIExecutor(nango=self._nango)
+            logger.info("[anyapi] Initialized in Nango mode")
+        elif token_store:
+            # Standalone mode
+            from anyapi.auth.oauth import OAuthManager
+            from anyapi.executor import APIExecutor
+            self._oauth = OAuthManager(token_store)
+            self._executor = APIExecutor(oauth_manager=self._oauth)
+            self._store = token_store
+            logger.info("[anyapi] Initialized in standalone mode")
+        else:
+            raise ValueError("Provide either nango_secret_key or token_store")
+
+    # ── Nango Auth ───────────────────────────────────────────────────
+
+    async def get_connect_session(
+        self,
+        provider: str,
+        connection_id: str,
+    ) -> Dict[str, Any]:
+        """Create a Nango Connect session (for frontend ConnectUI).
+
+        Returns a session token to pass to Nango's frontend widget.
+        """
+        if not self._nango:
+            raise ValueError("Nango mode required for get_connect_session")
+        return await self._nango.create_connect_session(
+            provider=_NANGO_PROVIDERS.get(provider, provider),
+            connection_id=connection_id,
         )
-        # Store synchronously if possible, otherwise create task
-        try:
-            loop = asyncio.get_running_loop()
-            loop.create_task(self._store.save_tokens(tokens))
-        except RuntimeError:
-            asyncio.run(self._store.save_tokens(tokens))
-
-        self._credentials.setdefault(app, AppCredentials(app=app, auth_type="api_key"))
-        logger.info(f"[anyapi] Registered API key app: {app} user={user_id}")
-
-    # ── OAuth Flow ───────────────────────────────────────────────────
 
     async def get_auth_url(
         self,
-        app: str,
-        user_id: str,
+        provider: str,
+        connection_id: str,
+        callback_url: str = "",
         extra_scopes: Optional[List[str]] = None,
     ) -> str:
-        """Get the OAuth authorization URL for a user to click.
+        """Get OAuth authorization URL.
 
-        Returns a URL — redirect the user to it or open in a popup.
+        Nango mode: Uses Nango's auth endpoint
+        Standalone mode: Uses our own OAuth manager
         """
-        creds = self._get_credentials(app)
-        return await self._oauth.get_auth_url(creds, user_id, extra_scopes)
+        if self._nango:
+            return await self._nango.get_auth_url(
+                provider=_NANGO_PROVIDERS.get(provider, provider),
+                connection_id=connection_id,
+                callback_url=callback_url,
+            )
+        else:
+            creds = self._get_credentials(provider)
+            return await self._oauth.get_auth_url(creds, connection_id, extra_scopes)
 
-    async def handle_callback(
-        self,
-        app: str,
-        code: str,
-        state: str,
-    ) -> UserTokens:
-        """Handle the OAuth callback after user authorizes.
+    # ── Standalone Auth (only when not using Nango) ──────────────────
 
-        Call this in your /oauth/callback endpoint.
-        Returns the stored tokens.
-        """
+    def register_app(self, credentials) -> None:
+        """Register OAuth credentials (standalone mode only)."""
+        self._credentials[credentials.app] = credentials
+        logger.info(f"[anyapi] Registered app: {credentials.app}")
+
+    async def handle_callback(self, app: str, code: str, state: str):
+        """Handle OAuth callback (standalone mode only)."""
+        if self._nango:
+            raise ValueError("In Nango mode, Nango handles callbacks automatically")
         creds = self._get_credentials(app)
         return await self._oauth.handle_callback(creds, code, state)
 
-    async def disconnect(self, app: str, user_id: str) -> None:
-        """Disconnect an app (delete tokens)."""
-        await self._oauth.disconnect(app, user_id)
+    # ── Connection Management ────────────────────────────────────────
 
-    async def list_connected(self, user_id: str) -> List[UserTokens]:
+    async def is_connected(self, provider: str, connection_id: str) -> bool:
+        """Check if a user has connected an app."""
+        if self._nango:
+            conn = await self._nango.get_connection(
+                _NANGO_PROVIDERS.get(provider, provider), connection_id
+            )
+            return bool(conn)
+        else:
+            tokens = await self._store.get_tokens(provider, connection_id)
+            return tokens is not None
+
+    async def list_connections(self, connection_id: str) -> list:
         """List all connected apps for a user."""
-        return await self._store.list_connected(user_id)
+        if self._nango:
+            return await self._nango.list_connections(connection_id)
+        else:
+            return await self._store.list_connected(connection_id)
 
-    async def is_connected(self, app: str, user_id: str) -> bool:
-        """Check if an app is connected for a user."""
-        tokens = await self._store.get_tokens(app, user_id)
-        return tokens is not None
+    async def disconnect(self, provider: str, connection_id: str) -> None:
+        """Disconnect an app."""
+        if self._nango:
+            await self._nango.delete_connection(
+                _NANGO_PROVIDERS.get(provider, provider), connection_id
+            )
+        else:
+            await self._store.delete_tokens(provider, connection_id)
 
     # ── API Execution ────────────────────────────────────────────────
 
     async def call(
         self,
         action: str,
-        user_id: str,
+        connection_id: str,
         **params: Any,
     ) -> Dict[str, Any]:
         """Call an API action by name.
@@ -166,39 +180,37 @@ class AnyAPI:
         Example:
             result = await api.call(
                 "gmail_send_email",
-                user_id="workspace-123",
+                connection_id="workspace-123",
                 to="vendor@example.com",
                 subject="Follow-up",
-                body="Hello, please update the status.",
+                body="Hello",
             )
         """
         spec = _ALL_SPECS.get(action)
         if not spec:
-            available = list(_ALL_SPECS.keys())
-            raise ValueError(
-                f"Unknown action '{action}'. Available: {available}"
-            )
+            raise ValueError(f"Unknown action '{action}'. Available: {list(_ALL_SPECS.keys())}")
 
-        creds = self._get_credentials(spec.app)
-        return await self._executor.execute(spec, params, creds, user_id)
+        provider = _NANGO_PROVIDERS.get(spec.app, spec.app)
+
+        return await self._executor.execute(
+            spec=spec,
+            params=params,
+            provider=provider,
+            connection_id=connection_id,
+            credentials=self._credentials.get(spec.app),
+        )
 
     # ── LangChain Tools ──────────────────────────────────────────────
 
     def get_tools(
         self,
         app: str,
-        user_id: str,
+        connection_id: str,
         actions: Optional[List[str]] = None,
     ) -> list:
         """Get LangChain StructuredTools for an app.
 
-        Returns tools ready for `llm.bind_tools(tools)`.
-
-        Args:
-            app: App slug (e.g. "google")
-            user_id: User/workspace ID for token lookup
-            actions: Optional list of specific action names to include.
-                     If None, returns all actions for the app.
+        Returns tools ready for llm.bind_tools(tools).
         """
         from anyapi.tools.langchain import build_tools
 
@@ -207,29 +219,31 @@ class AnyAPI:
             specs = [s for s in specs if s.name in actions]
 
         if not specs:
-            logger.warning(f"[anyapi] No specs found for app={app} actions={actions}")
+            logger.warning(f"[anyapi] No specs for app={app} actions={actions}")
             return []
 
-        creds = self._get_credentials(app)
-        return build_tools(self._executor, specs, creds, user_id)
+        provider = _NANGO_PROVIDERS.get(app, app)
 
-    def get_all_tools(self, user_id: str) -> list:
-        """Get LangChain tools for ALL registered apps."""
+        return build_tools(
+            executor=self._executor,
+            specs=specs,
+            provider=provider,
+            connection_id=connection_id,
+        )
+
+    def get_all_tools(self, connection_id: str, apps: Optional[List[str]] = None) -> list:
+        """Get LangChain tools for multiple apps."""
         all_tools = []
-        for app in self._credentials:
-            tools = self.get_tools(app, user_id)
+        for app in (apps or list(_APP_SPECS.keys())):
+            tools = self.get_tools(app, connection_id)
             all_tools.extend(tools)
         return all_tools
 
-    # ── Available Actions ────────────────────────────────────────────
+    # ── Discovery ────────────────────────────────────────────────────
 
     @staticmethod
     def list_actions(app: Optional[str] = None) -> List[Dict[str, str]]:
-        """List available actions (for documentation/discovery).
-
-        Returns:
-            [{"name": "gmail_send_email", "app": "google", "description": "Send an email..."}]
-        """
+        """List available actions."""
         specs = _APP_SPECS.get(app, []) if app else list(_ALL_SPECS.values())
         return [
             {
@@ -244,15 +258,13 @@ class AnyAPI:
 
     # ── Internal ─────────────────────────────────────────────────────
 
-    def _get_credentials(self, app: str) -> AppCredentials:
+    def _get_credentials(self, app):
         if app not in self._credentials:
-            raise ValueError(
-                f"App '{app}' not registered. Call api.register_app() first. "
-                f"Registered: {list(self._credentials.keys())}"
-            )
+            raise ValueError(f"App '{app}' not registered. Registered: {list(self._credentials.keys())}")
         return self._credentials[app]
 
     async def close(self):
-        """Close HTTP clients."""
-        await self._oauth.close()
-        await self._executor.close()
+        if self._nango:
+            await self._nango.close()
+        if self._oauth:
+            await self._oauth.close()
