@@ -252,3 +252,49 @@ def test_docusign_envelope_builder_handles_json_string():
     assert len(roles) == 1
     assert roles[0]["roleName"] == "Signer"
     assert roles[0]["name"] == "Jane"
+
+
+# ── Freshdesk Specs ──────────────────────────────────────────────────
+
+
+def test_freshdesk_specs_registered():
+    actions = AnyAPI.list_actions("freshdesk")
+    names = [a["name"] for a in actions]
+    assert "freshdesk_create_ticket" in names
+    assert "freshdesk_reply_ticket" in names
+    assert "freshdesk_search_tickets" in names
+    assert len(actions) == 10
+
+
+def test_freshdesk_tools_generated():
+    api = AnyAPI(nango_secret_key="fake-key")
+    tools = api.get_tools("freshdesk", connection_id="test")
+    assert len(tools) == 10
+
+
+# ── Slack Specs ─────────────────────────────────────────────────────
+
+
+def test_slack_specs_registered():
+    actions = AnyAPI.list_actions("slack")
+    names = [a["name"] for a in actions]
+    assert "slack_send_message" in names
+    assert "slack_list_channels" in names
+    assert "slack_lookup_user" in names
+    assert len(actions) == 7
+
+
+def test_slack_tools_generated():
+    api = AnyAPI(nango_secret_key="fake-key")
+    tools = api.get_tools("slack", connection_id="test")
+    assert len(tools) == 7
+
+
+# ── All Apps Summary ────────────────────────────────────────────────
+
+
+def test_total_specs_count():
+    """Verify total spec count across all apps."""
+    all_actions = AnyAPI.list_actions()
+    # Google: 11, DocuSign: 6, Freshdesk: 10, Slack: 7 = 34
+    assert len(all_actions) == 34

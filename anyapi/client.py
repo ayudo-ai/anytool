@@ -21,22 +21,25 @@ from anyapi.specs.base import ActionSpec
 # Import all spec modules
 from anyapi.specs.google import GOOGLE_SPECS
 from anyapi.specs.docusign import DOCUSIGN_SPECS
+from anyapi.specs.freshdesk import FRESHDESK_SPECS
+from anyapi.specs.slack import SLACK_SPECS
 
 # Spec registry
 _ALL_SPECS: Dict[str, ActionSpec] = {}
 _APP_SPECS: Dict[str, List[ActionSpec]] = {}
 
-for spec in GOOGLE_SPECS + DOCUSIGN_SPECS:
+for spec in GOOGLE_SPECS + DOCUSIGN_SPECS + FRESHDESK_SPECS + SLACK_SPECS:
     _ALL_SPECS[spec.name] = spec
     _APP_SPECS.setdefault(spec.app, []).append(spec)
 
 
-# Provider → Nango provider config key mapping
-# (Nango uses "google" for Google, same as us, but some differ)
-_NANGO_PROVIDERS = {
+# Provider → Nango provider config key mapping.
+# These MUST match the Integration ID in your Nango dashboard.
+# Override at runtime with: api.set_provider_mapping("docusign", "my-docusign-key")
+_NANGO_PROVIDERS: Dict[str, str] = {
     "google": "google",
     "freshdesk": "freshdesk",
-    "docusign": "docusign",
+    "docusign": "docusign-sandbox",  # Nango names sandbox differently
     "slack": "slack",
     "microsoft": "microsoft",
     "github": "github",
@@ -126,6 +129,15 @@ class AnyAPI:
             return await self._oauth.get_auth_url(creds, connection_id, extra_scopes)
 
     # ── Standalone Auth (only when not using Nango) ──────────────────
+
+    def set_provider_mapping(self, app: str, nango_key: str) -> None:
+        """Override the Nango provider config key for an app.
+
+        Use when your Nango integration ID differs from the default.
+        Example: api.set_provider_mapping("docusign", "docusign-prod")
+        """
+        _NANGO_PROVIDERS[app] = nango_key
+        logger.info(f"[anyapi] Provider mapping: {app} → {nango_key}")
 
     def register_app(self, credentials) -> None:
         """Register OAuth credentials (standalone mode only)."""

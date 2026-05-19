@@ -36,7 +36,7 @@ DOCUSIGN_CREATE_ENVELOPE = ActionSpec(
         "Set status='sent' to send immediately, or 'created' to save as draft."
     ),
     method="POST",
-    path="/accounts/{account_id}/envelopes",
+    path="/restapi/v2.1/accounts/{account_id}/envelopes",
     content_type="application/json",
     params=[
         ParamSpec(
@@ -98,7 +98,7 @@ DOCUSIGN_GET_ENVELOPE = ActionSpec(
         "recipient info, and timestamps."
     ),
     method="GET",
-    path="/accounts/{account_id}/envelopes/{envelope_id}",
+    path="/restapi/v2.1/accounts/{account_id}/envelopes/{envelope_id}",
     params=[
         ParamSpec(name="account_id", type="string", required=True, location="path",
                   description="DocuSign account ID"),
@@ -119,7 +119,7 @@ DOCUSIGN_LIST_ENVELOPES = ActionSpec(
         "Returns envelope IDs, subjects, statuses, and timestamps."
     ),
     method="GET",
-    path="/accounts/{account_id}/envelopes",
+    path="/restapi/v2.1/accounts/{account_id}/envelopes",
     params=[
         ParamSpec(name="account_id", type="string", required=True, location="path",
                   description="DocuSign account ID"),
@@ -146,7 +146,7 @@ DOCUSIGN_GET_RECIPIENTS = ActionSpec(
         "and when they signed."
     ),
     method="GET",
-    path="/accounts/{account_id}/envelopes/{envelope_id}/recipients",
+    path="/restapi/v2.1/accounts/{account_id}/envelopes/{envelope_id}/recipients",
     params=[
         ParamSpec(name="account_id", type="string", required=True, location="path",
                   description="DocuSign account ID"),
@@ -166,7 +166,7 @@ DOCUSIGN_VOID_ENVELOPE = ActionSpec(
         "Requires a reason for voiding."
     ),
     method="PUT",
-    path="/accounts/{account_id}/envelopes/{envelope_id}",
+    path="/restapi/v2.1/accounts/{account_id}/envelopes/{envelope_id}",
     content_type="application/json",
     params=[
         ParamSpec(name="account_id", type="string", required=True, location="path",
@@ -190,7 +190,7 @@ DOCUSIGN_RESEND_ENVELOPE = ActionSpec(
         "Sends a new email to recipients who haven't completed signing."
     ),
     method="PUT",
-    path="/accounts/{account_id}/envelopes/{envelope_id}/recipients",
+    path="/restapi/v2.1/accounts/{account_id}/envelopes/{envelope_id}/recipients",
     content_type="application/json",
     params=[
         ParamSpec(name="account_id", type="string", required=True, location="path",

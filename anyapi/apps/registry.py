@@ -113,7 +113,7 @@ APPS: Dict[str, AppConfig] = {
         authorize_url="https://account-d.docusign.com/oauth/auth",  # demo; prod is account.docusign.com
         token_url="https://account-d.docusign.com/oauth/token",
         userinfo_url="https://account-d.docusign.com/oauth/userinfo",
-        api_base_url="https://demo.docusign.net/restapi/v2.1",  # from userinfo base_uri
+        api_base_url="https://demo.docusign.net",  # Nango needs base without /restapi/v2.1
         _extract_metadata=_docusign_metadata,
         _extract_userinfo=_docusign_userinfo,
     ),
