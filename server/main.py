@@ -116,15 +116,24 @@ app.add_middleware(
 
 # ── Routes ───────────────────────────────────────────────────────────
 
-from server.routers import accounts, connections, execute, triggers, dashboard, sso, auth_configs
+from server.rate_limit import RateLimitMiddleware
+app.add_middleware(RateLimitMiddleware)
+
+from server.routers import (
+    accounts, connections, execute, triggers,
+    dashboard, sso, auth_configs, entities, billing, mcp,
+)
 
 app.include_router(sso.router, prefix=config.api_prefix)
 app.include_router(accounts.router, prefix=config.api_prefix)
 app.include_router(auth_configs.router, prefix=config.api_prefix)
 app.include_router(connections.router, prefix=config.api_prefix)
+app.include_router(entities.router, prefix=config.api_prefix)
 app.include_router(execute.router, prefix=config.api_prefix)
 app.include_router(triggers.router, prefix=config.api_prefix)
 app.include_router(dashboard.router, prefix=config.api_prefix)
+app.include_router(billing.router, prefix=config.api_prefix)
+app.include_router(mcp.router, prefix=config.api_prefix)
 
 
 @app.get("/")

@@ -5,6 +5,7 @@ import { DashboardLayout } from '@/layouts/DashboardLayout'
 import { OverviewPage } from '@/pages/OverviewPage'
 import { AuthConfigsPage } from '@/pages/AuthConfigsPage'
 import { ConnectionsPage } from '@/pages/ConnectionsPage'
+import { EntitiesPage } from '@/pages/EntitiesPage'
 import { ActionsPage } from '@/pages/ActionsPage'
 import { TriggersPage } from '@/pages/TriggersPage'
 import { LogsPage } from '@/pages/LogsPage'
@@ -32,6 +33,7 @@ export default function App() {
         <Route index element={<OverviewPage />} />
         <Route path="auth-configs" element={<AuthConfigsPage />} />
         <Route path="connections" element={<ConnectionsPage />} />
+        <Route path="entities" element={<EntitiesPage />} />
         <Route path="actions" element={<ActionsPage />} />
         <Route path="triggers" element={<TriggersPage />} />
         <Route path="logs" element={<LogsPage />} />

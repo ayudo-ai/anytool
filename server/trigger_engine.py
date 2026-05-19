@@ -127,10 +127,15 @@ async def get_trigger_engine() -> TriggerEngine:
     global _engine, _engine_task
 
     if _engine is None:
+        import os
         api = get_api()
         store = DBTriggerStore()
-        _engine = TriggerEngine(api=api, store=store)
-        logger.info("[platform] TriggerEngine initialized with DBTriggerStore")
+        webhook_secret = os.environ.get("ANYTOOL_WEBHOOK_SECRET", "")
+        _engine = TriggerEngine(
+            api=api, store=store,
+            webhook_secret=webhook_secret,
+        )
+        logger.info(f"[platform] TriggerEngine initialized | hmac={'yes' if webhook_secret else 'no'}")
 
     # Start background loop if not running
     if _engine_task is None or _engine_task.done():

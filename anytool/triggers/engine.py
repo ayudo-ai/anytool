@@ -32,6 +32,9 @@ Usage:
 from __future__ import annotations
 
 import asyncio
+import hashlib
+import hmac
+import json
 from datetime import datetime, timezone
 from typing import List, Optional
 
@@ -52,10 +55,12 @@ class TriggerEngine:
         api: AnyTool,
         store: TriggerStore,
         max_concurrent_polls: int = 5,
+        webhook_secret: str = "",
     ):
         self._api = api
         self._store = store
         self._max_concurrent = max_concurrent_polls
+        self._webhook_secret = webhook_secret
         self._running = False
         self._http = httpx.AsyncClient(timeout=10.0)
 
@@ -212,22 +217,40 @@ class TriggerEngine:
 
         return delivered
 
+    def _sign_payload(self, payload_bytes: bytes) -> str:
+        """Compute HMAC-SHA256 signature for webhook payload."""
+        if not self._webhook_secret:
+            return ""
+        return hmac.new(
+            self._webhook_secret.encode(),
+            payload_bytes,
+            hashlib.sha256,
+        ).hexdigest()
+
     async def _deliver_event(
         self,
         event: TriggerEvent,
         webhook_url: str,
         max_retries: int = 3,
     ) -> bool:
-        """POST an event to the webhook URL with exponential backoff retries."""
+        """POST an event to the webhook URL with HMAC signature and retries."""
         payload = event.to_webhook_payload()
-        delays = [1, 5, 15]  # seconds between retries
+        payload_bytes = json.dumps(payload, default=str).encode()
+        delays = [1, 5, 15]
+
+        # Build headers with HMAC signature
+        headers = {"Content-Type": "application/json"}
+        if self._webhook_secret:
+            sig = self._sign_payload(payload_bytes)
+            headers["X-Anytool-Signature"] = f"sha256={sig}"
+            headers["X-Anytool-Timestamp"] = datetime.now(timezone.utc).isoformat()
 
         for attempt in range(max_retries):
             try:
                 resp = await self._http.post(
                     webhook_url,
-                    json=payload,
-                    headers={"Content-Type": "application/json"},
+                    content=payload_bytes,
+                    headers=headers,
                 )
 
                 if resp.is_success:

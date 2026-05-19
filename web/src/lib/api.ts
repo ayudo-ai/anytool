@@ -42,7 +42,7 @@ export function setStoredApiKey(key: string) {
 
 // ── HTTP client ─────────────────────────────────────────────────────
 
-async function request<T>(
+export async function request<T>(
   path: string,
   options: RequestInit = {},
 ): Promise<T> {

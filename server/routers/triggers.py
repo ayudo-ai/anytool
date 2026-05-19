@@ -31,8 +31,22 @@ router = APIRouter(prefix="/triggers", tags=["triggers"])
 # ── Supported triggers ───────────────────────────────────────────────
 
 TRIGGER_MAP = {
+    # Gmail
     "gmail_new_message": {"trigger_type": "gmail_new_message", "provider": "google"},
     "gmail_new_email": {"trigger_type": "gmail_new_message", "provider": "google"},
+    # Slack
+    "slack_new_message": {"trigger_type": "slack_new_message", "provider": "slack"},
+    # GitHub
+    "github_new_issue": {"trigger_type": "github_new_issue", "provider": "github"},
+    "github_new_pr": {"trigger_type": "github_new_pr", "provider": "github"},
+    "github_new_pull_request": {"trigger_type": "github_new_pr", "provider": "github"},
+    # HubSpot
+    "hubspot_new_contact": {"trigger_type": "hubspot_new_contact", "provider": "hubspot"},
+    "hubspot_new_deal": {"trigger_type": "hubspot_new_deal", "provider": "hubspot"},
+    # Freshdesk
+    "freshdesk_new_ticket": {"trigger_type": "freshdesk_new_ticket", "provider": "freshdesk"},
+    # Zendesk
+    "zendesk_new_ticket": {"trigger_type": "zendesk_new_ticket", "provider": "zendesk"},
 }
 
 

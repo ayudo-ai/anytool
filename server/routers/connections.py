@@ -260,6 +260,66 @@ async def check_connection(
     return {"connected": connected, "provider": provider, "user_id": user_id}
 
 
+@router.get("/health")
+async def check_connection_health(
+    provider: str,
+    user_id: str,
+    ctx: AuthContext = Depends(get_auth_context),
+):
+    """Check if a connection's tokens are still valid.
+
+    Makes a lightweight API call to verify the token works.
+    Returns health status + token expiry info.
+    """
+    app = PROVIDER_MAP.get(provider.lower(), provider)
+    api = await get_api_for_workspace(ctx.workspace_id, ctx.account_id)
+
+    # Check if tokens exist
+    connected = await api.is_connected(app, user_id)
+    if not connected:
+        return {
+            "healthy": False,
+            "provider": provider,
+            "user_id": user_id,
+            "reason": "not_connected",
+        }
+
+    # Try a lightweight API call to validate the token
+    health_actions = {
+        "google": ("gmail_search", {"q": "newer_than:1d", "maxResults": 1}),
+        "slack": ("slack_list_channels", {"limit": 1}),
+        "github": ("github_list_repos", {"per_page": 1}),
+        "hubspot": ("hubspot_list_contacts", {"limit": 1}),
+    }
+
+    if app in health_actions:
+        action, params = health_actions[app]
+        try:
+            result = await api.call(action, connection_id=user_id, **params)
+            healthy = result.get("successful", False)
+            return {
+                "healthy": healthy,
+                "provider": provider,
+                "user_id": user_id,
+                "status_code": result.get("status_code", 0),
+                "reason": "" if healthy else result.get("error", "unknown"),
+            }
+        except Exception as e:
+            return {
+                "healthy": False,
+                "provider": provider,
+                "user_id": user_id,
+                "reason": str(e),
+            }
+
+    return {
+        "healthy": True,
+        "provider": provider,
+        "user_id": user_id,
+        "reason": "token_exists_no_health_check",
+    }
+
+
 @router.delete("")
 async def disconnect_app(body: DisconnectRequest, ctx: AuthContext = Depends(get_auth_context)):
     """Disconnect an app for a user. Removes tokens + connection record."""
