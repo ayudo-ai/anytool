@@ -3,11 +3,13 @@ import { isLoggedIn } from '@/lib/api'
 import { AuthPage } from '@/pages/AuthPage'
 import { DashboardLayout } from '@/layouts/DashboardLayout'
 import { OverviewPage } from '@/pages/OverviewPage'
+import { AuthConfigsPage } from '@/pages/AuthConfigsPage'
 import { ConnectionsPage } from '@/pages/ConnectionsPage'
 import { ActionsPage } from '@/pages/ActionsPage'
 import { TriggersPage } from '@/pages/TriggersPage'
 import { LogsPage } from '@/pages/LogsPage'
 import { KeysPage } from '@/pages/KeysPage'
+import { SettingsPage } from '@/pages/SettingsPage'
 import { QuickstartPage } from '@/pages/QuickstartPage'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -28,11 +30,13 @@ export default function App() {
         }
       >
         <Route index element={<OverviewPage />} />
+        <Route path="auth-configs" element={<AuthConfigsPage />} />
         <Route path="connections" element={<ConnectionsPage />} />
         <Route path="actions" element={<ActionsPage />} />
         <Route path="triggers" element={<TriggersPage />} />
         <Route path="logs" element={<LogsPage />} />
         <Route path="keys" element={<KeysPage />} />
+        <Route path="settings" element={<SettingsPage />} />
         <Route path="quickstart" element={<QuickstartPage />} />
       </Route>
     </Routes>

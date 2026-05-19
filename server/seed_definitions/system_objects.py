@@ -379,6 +379,109 @@ SYSTEM_OBJECTS: List[Dict[str, Any]] = [
         ],
     },
 
+    # ── Auth Config (per-workspace OAuth credentials) ─────────
+    {
+        "slug": "auth_config",
+        "label": "Auth Config",
+        "description": (
+            "Per-workspace OAuth app credentials. Each workspace can have "
+            "multiple auth configs (one per provider). Supports managed "
+            "(platform-provided) and custom (developer-provided) credentials. "
+            "Client secrets stored encrypted."
+        ),
+        "fields": [
+            {
+                "api_name": "name",
+                "label": "Config Name",
+                "type": "string",
+                "required": True,
+                # e.g. "Google Production", "Slack Bot"
+            },
+            {
+                "api_name": "provider",
+                "label": "Provider",
+                "type": "string",
+                "required": True,
+                # google, slack, hubspot, github, docusign, zendesk, freshdesk, whatsapp
+            },
+            {
+                "api_name": "auth_scheme",
+                "label": "Auth Scheme",
+                "type": "string",
+                "required": True,
+                "default": "oauth2",
+                "validation_rules": {
+                    "options": ["oauth2", "api_key", "bearer"],
+                },
+            },
+            {
+                "api_name": "management",
+                "label": "Management",
+                "type": "string",
+                "required": True,
+                "default": "custom",
+                "validation_rules": {
+                    "options": ["managed", "custom"],
+                },
+                # managed = platform-provided creds (from env)
+                # custom = developer-provided creds
+            },
+            {
+                "api_name": "client_id",
+                "label": "Client ID",
+                "type": "string",
+            },
+            {
+                "api_name": "client_secret_encrypted",
+                "label": "Client Secret (encrypted)",
+                "type": "text",
+                # Fernet-encrypted. Never returned in API responses.
+            },
+            {
+                "api_name": "scopes",
+                "label": "OAuth Scopes",
+                "type": "list",
+                "default": [],
+            },
+            {
+                "api_name": "redirect_uri",
+                "label": "Redirect URI",
+                "type": "url",
+            },
+            {
+                "api_name": "api_key_encrypted",
+                "label": "API Key (encrypted)",
+                "type": "text",
+                # For api_key auth (e.g. Freshdesk)
+            },
+            {
+                "api_name": "domain",
+                "label": "Domain",
+                "type": "string",
+                # e.g. "yourcompany.freshdesk.com" or Zendesk subdomain
+            },
+            {
+                "api_name": "extra_config",
+                "label": "Extra Config",
+                "type": "json",
+                "default": {},
+            },
+            {
+                "api_name": "connections_count",
+                "label": "Connected Users",
+                "type": "number",
+                "default": 0,
+            },
+            {
+                "api_name": "enabled",
+                "label": "Enabled",
+                "type": "boolean",
+                "required": True,
+                "default": True,
+            },
+        ],
+    },
+
     # ── OAuth Token (encrypted token storage) ─────────────────
     {
         "slug": "oauth_token",

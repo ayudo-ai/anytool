@@ -1,6 +1,7 @@
 import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard,
+  KeyRound,
   Plug,
   Zap,
   ScrollText,
@@ -8,6 +9,7 @@ import {
   BookOpen,
   LogOut,
   Wrench,
+  Settings,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
@@ -18,11 +20,13 @@ import { cn } from '@/lib/utils'
 
 const NAV = [
   { to: '/dashboard', icon: LayoutDashboard, label: 'Overview', end: true },
+  { to: '/dashboard/auth-configs', icon: KeyRound, label: 'Auth Configs' },
   { to: '/dashboard/connections', icon: Plug, label: 'Connections' },
   { to: '/dashboard/actions', icon: Wrench, label: 'Actions' },
   { to: '/dashboard/triggers', icon: Zap, label: 'Triggers' },
   { to: '/dashboard/logs', icon: ScrollText, label: 'Logs' },
   { to: '/dashboard/keys', icon: Key, label: 'API Keys' },
+  { to: '/dashboard/settings', icon: Settings, label: 'Settings' },
   { to: '/dashboard/quickstart', icon: BookOpen, label: 'Quickstart' },
 ]
 

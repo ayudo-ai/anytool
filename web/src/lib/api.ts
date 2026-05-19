@@ -285,6 +285,68 @@ export function listTriggerTypes() {
   }>('/triggers/types');
 }
 
+// ── Auth Configs ─────────────────────────────────────────────────────
+
+export interface AuthConfig {
+  id: string;
+  name: string;
+  provider: string;
+  auth_scheme: string;
+  management: string;
+  client_id: string;
+  scopes: string[];
+  redirect_uri: string;
+  domain: string;
+  connections_count: number;
+  enabled: boolean;
+  created_at: string;
+}
+
+export function listAuthConfigs() {
+  return request<{ auth_configs: AuthConfig[]; total: number }>('/auth-configs');
+}
+
+export function createAuthConfig(data: {
+  name: string;
+  provider: string;
+  auth_scheme?: string;
+  management?: string;
+  client_id?: string;
+  client_secret?: string;
+  scopes?: string[];
+  redirect_uri?: string;
+  api_key?: string;
+  domain?: string;
+}) {
+  return request<{ id: string; provider: string; status: string }>('/auth-configs', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+export function updateAuthConfig(id: string, data: Record<string, unknown>) {
+  return request<{ updated: boolean }>(`/auth-configs/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  });
+}
+
+export function deleteAuthConfig(id: string) {
+  return request<{ deleted: boolean }>(`/auth-configs/${id}`, { method: 'DELETE' });
+}
+
+export function listProviders() {
+  return request<{
+    providers: {
+      slug: string;
+      name: string;
+      auth_scheme: string;
+      apps: string[];
+      default_scopes: string[];
+    }[];
+  }>('/auth-configs/providers');
+}
+
 // ── API Keys ────────────────────────────────────────────────────────
 
 export function listApiKeys() {

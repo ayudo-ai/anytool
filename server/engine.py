@@ -152,21 +152,82 @@ def get_api() -> AnyTool:
         store = PostgresTokenStore()
         _api = AnyTool(token_store=store)
 
-        # Register all app credentials from env
+        # Register default credentials from env (fallback for managed configs)
         creds = _load_app_credentials()
         for c in creds:
             _api.register_app(c)
-            logger.info(f"[engine] Registered app: {c.app} (scopes: {len(c.scopes)})")
+            logger.info(f"[engine] Registered default app: {c.app} (scopes: {len(c.scopes)})")
 
-        if not creds:
-            logger.warning(
-                "[engine] No OAuth app credentials found in env. "
-                "Set GOOGLE_OAUTH_CLIENT_ID + GOOGLE_OAUTH_CLIENT_SECRET etc."
-            )
-
-        logger.info(f"[engine] AnyTool initialized in standalone mode | apps={len(creds)}")
+        logger.info(f"[engine] AnyTool initialized in standalone mode | default_apps={len(creds)}")
 
     return _api
+
+
+async def get_api_for_workspace(workspace_id: str, account_id: str) -> AnyTool:
+    """Get an AnyTool instance with workspace-specific auth configs.
+
+    Loads auth configs from DB for this workspace and registers them.
+    Falls back to env var defaults for providers without a workspace config.
+    """
+    from server.token_store import PostgresTokenStore, _decrypt
+    from server.database import list_records
+    from server.config import config as server_config
+
+    store = PostgresTokenStore()
+    api = AnyTool(token_store=store)
+
+    callback_url = f"{server_config.base_url}{server_config.api_prefix}/connections/callback"
+
+    # 1. Load workspace-specific auth configs from DB
+    records = await list_records("auth_config", account_id=account_id, workspace_id=workspace_id)
+    registered_providers = set()
+
+    for r in records:
+        d = r.custom_data or {}
+        if not d.get("enabled", True):
+            continue
+
+        provider = d.get("provider", "")
+        auth_scheme = d.get("auth_scheme", "oauth2")
+
+        # Decrypt secrets
+        client_secret = ""
+        if d.get("client_secret_encrypted"):
+            try:
+                client_secret = _decrypt(d["client_secret_encrypted"])
+            except Exception:
+                logger.warning(f"[engine] Failed to decrypt secret for {provider} config {r.primary_field_value}")
+                continue
+
+        api_key = ""
+        if d.get("api_key_encrypted"):
+            try:
+                api_key = _decrypt(d["api_key_encrypted"])
+            except Exception:
+                pass
+
+        cred = AppCredentials(
+            app=provider,
+            auth_type=auth_scheme,
+            client_id=d.get("client_id", ""),
+            client_secret=client_secret,
+            scopes=d.get("scopes", []),
+            redirect_uri=d.get("redirect_uri", "") or callback_url,
+            api_key=api_key,
+            domain=d.get("domain", ""),
+        )
+        api.register_app(cred)
+        registered_providers.add(provider)
+        logger.debug(f"[engine] Workspace {workspace_id}: registered {provider} from auth_config")
+
+    # 2. Fall back to env var defaults for missing providers
+    env_creds = _load_app_credentials()
+    for c in env_creds:
+        if c.app not in registered_providers:
+            api.register_app(c)
+            logger.debug(f"[engine] Workspace {workspace_id}: using env default for {c.app}")
+
+    return api
 
 
 async def close_api():

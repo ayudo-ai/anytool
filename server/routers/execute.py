@@ -17,7 +17,7 @@ from server.auth import get_auth_context, AuthContext
 import time
 
 from server.database import get_record, update_record_fields, atomic_increment, put_record, new_id
-from server.engine import get_api
+from server.engine import get_api, get_api_for_workspace
 
 router = APIRouter(tags=["execute"])
 
@@ -60,7 +60,7 @@ async def execute_action(body: ExecuteRequest, ctx: AuthContext = Depends(get_au
                 f"Monthly call limit reached ({max_calls}). Upgrade at anytool.dev"
             )
 
-    api = get_api()
+    api = await get_api_for_workspace(ctx.workspace_id, ctx.account_id)
 
     start_time = time.monotonic()
     result = None

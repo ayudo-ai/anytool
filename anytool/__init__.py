@@ -16,7 +16,7 @@ from anytool.triggers.base import TriggerConfig, TriggerEvent
 from anytool.triggers.store import TriggerStore, MemoryTriggerStore
 from anytool.triggers.engine import TriggerEngine
 
-__version__ = "0.1.3"
+__version__ = "0.1.4"
 
 __all__ = [
     "AnyTool",

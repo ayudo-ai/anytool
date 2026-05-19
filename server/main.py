@@ -116,10 +116,11 @@ app.add_middleware(
 
 # ── Routes ───────────────────────────────────────────────────────────
 
-from server.routers import accounts, connections, execute, triggers, dashboard, sso
+from server.routers import accounts, connections, execute, triggers, dashboard, sso, auth_configs
 
 app.include_router(sso.router, prefix=config.api_prefix)
 app.include_router(accounts.router, prefix=config.api_prefix)
+app.include_router(auth_configs.router, prefix=config.api_prefix)
 app.include_router(connections.router, prefix=config.api_prefix)
 app.include_router(execute.router, prefix=config.api_prefix)
 app.include_router(triggers.router, prefix=config.api_prefix)

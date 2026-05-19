@@ -18,7 +18,7 @@ from pydantic import BaseModel
 
 from server.auth import get_auth_context, AuthContext
 from server.database import put_record, list_records, delete_record, now
-from server.engine import get_api
+from server.engine import get_api, get_api_for_workspace
 
 router = APIRouter(prefix="/connections", tags=["connections"])
 
@@ -77,7 +77,7 @@ async def connect_app(body: ConnectRequest, ctx: AuthContext = Depends(get_auth_
             f"Available: {list(PROVIDER_MAP.keys())}"
         )
 
-    api = get_api()
+    api = await get_api_for_workspace(ctx.workspace_id, ctx.account_id)
     try:
         auth_url = await api.get_auth_url(
             provider=provider,
@@ -235,7 +235,7 @@ async def check_connection(
 ):
     """Check if a specific user has connected a provider."""
     app = PROVIDER_MAP.get(provider.lower(), provider)
-    api = get_api()
+    api = await get_api_for_workspace(ctx.workspace_id, ctx.account_id)
     connected = await api.is_connected(app, user_id)
     return {"connected": connected, "provider": provider, "user_id": user_id}
 
@@ -244,7 +244,7 @@ async def check_connection(
 async def disconnect_app(body: DisconnectRequest, ctx: AuthContext = Depends(get_auth_context)):
     """Disconnect an app for a user. Removes tokens + connection record."""
     provider = PROVIDER_MAP.get(body.provider.lower(), body.provider)
-    api = get_api()
+    api = await get_api_for_workspace(ctx.workspace_id, ctx.account_id)
     try:
         await api.disconnect(provider, body.user_id)
 
