@@ -389,6 +389,96 @@ def test_github_tools_generated():
     assert len(tools) == 16
 
 
+# ── Google Calendar + Docs Specs ─────────────────────────────────────
+
+
+def test_google_calendar_specs():
+    actions = AnyTool.list_actions("google")
+    names = [a["name"] for a in actions]
+    assert "calendar_create_event" in names
+    assert "calendar_list_events" in names
+    assert "calendar_delete_event" in names
+    assert "calendar_list_calendars" in names
+
+
+def test_google_docs_specs():
+    actions = AnyTool.list_actions("google")
+    names = [a["name"] for a in actions]
+    assert "docs_get_document" in names
+    assert "docs_create_document" in names
+    assert "docs_insert_text" in names
+    assert "docs_replace_text" in names
+    assert "docs_batch_update" in names
+
+
+def test_calendar_event_builder():
+    from anytool.executor import APIExecutor
+    from anytool.auth.nango import NangoClient
+
+    executor = APIExecutor(nango=NangoClient(secret_key="fake"))
+    result = executor._build_calendar_event({
+        "summary": "Team standup",
+        "start_datetime": "2024-01-15T09:00:00-05:00",
+        "end_datetime": "2024-01-15T09:30:00-05:00",
+        "timezone": "America/New_York",
+        "attendees": ["alice@example.com", "bob@example.com"],
+        "location": "Zoom",
+    })
+
+    assert result["summary"] == "Team standup"
+    assert result["start"]["dateTime"] == "2024-01-15T09:00:00-05:00"
+    assert result["start"]["timeZone"] == "America/New_York"
+    assert result["location"] == "Zoom"
+    assert len(result["attendees"]) == 2
+    assert result["attendees"][0]["email"] == "alice@example.com"
+
+
+def test_calendar_all_day_event():
+    from anytool.executor import APIExecutor
+    from anytool.auth.nango import NangoClient
+
+    executor = APIExecutor(nango=NangoClient(secret_key="fake"))
+    result = executor._build_calendar_event({
+        "summary": "Company holiday",
+        "start_datetime": "2024-12-25",
+        "end_datetime": "2024-12-26",
+    })
+
+    assert result["start"] == {"date": "2024-12-25"}
+    assert result["end"] == {"date": "2024-12-26"}
+
+
+def test_docs_insert_text_builder():
+    from anytool.executor import APIExecutor
+    from anytool.auth.nango import NangoClient
+
+    executor = APIExecutor(nango=NangoClient(secret_key="fake"))
+    result = executor._build_docs_insert_text({
+        "text": "Hello world",
+        "index": 1,
+    })
+
+    assert result["requests"][0]["insertText"]["text"] == "Hello world"
+    assert result["requests"][0]["insertText"]["location"]["index"] == 1
+
+
+def test_docs_replace_text_builder():
+    from anytool.executor import APIExecutor
+    from anytool.auth.nango import NangoClient
+
+    executor = APIExecutor(nango=NangoClient(secret_key="fake"))
+    result = executor._build_docs_replace_text({
+        "find_text": "{{name}}",
+        "replace_text": "John Doe",
+        "match_case": True,
+    })
+
+    req = result["requests"][0]["replaceAllText"]
+    assert req["containsText"]["text"] == "{{name}}"
+    assert req["replaceText"] == "John Doe"
+    assert req["containsText"]["matchCase"] is True
+
+
 # ── Zendesk Specs ───────────────────────────────────────────────────
 
 
@@ -465,5 +555,5 @@ def test_zendesk_internal_note():
 def test_total_specs_count():
     """Verify total spec count across all apps."""
     all_actions = AnyTool.list_actions()
-    # Google: 11, DocuSign: 6, Freshdesk: 10, Slack: 7, HubSpot: 15, GitHub: 16, Zendesk: 13 = 78
-    assert len(all_actions) == 78
+    # Google: 22, DocuSign: 6, Freshdesk: 10, Slack: 7, HubSpot: 15, GitHub: 16, Zendesk: 13 = 89
+    assert len(all_actions) == 89

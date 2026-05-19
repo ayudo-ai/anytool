@@ -187,6 +187,18 @@ class APIExecutor:
         if spec.request_transform == "zendesk_comment":
             return self._build_zendesk_comment(params)
 
+        if spec.request_transform == "calendar_event":
+            return self._build_calendar_event(params)
+
+        if spec.request_transform == "docs_batch_update":
+            return {"requests": params.get("requests", [])}
+
+        if spec.request_transform == "docs_insert_text":
+            return self._build_docs_insert_text(params)
+
+        if spec.request_transform == "docs_replace_text":
+            return self._build_docs_replace_text(params)
+
         if spec.body_template:
             body = {}
             for key, template in spec.body_template.items():
@@ -401,3 +413,73 @@ class APIExecutor:
             comment["author_id"] = params["author_id"]
 
         return {"ticket": {"comment": comment}}
+
+    def _build_calendar_event(self, params: Dict[str, Any]) -> dict:
+        """Build Google Calendar event payload.
+
+        Handles dateTime vs date (all-day) and attendees list.
+        """
+        body: Dict[str, Any] = {}
+
+        if params.get("summary"):
+            body["summary"] = params["summary"]
+        if params.get("description"):
+            body["description"] = params["description"]
+        if params.get("location"):
+            body["location"] = params["location"]
+
+        tz = params.get("timezone", "")
+
+        # Start time — detect all-day (date only) vs timed event
+        if params.get("start_datetime"):
+            start = params["start_datetime"]
+            if len(start) <= 10:  # "2024-01-15" → all-day
+                body["start"] = {"date": start}
+            else:
+                body["start"] = {"dateTime": start}
+                if tz:
+                    body["start"]["timeZone"] = tz
+
+        if params.get("end_datetime"):
+            end = params["end_datetime"]
+            if len(end) <= 10:
+                body["end"] = {"date": end}
+            else:
+                body["end"] = {"dateTime": end}
+                if tz:
+                    body["end"]["timeZone"] = tz
+
+        # Attendees
+        if params.get("attendees"):
+            attendees = params["attendees"]
+            if isinstance(attendees, str):
+                attendees = [a.strip() for a in attendees.split(",")]
+            body["attendees"] = [{"email": email} for email in attendees]
+
+        return body
+
+    def _build_docs_insert_text(self, params: Dict[str, Any]) -> dict:
+        """Build Google Docs insertText batchUpdate payload."""
+        index = params.get("index", 1)
+        return {
+            "requests": [{
+                "insertText": {
+                    "location": {"index": index},
+                    "text": params.get("text", ""),
+                }
+            }]
+        }
+
+    def _build_docs_replace_text(self, params: Dict[str, Any]) -> dict:
+        """Build Google Docs replaceAllText batchUpdate payload."""
+        return {
+            "requests": [{
+                "replaceAllText": {
+                    "containsText": {
+                        "text": params.get("find_text", ""),
+                        "matchCase": params.get("match_case", True),
+                    },
+                    "replaceText": params.get("replace_text", ""),
+                }
+            }]
+        }

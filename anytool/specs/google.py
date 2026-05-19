@@ -202,6 +202,255 @@ DRIVE_GET_FILE = ActionSpec(
 )
 
 
+# ── Google Calendar ──────────────────────────────────────────────────
+
+CALENDAR_LIST_EVENTS = ActionSpec(
+    name="calendar_list_events",
+    app="google",
+    description=(
+        "List upcoming events from a Google Calendar. "
+        "Defaults to primary calendar. Use timeMin/timeMax for date range."
+    ),
+    method="GET",
+    path="/calendar/v3/calendars/{calendar_id}/events",
+    base_url="https://www.googleapis.com",
+    params=[
+        ParamSpec(name="calendar_id", type="string", required=True, location="path",
+                  description="Calendar ID. Use 'primary' for the user's main calendar"),
+        ParamSpec(name="timeMin", type="string", required=False, location="query",
+                  description="Start of time range (RFC3339, e.g. '2024-01-15T00:00:00Z')"),
+        ParamSpec(name="timeMax", type="string", required=False, location="query",
+                  description="End of time range (RFC3339)"),
+        ParamSpec(name="maxResults", type="integer", required=False, location="query",
+                  description="Max events to return (default 10, max 2500)"),
+        ParamSpec(name="singleEvents", type="boolean", required=False, location="query",
+                  description="Expand recurring events into single instances. Default: false"),
+        ParamSpec(name="orderBy", type="string", required=False, location="query",
+                  description="'startTime' (requires singleEvents=true) or 'updated'"),
+        ParamSpec(name="q", type="string", required=False, location="query",
+                  description="Free-text search across event fields"),
+    ],
+)
+
+CALENDAR_GET_EVENT = ActionSpec(
+    name="calendar_get_event",
+    app="google",
+    description="Get a specific calendar event by ID. Returns summary, start/end times, attendees, and description.",
+    method="GET",
+    path="/calendar/v3/calendars/{calendar_id}/events/{event_id}",
+    base_url="https://www.googleapis.com",
+    params=[
+        ParamSpec(name="calendar_id", type="string", required=True, location="path",
+                  description="Calendar ID (use 'primary' for main calendar)"),
+        ParamSpec(name="event_id", type="string", required=True, location="path",
+                  description="Event ID"),
+    ],
+    response_ids={"id": "event_id"},
+)
+
+CALENDAR_CREATE_EVENT = ActionSpec(
+    name="calendar_create_event",
+    app="google",
+    description=(
+        "Create a calendar event. Specify start/end as dateTime (with time) "
+        "or date (all-day). Optionally add attendees, location, and description."
+    ),
+    method="POST",
+    path="/calendar/v3/calendars/{calendar_id}/events",
+    base_url="https://www.googleapis.com",
+    content_type="application/json",
+    params=[
+        ParamSpec(name="calendar_id", type="string", required=True, location="path",
+                  description="Calendar ID (use 'primary' for main calendar)"),
+        ParamSpec(name="summary", type="string", required=True,
+                  description="Event title"),
+        ParamSpec(name="start_datetime", type="string", required=True,
+                  description="Start time (RFC3339, e.g. '2024-01-15T10:00:00-05:00') or date for all-day ('2024-01-15')"),
+        ParamSpec(name="end_datetime", type="string", required=True,
+                  description="End time (RFC3339) or date for all-day"),
+        ParamSpec(name="timezone", type="string", required=False,
+                  description="Timezone (e.g. 'America/New_York'). Defaults to calendar timezone"),
+        ParamSpec(name="description", type="string", required=False,
+                  description="Event description (HTML supported)"),
+        ParamSpec(name="location", type="string", required=False,
+                  description="Event location"),
+        ParamSpec(name="attendees", type="list", required=False,
+                  description="List of attendee emails, e.g. ['alice@example.com', 'bob@example.com']"),
+        ParamSpec(name="send_updates", type="string", required=False, location="query",
+                  description="'all' to notify attendees, 'none' for no notifications. Default: 'none'"),
+    ],
+    request_transform="calendar_event",
+    response_ids={"id": "event_id"},
+)
+
+CALENDAR_UPDATE_EVENT = ActionSpec(
+    name="calendar_update_event",
+    app="google",
+    description="Update a calendar event — change title, time, attendees, description, or location.",
+    method="PATCH",
+    path="/calendar/v3/calendars/{calendar_id}/events/{event_id}",
+    base_url="https://www.googleapis.com",
+    content_type="application/json",
+    params=[
+        ParamSpec(name="calendar_id", type="string", required=True, location="path",
+                  description="Calendar ID"),
+        ParamSpec(name="event_id", type="string", required=True, location="path",
+                  description="Event ID to update"),
+        ParamSpec(name="summary", type="string", required=False,
+                  description="Updated event title"),
+        ParamSpec(name="start_datetime", type="string", required=False,
+                  description="Updated start time (RFC3339)"),
+        ParamSpec(name="end_datetime", type="string", required=False,
+                  description="Updated end time (RFC3339)"),
+        ParamSpec(name="timezone", type="string", required=False,
+                  description="Timezone"),
+        ParamSpec(name="description", type="string", required=False,
+                  description="Updated description"),
+        ParamSpec(name="location", type="string", required=False,
+                  description="Updated location"),
+        ParamSpec(name="attendees", type="list", required=False,
+                  description="Replace all attendees (list of emails)"),
+        ParamSpec(name="send_updates", type="string", required=False, location="query",
+                  description="'all' or 'none'"),
+    ],
+    request_transform="calendar_event",
+    response_ids={"id": "event_id"},
+)
+
+CALENDAR_DELETE_EVENT = ActionSpec(
+    name="calendar_delete_event",
+    app="google",
+    description="Delete a calendar event.",
+    method="DELETE",
+    path="/calendar/v3/calendars/{calendar_id}/events/{event_id}",
+    base_url="https://www.googleapis.com",
+    params=[
+        ParamSpec(name="calendar_id", type="string", required=True, location="path",
+                  description="Calendar ID"),
+        ParamSpec(name="event_id", type="string", required=True, location="path",
+                  description="Event ID to delete"),
+        ParamSpec(name="send_updates", type="string", required=False, location="query",
+                  description="'all' or 'none'"),
+    ],
+)
+
+CALENDAR_LIST_CALENDARS = ActionSpec(
+    name="calendar_list_calendars",
+    app="google",
+    description="List all calendars the user has access to. Returns calendar IDs, names, and access roles.",
+    method="GET",
+    path="/calendar/v3/users/me/calendarList",
+    base_url="https://www.googleapis.com",
+    params=[
+        ParamSpec(name="maxResults", type="integer", required=False, location="query",
+                  description="Max calendars to return (default 100)"),
+    ],
+)
+
+
+# ── Google Docs ──────────────────────────────────────────────────────
+
+DOCS_GET_DOCUMENT = ActionSpec(
+    name="docs_get_document",
+    app="google",
+    description=(
+        "Get a Google Doc by ID. Returns the document title, body content, "
+        "headers, footers, and structural elements."
+    ),
+    method="GET",
+    path="/v1/documents/{document_id}",
+    base_url="https://docs.googleapis.com",
+    params=[
+        ParamSpec(name="document_id", type="string", required=True, location="path",
+                  description="Google Doc ID (from the URL)"),
+    ],
+    response_ids={"documentId": "document_id", "title": "document_title"},
+)
+
+DOCS_CREATE_DOCUMENT = ActionSpec(
+    name="docs_create_document",
+    app="google",
+    description="Create a new empty Google Doc with a title.",
+    method="POST",
+    path="/v1/documents",
+    base_url="https://docs.googleapis.com",
+    content_type="application/json",
+    params=[
+        ParamSpec(name="title", type="string", required=True,
+                  description="Document title"),
+    ],
+    response_ids={"documentId": "document_id"},
+)
+
+DOCS_BATCH_UPDATE = ActionSpec(
+    name="docs_batch_update",
+    app="google",
+    description=(
+        "Apply updates to a Google Doc — insert text, delete content, "
+        "replace text, update formatting. Pass an array of request objects. "
+        "Common requests: insertText, deleteContentRange, replaceAllText."
+    ),
+    method="POST",
+    path="/v1/documents/{document_id}:batchUpdate",
+    base_url="https://docs.googleapis.com",
+    content_type="application/json",
+    params=[
+        ParamSpec(name="document_id", type="string", required=True, location="path",
+                  description="Google Doc ID"),
+        ParamSpec(name="requests", type="list", required=True,
+                  description=(
+                      "List of update requests. Examples: "
+                      '[{"insertText": {"location": {"index": 1}, "text": "Hello world"}}], '
+                      '[{"replaceAllText": {"containsText": {"text": "old"}, "replaceText": "new"}}]'
+                  )),
+    ],
+    request_transform="docs_batch_update",
+)
+
+DOCS_INSERT_TEXT = ActionSpec(
+    name="docs_insert_text",
+    app="google",
+    description=(
+        "Insert text into a Google Doc at a specific position. "
+        "Use index=1 to insert at the beginning of the document."
+    ),
+    method="POST",
+    path="/v1/documents/{document_id}:batchUpdate",
+    base_url="https://docs.googleapis.com",
+    content_type="application/json",
+    params=[
+        ParamSpec(name="document_id", type="string", required=True, location="path",
+                  description="Google Doc ID"),
+        ParamSpec(name="text", type="string", required=True,
+                  description="Text to insert"),
+        ParamSpec(name="index", type="integer", required=False,
+                  description="Position to insert at (1 = beginning of doc). Default: 1"),
+    ],
+    request_transform="docs_insert_text",
+)
+
+DOCS_REPLACE_TEXT = ActionSpec(
+    name="docs_replace_text",
+    app="google",
+    description="Find and replace all occurrences of text in a Google Doc.",
+    method="POST",
+    path="/v1/documents/{document_id}:batchUpdate",
+    base_url="https://docs.googleapis.com",
+    content_type="application/json",
+    params=[
+        ParamSpec(name="document_id", type="string", required=True, location="path",
+                  description="Google Doc ID"),
+        ParamSpec(name="find_text", type="string", required=True,
+                  description="Text to find"),
+        ParamSpec(name="replace_text", type="string", required=True,
+                  description="Replacement text"),
+        ParamSpec(name="match_case", type="boolean", required=False,
+                  description="Case-sensitive matching. Default: true"),
+    ],
+    request_transform="docs_replace_text",
+)
+
+
 # ── Export all specs ─────────────────────────────────────────────────
 
 GOOGLE_SPECS = [
@@ -219,4 +468,17 @@ GOOGLE_SPECS = [
     # Drive
     DRIVE_LIST_FILES,
     DRIVE_GET_FILE,
+    # Calendar
+    CALENDAR_LIST_EVENTS,
+    CALENDAR_GET_EVENT,
+    CALENDAR_CREATE_EVENT,
+    CALENDAR_UPDATE_EVENT,
+    CALENDAR_DELETE_EVENT,
+    CALENDAR_LIST_CALENDARS,
+    # Docs
+    DOCS_GET_DOCUMENT,
+    DOCS_CREATE_DOCUMENT,
+    DOCS_BATCH_UPDATE,
+    DOCS_INSERT_TEXT,
+    DOCS_REPLACE_TEXT,
 ]
