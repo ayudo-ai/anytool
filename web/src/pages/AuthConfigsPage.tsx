@@ -42,14 +42,14 @@ import { Plus, Trash2, KeyRound } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const PROVIDER_COLORS: Record<string, string> = {
-  google: 'bg-red-50 text-red-700 border-red-200',
-  slack: 'bg-purple-50 text-purple-700 border-purple-200',
-  hubspot: 'bg-orange-50 text-orange-700 border-orange-200',
-  github: 'bg-neutral-50 text-neutral-700 border-neutral-200',
-  freshdesk: 'bg-green-50 text-green-700 border-green-200',
-  docusign: 'bg-blue-50 text-blue-700 border-blue-200',
-  zendesk: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-  whatsapp: 'bg-green-50 text-green-700 border-green-200',
+  google: 'bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-300 border-red-200 dark:border-red-800',
+  slack: 'bg-purple-50 text-purple-700 dark:bg-purple-950 dark:text-purple-300 border-purple-200 dark:border-purple-800',
+  hubspot: 'bg-orange-50 text-orange-700 dark:bg-orange-950 dark:text-orange-300 border-orange-200 dark:border-orange-800',
+  github: 'bg-neutral-50 text-neutral-700 dark:bg-neutral-900 dark:text-neutral-300 border-neutral-200 dark:border-neutral-700',
+  freshdesk: 'bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-300 border-green-200 dark:border-green-800',
+  docusign: 'bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300 border-blue-200 dark:border-blue-800',
+  zendesk: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800',
+  whatsapp: 'bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-300 border-green-200 dark:border-green-800',
 }
 
 const SCHEME_LABELS: Record<string, string> = {

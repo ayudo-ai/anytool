@@ -57,14 +57,14 @@ function getEntity(userId: string) {
 }
 
 const PROVIDER_COLORS: Record<string, string> = {
-  google: 'bg-red-50 text-red-700',
-  slack: 'bg-purple-50 text-purple-700',
-  hubspot: 'bg-orange-50 text-orange-700',
-  github: 'bg-neutral-50 text-neutral-700',
-  freshdesk: 'bg-green-50 text-green-700',
-  docusign: 'bg-blue-50 text-blue-700',
-  zendesk: 'bg-emerald-50 text-emerald-700',
-  whatsapp: 'bg-green-50 text-green-700',
+  google: 'bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-300',
+  slack: 'bg-purple-50 text-purple-700 dark:bg-purple-950 dark:text-purple-300',
+  hubspot: 'bg-orange-50 text-orange-700 dark:bg-orange-950 dark:text-orange-300',
+  github: 'bg-neutral-50 text-neutral-700 dark:bg-neutral-900 dark:text-neutral-300',
+  freshdesk: 'bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-300',
+  docusign: 'bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300',
+  zendesk: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300',
+  whatsapp: 'bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-300',
 }
 
 export function EntitiesPage() {

@@ -11,12 +11,22 @@ import {
   LogOut,
   Wrench,
   Settings,
+  Sun,
+  Moon,
+  Monitor,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { clearSession } from '@/lib/api'
+import { useTheme } from '@/lib/theme'
 import { cn } from '@/lib/utils'
 
 const NAV = [
@@ -34,6 +44,7 @@ const NAV = [
 
 export function DashboardLayout() {
   const navigate = useNavigate()
+  const { theme, resolved, setTheme } = useTheme()
 
   const userStr = localStorage.getItem('anytool_user')
   const user = userStr ? JSON.parse(userStr) as { name: string; email: string; picture: string } : null
@@ -43,15 +54,46 @@ export function DashboardLayout() {
     navigate('/')
   }
 
+  const ThemeIcon = theme === 'system' ? Monitor : resolved === 'dark' ? Moon : Sun
+
   return (
     <div className="flex h-screen">
       {/* Sidebar */}
       <aside className="flex w-60 flex-col border-r bg-muted/30">
-        <div className="flex h-14 items-center gap-2 px-4">
-          <div className="flex size-7 items-center justify-center rounded-md bg-primary text-primary-foreground text-xs font-bold">
-            AT
+        <div className="flex h-14 items-center justify-between px-4">
+          <div className="flex items-center gap-2">
+            <div className="flex size-7 items-center justify-center rounded-md bg-primary text-primary-foreground text-xs font-bold">
+              AT
+            </div>
+            <span className="text-sm font-semibold tracking-tight">anytool</span>
           </div>
-          <span className="text-sm font-semibold tracking-tight">anytool</span>
+
+          {/* Theme toggle */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="size-7">
+                <ThemeIcon className="size-3.5" />
+                <span className="sr-only">Toggle theme</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-32">
+              <DropdownMenuItem onClick={() => setTheme('light')}>
+                <Sun className="mr-2 size-3.5" />
+                Light
+                {theme === 'light' && <span className="ml-auto text-xs">✓</span>}
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setTheme('dark')}>
+                <Moon className="mr-2 size-3.5" />
+                Dark
+                {theme === 'dark' && <span className="ml-auto text-xs">✓</span>}
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setTheme('system')}>
+                <Monitor className="mr-2 size-3.5" />
+                System
+                {theme === 'system' && <span className="ml-auto text-xs">✓</span>}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
 
         <Separator />

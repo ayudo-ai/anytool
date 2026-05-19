@@ -16,7 +16,8 @@ import {
   emailLogin,
   type AuthResponse,
 } from '@/lib/api'
-import { Eye, EyeOff } from 'lucide-react'
+import { Eye, EyeOff, Sun, Moon } from 'lucide-react'
+import { useTheme } from '@/lib/theme'
 
 export function AuthPage() {
   const navigate = useNavigate()
@@ -34,6 +35,8 @@ export function AuthPage() {
       .then((res) => setGoogleClientId(res.client_id))
       .catch(() => {})
   }, [])
+
+  const { resolved, setTheme } = useTheme()
 
   if (isLoggedIn()) {
     navigate('/dashboard', { replace: true })
@@ -104,7 +107,7 @@ export function AuthPage() {
                 <GoogleLogin
                   onSuccess={handleGoogleSuccess}
                   onError={() => setError('Google sign-in failed')}
-                  theme="outline"
+                  theme={resolved === 'dark' ? 'filled_black' : 'outline'}
                   size="large"
                   width="100%"
                   text="continue_with"
@@ -216,7 +219,14 @@ export function AuthPage() {
       </div>
 
       {/* Right — Branding panel */}
-      <div className="hidden lg:flex lg:w-1/2 bg-muted/40 flex-col items-center justify-center p-12">
+      <div className="hidden lg:flex lg:w-1/2 bg-muted/40 flex-col items-center justify-center p-12 relative">
+          {/* Theme toggle */}
+          <button
+            onClick={() => setTheme(resolved === 'dark' ? 'light' : 'dark')}
+            className="absolute top-4 right-4 p-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+          >
+            {resolved === 'dark' ? <Sun className="size-4" /> : <Moon className="size-4" />}
+          </button>
         <div className="max-w-md text-center">
           <blockquote className="text-2xl font-medium leading-relaxed text-foreground">
             &ldquo;One API key. 98 actions across 8 apps. No more wrestling with OAuth flows and broken SDK wrappers.&rdquo;
