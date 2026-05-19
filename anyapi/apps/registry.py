@@ -126,6 +126,14 @@ APPS: Dict[str, AppConfig] = {
         api_base_url="https://slack.com/api",
         _extract_metadata=_slack_metadata,
     ),
+    "hubspot": AppConfig(
+        name="HubSpot",
+        slug="hubspot",
+        authorize_url="https://app.hubspot.com/oauth/authorize",
+        token_url="https://api.hubapi.com/oauth/v1/token",
+        api_base_url="https://api.hubapi.com",
+        scope_separator=" ",
+    ),
     "microsoft": AppConfig(
         name="Microsoft",
         slug="microsoft",
