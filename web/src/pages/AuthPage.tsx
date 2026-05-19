@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { GoogleLogin } from '@react-oauth/google'
+import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -142,6 +142,30 @@ export function AuthPage() {
     )
   }
 
+  // Google SSO button — only render after client_id is loaded
+  const googleButton = googleClientId ? (
+    <GoogleOAuthProvider clientId={googleClientId}>
+      <div className="flex justify-center">
+        <GoogleLogin
+          onSuccess={handleGoogleSuccess}
+          onError={() => setError('Google sign-in failed')}
+          theme="outline"
+          size="large"
+          text={mode === 'signup' ? 'signup_with' : 'signin_with'}
+        />
+      </div>
+
+      <div className="relative">
+        <div className="absolute inset-0 flex items-center">
+          <Separator className="w-full" />
+        </div>
+        <div className="relative flex justify-center text-xs uppercase">
+          <span className="bg-card px-2 text-muted-foreground">or</span>
+        </div>
+      </div>
+    </GoogleOAuthProvider>
+  ) : null
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-muted/30 p-4">
       <Card className="w-full max-w-md">
@@ -166,32 +190,7 @@ export function AuthPage() {
             </Alert>
           )}
 
-          {/* Google SSO Button */}
-          {googleClientId && (
-            <>
-              <div className="flex justify-center">
-                <GoogleLogin
-                  onSuccess={handleGoogleSuccess}
-                  onError={() => setError('Google sign-in failed')}
-                  theme="outline"
-                  size="large"
-                  width="100%"
-                  text={mode === 'signup' ? 'signup_with' : 'signin_with'}
-                />
-              </div>
-
-              <div className="relative">
-                <div className="absolute inset-0 flex items-center">
-                  <Separator className="w-full" />
-                </div>
-                <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-card px-2 text-muted-foreground">
-                    or
-                  </span>
-                </div>
-              </div>
-            </>
-          )}
+          {googleButton}
 
           {/* Email signup / API key login */}
           {mode === 'signup' ? (
