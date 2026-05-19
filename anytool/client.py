@@ -26,12 +26,13 @@ from anytool.specs.slack import SLACK_SPECS
 from anytool.specs.hubspot import HUBSPOT_SPECS
 from anytool.specs.github import GITHUB_SPECS
 from anytool.specs.zendesk import ZENDESK_SPECS
+from anytool.specs.whatsapp import WHATSAPP_SPECS
 
 # Spec registry
 _ALL_SPECS: Dict[str, ActionSpec] = {}
 _APP_SPECS: Dict[str, List[ActionSpec]] = {}
 
-for spec in GOOGLE_SPECS + DOCUSIGN_SPECS + FRESHDESK_SPECS + SLACK_SPECS + HUBSPOT_SPECS + GITHUB_SPECS + ZENDESK_SPECS:
+for spec in GOOGLE_SPECS + DOCUSIGN_SPECS + FRESHDESK_SPECS + SLACK_SPECS + HUBSPOT_SPECS + GITHUB_SPECS + ZENDESK_SPECS + WHATSAPP_SPECS:
     _ALL_SPECS[spec.name] = spec
     _APP_SPECS.setdefault(spec.app, []).append(spec)
 

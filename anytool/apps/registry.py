@@ -126,6 +126,13 @@ APPS: Dict[str, AppConfig] = {
         api_base_url="https://slack.com/api",
         _extract_metadata=_slack_metadata,
     ),
+    "whatsapp": AppConfig(
+        name="WhatsApp Business",
+        slug="whatsapp",
+        api_base_url="https://graph.facebook.com/v21.0",
+        # Auth is Bearer token (System User Token from Meta Business Suite)
+        # or OAuth2 via Facebook Login for Business
+    ),
     "zendesk": AppConfig(
         name="Zendesk",
         slug="zendesk",

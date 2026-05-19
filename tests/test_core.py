@@ -549,11 +549,83 @@ def test_zendesk_internal_note():
     assert result["ticket"]["comment"]["public"] is False
 
 
+# ── WhatsApp Specs ───────────────────────────────────────────────────
+
+
+def test_whatsapp_specs_registered():
+    actions = AnyTool.list_actions("whatsapp")
+    names = [a["name"] for a in actions]
+    assert "whatsapp_send_template" in names
+    assert "whatsapp_send_text" in names
+    assert "whatsapp_send_image" in names
+    assert "whatsapp_mark_read" in names
+    assert len(actions) == 9
+
+
+def test_whatsapp_tools_generated():
+    api = AnyTool(nango_secret_key="fake-key")
+    tools = api.get_tools("whatsapp", connection_id="test")
+    assert len(tools) == 9
+
+
+def test_whatsapp_template_builder():
+    from anytool.executor import APIExecutor
+    from anytool.auth.nango import NangoClient
+
+    executor = APIExecutor(nango=NangoClient(secret_key="fake"))
+    result = executor._build_whatsapp_template({
+        "to": "+14155552671",
+        "template_name": "order_update",
+        "language_code": "en_US",
+        "components": [{"type": "body", "parameters": [{"type": "text", "text": "John"}]}],
+    })
+
+    assert result["messaging_product"] == "whatsapp"
+    assert result["to"] == "+14155552671"
+    assert result["type"] == "template"
+    assert result["template"]["name"] == "order_update"
+    assert result["template"]["language"]["code"] == "en_US"
+    assert len(result["template"]["components"]) == 1
+
+
+def test_whatsapp_text_builder():
+    from anytool.executor import APIExecutor
+    from anytool.auth.nango import NangoClient
+
+    executor = APIExecutor(nango=NangoClient(secret_key="fake"))
+    result = executor._build_whatsapp_text({
+        "to": "+14155552671",
+        "body": "Your order has shipped!",
+    })
+
+    assert result["messaging_product"] == "whatsapp"
+    assert result["type"] == "text"
+    assert result["text"]["body"] == "Your order has shipped!"
+
+
+def test_whatsapp_document_builder():
+    from anytool.executor import APIExecutor
+    from anytool.auth.nango import NangoClient
+
+    executor = APIExecutor(nango=NangoClient(secret_key="fake"))
+    result = executor._build_whatsapp_media({
+        "to": "+14155552671",
+        "document_url": "https://example.com/invoice.pdf",
+        "filename": "invoice-1234.pdf",
+        "caption": "Your invoice is attached",
+    }, "document")
+
+    assert result["type"] == "document"
+    assert result["document"]["link"] == "https://example.com/invoice.pdf"
+    assert result["document"]["filename"] == "invoice-1234.pdf"
+    assert result["document"]["caption"] == "Your invoice is attached"
+
+
 # ── All Apps Summary ─────────────────────────────────────────────────
 
 
 def test_total_specs_count():
     """Verify total spec count across all apps."""
     all_actions = AnyTool.list_actions()
-    # Google: 22, DocuSign: 6, Freshdesk: 10, Slack: 7, HubSpot: 15, GitHub: 16, Zendesk: 13 = 89
-    assert len(all_actions) == 89
+    # Google: 22, DocuSign: 6, Freshdesk: 10, Slack: 7, HubSpot: 15, GitHub: 16, Zendesk: 13, WhatsApp: 9 = 98
+    assert len(all_actions) == 98

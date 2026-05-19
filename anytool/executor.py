@@ -199,6 +199,24 @@ class APIExecutor:
         if spec.request_transform == "docs_replace_text":
             return self._build_docs_replace_text(params)
 
+        if spec.request_transform == "whatsapp_template":
+            return self._build_whatsapp_template(params)
+
+        if spec.request_transform == "whatsapp_text":
+            return self._build_whatsapp_text(params)
+
+        if spec.request_transform == "whatsapp_media":
+            return self._build_whatsapp_media(params, "image")
+
+        if spec.request_transform == "whatsapp_document":
+            return self._build_whatsapp_media(params, "document")
+
+        if spec.request_transform == "whatsapp_reaction":
+            return self._build_whatsapp_reaction(params)
+
+        if spec.request_transform == "whatsapp_read":
+            return {"messaging_product": "whatsapp", "status": "read", "message_id": params.get("message_id", "")}
+
         if spec.body_template:
             body = {}
             for key, template in spec.body_template.items():
@@ -482,4 +500,81 @@ class APIExecutor:
                     "replaceText": params.get("replace_text", ""),
                 }
             }]
+        }
+
+    def _build_whatsapp_template(self, params: Dict[str, Any]) -> dict:
+        """Build WhatsApp template message payload."""
+        body: Dict[str, Any] = {
+            "messaging_product": "whatsapp",
+            "to": params.get("to", ""),
+            "type": "template",
+            "template": {
+                "name": params.get("template_name", ""),
+                "language": {
+                    "code": params.get("language_code", "en_US"),
+                },
+            },
+        }
+        if params.get("components"):
+            components = params["components"]
+            if isinstance(components, str):
+                import json
+                try:
+                    components = json.loads(components)
+                except (json.JSONDecodeError, TypeError):
+                    components = []
+            body["template"]["components"] = components
+        return body
+
+    def _build_whatsapp_text(self, params: Dict[str, Any]) -> dict:
+        """Build WhatsApp text message payload."""
+        body: Dict[str, Any] = {
+            "messaging_product": "whatsapp",
+            "to": params.get("to", ""),
+            "type": "text",
+            "text": {
+                "body": params.get("body", ""),
+            },
+        }
+        if params.get("preview_url"):
+            body["text"]["preview_url"] = True
+        return body
+
+    def _build_whatsapp_media(self, params: Dict[str, Any], media_type: str) -> dict:
+        """Build WhatsApp image/document message payload."""
+        body: Dict[str, Any] = {
+            "messaging_product": "whatsapp",
+            "to": params.get("to", ""),
+            "type": media_type,
+        }
+        media: Dict[str, Any] = {}
+        if media_type == "image":
+            if params.get("image_url"):
+                media["link"] = params["image_url"]
+            elif params.get("image_id"):
+                media["id"] = params["image_id"]
+            if params.get("caption"):
+                media["caption"] = params["caption"]
+        elif media_type == "document":
+            if params.get("document_url"):
+                media["link"] = params["document_url"]
+            elif params.get("document_id"):
+                media["id"] = params["document_id"]
+            if params.get("filename"):
+                media["filename"] = params["filename"]
+            if params.get("caption"):
+                media["caption"] = params["caption"]
+        body[media_type] = media
+        return body
+
+    def _build_whatsapp_reaction(self, params: Dict[str, Any]) -> dict:
+        """Build WhatsApp reaction payload."""
+        return {
+            "messaging_product": "whatsapp",
+            "to": params.get("to", ""),
+            "type": "reaction",
+            "reaction": {
+                "message_id": params.get("message_id", ""),
+                "emoji": params.get("emoji", ""),
+            },
         }
