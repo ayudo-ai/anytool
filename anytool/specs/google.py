@@ -157,7 +157,7 @@ SHEETS_APPEND_ROW = ActionSpec(
         ParamSpec(name="values", type="list", required=True, description="Row values as a list, e.g. ['John', 'john@example.com', '2024-01-15']"),
         ParamSpec(name="valueInputOption", type="string", required=False, location="query", description="'RAW' or 'USER_ENTERED' (default: USER_ENTERED)"),
     ],
-    body_template={"values": ["{values}"]},
+    request_transform="sheets_append",
 )
 
 SHEETS_READ_RANGE = ActionSpec(

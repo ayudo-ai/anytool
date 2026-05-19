@@ -30,8 +30,8 @@ class DBTriggerStore(TriggerStore):
 
     async def save_trigger(self, config: TriggerConfig) -> None:
         await put_record(
-            object_type="trigger",
-            key=config.id,
+            object_slug="trigger",
+            primary_key=config.id,
             data={
                 "trigger_type": config.trigger_type,
                 "provider": config.provider,
@@ -49,13 +49,13 @@ class DBTriggerStore(TriggerStore):
         record = await get_record("trigger", trigger_id)
         if not record:
             return None
-        return self._to_config(record.key, record.data)
+        return self._to_config(record.primary_field_value, record.custom_data)
 
     async def list_triggers(self, enabled_only: bool = True) -> List[TriggerConfig]:
         records = await list_records("trigger", active_only=True)
         triggers = []
         for r in records:
-            config = self._to_config(r.key, r.data)
+            config = self._to_config(r.primary_field_value, r.custom_data)
             if enabled_only and not config.enabled:
                 continue
             triggers.append(config)

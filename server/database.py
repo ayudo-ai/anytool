@@ -372,6 +372,33 @@ async def delete_record(object_slug: str, primary_key: str) -> bool:
         return False
 
 
+async def atomic_increment(object_slug: str, primary_key: str, field: str, amount: int = 1) -> int:
+    """Atomically increment a numeric field in custom_data JSONB. Returns new value.
+
+    Uses a single UPDATE with jsonb_set + COALESCE to avoid read-modify-write races.
+    """
+    async with async_session() as session:
+        result = await session.execute(
+            text(
+                f"UPDATE {SCHEMA}.meta_record "
+                f"SET custom_data = jsonb_set("
+                f"  custom_data, "
+                f"  :path, "
+                f"  to_jsonb(COALESCE((custom_data->>:field)::int, 0) + :amount)"
+                f"), updated_at = CURRENT_TIMESTAMP "
+                f"WHERE object_slug = :slug "
+                f"  AND primary_field_value = :pk "
+                f"  AND is_deleted = false "
+                f"RETURNING (custom_data->>:field)::int"
+            ),
+            {"path": f"{{{field}}}", "field": field, "amount": amount,
+             "slug": object_slug, "pk": primary_key},
+        )
+        row = result.fetchone()
+        await session.commit()
+        return row[0] if row else 0
+
+
 async def update_record_fields(object_slug: str, primary_key: str, updates: Dict[str, Any]) -> bool:
     """Update specific fields in custom_data JSONB."""
     async with async_session() as session:

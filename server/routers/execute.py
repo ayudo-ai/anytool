@@ -14,7 +14,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
 from server.auth import get_auth_context, AuthContext
-from server.database import get_record, update_record_fields
+from server.database import get_record, update_record_fields, atomic_increment
 from server.engine import get_api
 
 router = APIRouter(tags=["execute"])
@@ -45,17 +45,18 @@ async def execute_action(body: ExecuteRequest, ctx: AuthContext = Depends(get_au
             }
         }
     """
-    # Check workspace usage limit
-    workspace_record = await get_record("workspace", ctx.workspace_id)
-    workspace_data = workspace_record.custom_data if workspace_record else {}
-    calls_used = workspace_data.get("calls_this_month", 0)
+    # Check workspace usage limit (atomic increment avoids race conditions)
     max_calls = ctx.limits.get("max_calls", 1000)
 
-    if max_calls > 0 and calls_used >= max_calls:
-        raise HTTPException(
-            429,
-            f"Monthly call limit reached ({max_calls}). Upgrade at anytool.dev"
-        )
+    if max_calls > 0:
+        workspace_record = await get_record("workspace", ctx.workspace_id)
+        workspace_data = workspace_record.custom_data if workspace_record else {}
+        calls_used = workspace_data.get("calls_this_month", 0)
+        if calls_used >= max_calls:
+            raise HTTPException(
+                429,
+                f"Monthly call limit reached ({max_calls}). Upgrade at anytool.dev"
+            )
 
     api = get_api()
 
@@ -70,10 +71,8 @@ async def execute_action(body: ExecuteRequest, ctx: AuthContext = Depends(get_au
     except Exception as e:
         raise HTTPException(500, f"Execution failed: {e}")
 
-    # Increment workspace usage
-    await update_record_fields("workspace", ctx.workspace_id, {
-        "calls_this_month": calls_used + 1,
-    })
+    # Atomically increment usage counter (no read-modify-write race)
+    await atomic_increment("workspace", ctx.workspace_id, "calls_this_month")
 
     return {
         "successful": result.get("successful", False),
@@ -112,6 +111,17 @@ async def list_actions(
     return {"actions": actions, "total": len(actions)}
 
 
+# Map anytool param types → JSON Schema types
+_JSON_SCHEMA_TYPES = {
+    "string": "string",
+    "integer": "integer",
+    "number": "number",
+    "boolean": "boolean",
+    "list": "array",
+    "object": "object",
+}
+
+
 @router.get("/tools")
 async def get_tool_definitions(
     app: str,
@@ -120,6 +130,7 @@ async def get_tool_definitions(
     """Get OpenAI-compatible tool definitions for an app.
 
     Use these with any LLM that supports function calling.
+    Returns full parameter schemas with types, descriptions, and enums.
 
     Example:
         GET /v1/tools?app=gmail
@@ -131,6 +142,27 @@ async def get_tool_definitions(
 
     tools = []
     for action in actions:
+        params = action.get("params", [])
+        properties = {}
+        required = []
+
+        for p in params:
+            # Skip path params — they're filled from other params, not by the LLM
+            prop: Dict[str, Any] = {
+                "type": _JSON_SCHEMA_TYPES.get(p["type"], "string"),
+                "description": p.get("description", ""),
+            }
+            if p.get("enum"):
+                prop["enum"] = p["enum"]
+            if p.get("default") is not None:
+                prop["default"] = p["default"]
+            if prop["type"] == "array":
+                prop["items"] = {"type": "string"}  # sensible default
+
+            properties[p["name"]] = prop
+            if p.get("required"):
+                required.append(p["name"])
+
         tools.append({
             "type": "function",
             "function": {
@@ -138,11 +170,8 @@ async def get_tool_definitions(
                 "description": action["description"],
                 "parameters": {
                     "type": "object",
-                    "required": action.get("params", []),
-                    "properties": {
-                        p: {"type": "string", "description": ""}
-                        for p in action.get("params", [])
-                    },
+                    "required": required,
+                    "properties": properties,
                 },
             },
         })

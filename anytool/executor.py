@@ -169,6 +169,9 @@ class APIExecutor:
         if spec.request_transform == "docusign_resend":
             return {"resend_envelope": "true"}
 
+        if spec.request_transform == "sheets_append":
+            return self._build_sheets_append(params)
+
         if spec.request_transform == "hubspot_properties":
             return self._build_hubspot_properties(spec, params)
 
@@ -234,6 +237,27 @@ class APIExecutor:
                 body[param.name] = value
 
         return body if body else None
+
+    def _build_sheets_append(self, params: Dict[str, Any]) -> dict:
+        """Build Google Sheets append row payload.
+
+        Sheets API expects {"values": [["val1", "val2", ...]]}.
+        The outer list is rows, inner list is columns.
+        We wrap a single row in a list.
+        """
+        values = params.get("values", [])
+        if isinstance(values, str):
+            import json
+            try:
+                values = json.loads(values)
+            except (json.JSONDecodeError, TypeError):
+                values = [values]
+
+        # Ensure it's a list of lists (rows of columns)
+        if values and not isinstance(values[0], list):
+            values = [values]  # Single row: ["a", "b"] → [["a", "b"]]
+
+        return {"values": values}
 
     def _build_gmail_mime(self, params: Dict[str, Any]) -> dict:
         """Build Gmail API send request with MIME encoding."""

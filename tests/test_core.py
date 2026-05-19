@@ -31,6 +31,19 @@ def test_list_google_actions():
     assert all(a["app"] == "google" for a in actions)
 
 
+def test_list_actions_returns_full_params():
+    """list_actions must return full param info, not just names."""
+    actions = AnyTool.list_actions("google")
+    gmail_send = next(a for a in actions if a["name"] == "gmail_send_email")
+    params = gmail_send["params"]
+    # Should be list of dicts, not list of strings
+    assert isinstance(params[0], dict)
+    to_param = next(p for p in params if p["name"] == "to")
+    assert to_param["type"] == "string"
+    assert to_param["required"] is True
+    assert len(to_param["description"]) > 0
+
+
 # ── Tool Generation ──────────────────────────────────────────────────
 
 
@@ -387,6 +400,49 @@ def test_github_tools_generated():
     api = AnyTool(nango_secret_key="fake-key")
     tools = api.get_tools("github", connection_id="test")
     assert len(tools) == 16
+
+
+# ── Google Sheets ────────────────────────────────────────────────────
+
+
+def test_sheets_append_builder():
+    """sheets_append_row must produce {values: [[col1, col2, ...]]} not stringified."""
+    from anytool.executor import APIExecutor
+    from anytool.auth.nango import NangoClient
+
+    executor = APIExecutor(nango=NangoClient(secret_key="fake"))
+    result = executor._build_sheets_append({
+        "values": ["John", "john@example.com", "2024-01-15"],
+    })
+
+    # Must be nested list: [["John", "john@example.com", "2024-01-15"]]
+    assert result == {"values": [["John", "john@example.com", "2024-01-15"]]}
+
+
+def test_sheets_append_builder_json_string():
+    """LLM might pass values as JSON string."""
+    from anytool.executor import APIExecutor
+    from anytool.auth.nango import NangoClient
+
+    executor = APIExecutor(nango=NangoClient(secret_key="fake"))
+    result = executor._build_sheets_append({
+        "values": '["Alice", "alice@test.com"]',
+    })
+
+    assert result == {"values": [["Alice", "alice@test.com"]]}
+
+
+def test_sheets_append_builder_multiple_rows():
+    """Already nested list should pass through."""
+    from anytool.executor import APIExecutor
+    from anytool.auth.nango import NangoClient
+
+    executor = APIExecutor(nango=NangoClient(secret_key="fake"))
+    result = executor._build_sheets_append({
+        "values": [["Row1Col1", "Row1Col2"], ["Row2Col1", "Row2Col2"]],
+    })
+
+    assert result == {"values": [["Row1Col1", "Row1Col2"], ["Row2Col1", "Row2Col2"]]}
 
 
 # ── Google Calendar + Docs Specs ─────────────────────────────────────

@@ -48,6 +48,8 @@ _NANGO_PROVIDERS: Dict[str, str] = {
     "microsoft": "microsoft",
     "github": "github",
     "hubspot": "hubspot",
+    "zendesk": "zendesk",
+    "whatsapp": "whatsapp",
 }
 
 
@@ -259,16 +261,31 @@ class AnyTool:
     # ── Discovery ────────────────────────────────────────────────────
 
     @staticmethod
-    def list_actions(app: Optional[str] = None) -> List[Dict[str, str]]:
-        """List available actions."""
+    def list_actions(app: Optional[str] = None) -> List[Dict[str, Any]]:
+        """List available actions with full param info."""
         specs = _APP_SPECS.get(app, []) if app else list(_ALL_SPECS.values())
         return [
             {
                 "name": s.name,
                 "app": s.app,
-                "description": s.description[:200],
+                "description": s.description,
                 "method": s.method,
-                "params": [p.name for p in s.required_params],
+                "params": [
+                    {
+                        "name": p.name,
+                        "type": p.type,
+                        "required": p.required,
+                        "description": p.description,
+                        "location": p.location,
+                        **({
+                            "enum": p.enum
+                        } if p.enum else {}),
+                        **({
+                            "default": p.default
+                        } if p.default is not None else {}),
+                    }
+                    for p in s.params
+                ],
             }
             for s in specs
         ]
