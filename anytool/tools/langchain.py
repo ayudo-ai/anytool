@@ -1,5 +1,9 @@
 """
 LangChain tool wrappers — converts ActionSpecs into LangChain StructuredTools.
+
+Supports two execution backends:
+  1. Direct executor (standalone/nango mode)
+  2. Platform client (platform mode — calls POST /v1/execute)
 """
 
 from __future__ import annotations
@@ -9,7 +13,6 @@ from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, Field, create_model
 
-from anytool.executor import APIExecutor
 from anytool.specs.base import ActionSpec, ParamSpec
 
 _TYPE_MAP = {
@@ -41,12 +44,17 @@ def _build_pydantic_model(spec: ActionSpec) -> type[BaseModel]:
 
 
 def build_tools(
-    executor: APIExecutor,
+    executor,  # APIExecutor or None (platform mode)
     specs: List[ActionSpec],
     provider: str,
     connection_id: str,
+    platform_client=None,  # _PlatformClient (platform mode)
 ) -> list:
-    """Convert ActionSpecs into LangChain StructuredTools."""
+    """Convert ActionSpecs into LangChain StructuredTools.
+
+    If platform_client is provided, tool calls go through POST /v1/execute.
+    Otherwise, they go through the executor directly.
+    """
     try:
         from langchain_core.tools import StructuredTool
     except ImportError:
@@ -58,26 +66,51 @@ def build_tools(
     for spec in specs:
         input_model = _build_pydantic_model(spec)
 
-        async def _execute(
-            _spec=spec,
-            _provider=provider,
-            _cid=connection_id,
-            **kwargs,
-        ) -> str:
-            result = await executor.execute(
-                spec=_spec,
-                params=kwargs,
-                provider=_provider,
-                connection_id=_cid,
-            )
-            return json.dumps(result, default=str)
+        if platform_client:
+            # Platform mode — call through API
+            async def _execute_platform(
+                _spec=spec,
+                _cid=connection_id,
+                _client=platform_client,
+                **kwargs,
+            ) -> str:
+                result = await _client.post("/execute", json={
+                    "action": _spec.name,
+                    "user_id": _cid,
+                    "params": kwargs,
+                })
+                return json.dumps(result, default=str)
 
-        tool = StructuredTool.from_function(
-            coroutine=_execute,
-            name=spec.name,
-            description=spec.description,
-            args_schema=input_model,
-        )
+            tool = StructuredTool.from_function(
+                coroutine=_execute_platform,
+                name=spec.name,
+                description=spec.description,
+                args_schema=input_model,
+            )
+        else:
+            # Direct executor mode
+            async def _execute_direct(
+                _spec=spec,
+                _provider=provider,
+                _cid=connection_id,
+                _exec=executor,
+                **kwargs,
+            ) -> str:
+                result = await _exec.execute(
+                    spec=_spec,
+                    params=kwargs,
+                    provider=_provider,
+                    connection_id=_cid,
+                )
+                return json.dumps(result, default=str)
+
+            tool = StructuredTool.from_function(
+                coroutine=_execute_direct,
+                name=spec.name,
+                description=spec.description,
+                args_schema=input_model,
+            )
+
         tools.append(tool)
 
     return tools

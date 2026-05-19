@@ -95,3 +95,7 @@ class OAuthState(BaseModel):
     redirect_uri: str
     scopes: List[str] = Field(default_factory=list)
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+    # Platform context — set by server when initiating OAuth
+    account_id: str = ""
+    workspace_id: str = ""

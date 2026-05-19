@@ -4,8 +4,9 @@ anytool — Agent-native API execution.
 No wrappers. Curated specs. Direct execution.
 
 Modes:
-  Nango:      AnyTool(nango_secret_key="xxx")
+  Platform:   AnyTool(api_key="at_xxxx")
   Standalone: AnyTool(token_store=MemoryTokenStore())
+  Nango:      AnyTool(nango_secret_key="xxx")  # legacy
 """
 
 from anytool.client import AnyTool

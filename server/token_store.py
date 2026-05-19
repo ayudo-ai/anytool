@@ -147,6 +147,8 @@ class PostgresTokenStore(TokenStore):
                 "user_id": state.user_id,
                 "redirect_uri": state.redirect_uri,
                 "scopes": state.scopes,
+                "account_id": state.account_id,
+                "workspace_id": state.workspace_id,
                 "created_at": state.created_at.isoformat(),
             },
         )
@@ -167,4 +169,6 @@ class PostgresTokenStore(TokenStore):
             state=state_key,
             redirect_uri=data.get("redirect_uri", ""),
             scopes=data.get("scopes", []),
+            account_id=data.get("account_id", ""),
+            workspace_id=data.get("workspace_id", ""),
         )

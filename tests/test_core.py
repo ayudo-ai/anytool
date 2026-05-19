@@ -160,7 +160,7 @@ def test_standalone_mode_init():
 
 
 def test_no_args_raises():
-    with pytest.raises(ValueError, match="nango_secret_key or token_store"):
+    with pytest.raises(ValueError, match="api_key"):
         AnyTool()
 
 
@@ -685,3 +685,19 @@ def test_total_specs_count():
     all_actions = AnyTool.list_actions()
     # Google: 22, DocuSign: 6, Freshdesk: 10, Slack: 7, HubSpot: 15, GitHub: 16, Zendesk: 13, WhatsApp: 9 = 98
     assert len(all_actions) == 98
+
+
+def test_platform_mode_init():
+    """Test AnyTool initializes in platform mode with api_key."""
+    api = AnyTool(api_key="at_test_key_123")
+    assert api._mode == "platform"
+    assert api._platform is not None
+    assert api._platform._api_key == "at_test_key_123"
+
+
+def test_platform_mode_list_actions():
+    """Platform mode should still be able to list actions (static method)."""
+    api = AnyTool(api_key="at_test_key_123")
+    actions = api.list_actions("google")
+    assert len(actions) > 0
+    assert all(a["app"] == "google" for a in actions)

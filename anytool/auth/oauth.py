@@ -33,6 +33,8 @@ class OAuthManager:
         credentials: AppCredentials,
         user_id: str,
         extra_scopes: Optional[list[str]] = None,
+        account_id: str = "",
+        workspace_id: str = "",
     ) -> str:
         """Generate the OAuth authorization URL for a user to click.
 
@@ -52,6 +54,8 @@ class OAuthManager:
             state=state,
             redirect_uri=credentials.redirect_uri,
             scopes=scopes,
+            account_id=account_id,
+            workspace_id=workspace_id,
         ))
 
         params = {

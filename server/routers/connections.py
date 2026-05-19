@@ -82,6 +82,8 @@ async def connect_app(body: ConnectRequest, ctx: AuthContext = Depends(get_auth_
         auth_url = await api.get_auth_url(
             provider=provider,
             connection_id=body.user_id,
+            account_id=ctx.account_id,
+            workspace_id=ctx.workspace_id,
         )
 
         # Track the connection attempt
@@ -122,23 +124,41 @@ async def oauth_callback(
 
     This is a GET endpoint (browser redirect) — no auth header needed.
     The state parameter links back to the original connect request.
+    Workspace context is recovered from the stored OAuth state.
     """
-    api = get_api()
+    # First, peek at the state to get workspace context
+    from server.token_store import PostgresTokenStore
+    store = PostgresTokenStore()
+    oauth_state = await store.get_oauth_state(state)
+
+    if oauth_state and oauth_state.account_id and oauth_state.workspace_id:
+        # Use workspace-specific API (with workspace's auth config credentials)
+        api = await get_api_for_workspace(oauth_state.workspace_id, oauth_state.account_id)
+        # Re-save state since get_oauth_state consumed it
+        await store.save_oauth_state(oauth_state)
+        account_id = oauth_state.account_id
+        workspace_id = oauth_state.workspace_id
+    else:
+        # Fallback to global API (backward compat)
+        api = get_api()
+        account_id = ""
+        workspace_id = ""
 
     try:
         # The OAuth manager verifies state, exchanges code, saves tokens
-        # It knows which app + user_id from the stored OAuth state
         tokens = await api.handle_callback(
             app="",  # Will be resolved from state
             code=code,
             state=state,
         )
 
-        # Update connection status to active
+        # Update connection status to active — scoped to workspace
         connection_key = f"{tokens.user_id}:{tokens.app}"
         await put_record(
             object_slug="connection",
             primary_key=connection_key,
+            account_id=account_id,
+            workspace_id=workspace_id,
             data={
                 "user_id": tokens.user_id,
                 "provider": tokens.app,
