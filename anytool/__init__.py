@@ -1,7 +1,7 @@
 """
 anytool — Agent-native API execution.
 
-No wrappers. No Composio. No Pipedream.
+No wrappers. Curated specs. Direct execution.
 
 Modes:
   Nango:      AnyTool(nango_secret_key="xxx")
@@ -16,7 +16,7 @@ from anytool.triggers.base import TriggerConfig, TriggerEvent
 from anytool.triggers.store import TriggerStore, MemoryTriggerStore
 from anytool.triggers.engine import TriggerEngine
 
-__version__ = "0.1.1"
+__version__ = "0.1.2"
 
 __all__ = [
     "AnyTool",

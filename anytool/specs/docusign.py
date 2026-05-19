@@ -1,8 +1,8 @@
 """
 DocuSign eSign API specs.
 
-This is the exact integration that was BROKEN on Composio —
-templateRoles nested objects were serialized as [{}].
+This module fixes a common issue where integration platforms
+drop nested objects during serialization (e.g. templateRoles becomes [{}]).
 
 With anytool, we build the exact JSON payload. No intermediate
 Pydantic models. No serialization bugs. What you pass is what
@@ -24,8 +24,8 @@ from anytool.specs.base import ActionSpec, ParamSpec
 
 
 # ── Create Envelope from Template ────────────────────────────────────
-# This is THE action that was broken on Composio.
-# Composio turned templateRoles: [{roleName: "Signer", ...}] into [{}]
+# This is the action where nested object serialization commonly breaks.
+# Other platforms turn templateRoles: [{roleName: "Signer", ...}] into [{}]
 
 DOCUSIGN_CREATE_ENVELOPE = ActionSpec(
     name="docusign_create_envelope",

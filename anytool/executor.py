@@ -221,7 +221,7 @@ class APIExecutor:
     def _build_docusign_envelope(self, params: Dict[str, Any]) -> dict:
         """Build DocuSign create envelope payload.
 
-        This is the exact payload that Composio broke by turning
+        This is a payload where integration platforms commonly break by turning
         templateRoles: [{roleName: 'Signer', ...}] into [{}].
 
         We build it directly — no intermediate Pydantic models,
@@ -232,7 +232,7 @@ class APIExecutor:
             "status": params.get("status", "sent"),
         }
 
-        # templateRoles — the field that Composio broke
+        # templateRoles — the field that commonly breaks with wrapper-based platforms
         # We pass it EXACTLY as the LLM constructed it.
         template_roles = params.get("template_roles", [])
         if isinstance(template_roles, str):
