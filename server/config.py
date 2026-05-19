@@ -16,8 +16,14 @@ class PlatformConfig:
     nango_secret_key: str = ""
     nango_base_url: str = "https://api.nango.dev"
 
-    # Database
-    database_url: str = "sqlite+aiosqlite:///anytool.db"
+    # PostgreSQL — uses 'anytool' schema in the same Postgres instance
+    # Fully isolated from Ayudo's tables (different schema)
+    db_host: str = "localhost"
+    db_port: str = "5432"
+    db_name: str = "metadb"  # same DB instance, different schema
+    db_user: str = "ayudo"
+    db_password: str = "password"
+    db_schema: str = "anytool"  # all tables live here
 
     # Server
     host: str = "0.0.0.0"
@@ -27,12 +33,25 @@ class PlatformConfig:
     # API
     api_prefix: str = "/v1"
 
+    @property
+    def database_url(self) -> str:
+        """Async PostgreSQL URL for SQLAlchemy."""
+        return (
+            f"postgresql+asyncpg://{self.db_user}:{self.db_password}"
+            f"@{self.db_host}:{self.db_port}/{self.db_name}"
+        )
+
     @classmethod
     def from_env(cls) -> "PlatformConfig":
         return cls(
             nango_secret_key=os.environ.get("NANGO_SECRET_KEY", ""),
             nango_base_url=os.environ.get("NANGO_BASE_URL", "https://api.nango.dev"),
-            database_url=os.environ.get("DATABASE_URL", "sqlite+aiosqlite:///anytool.db"),
+            db_host=os.environ.get("ANYTOOL_DB_HOST", os.environ.get("DB_HOST", "localhost")),
+            db_port=os.environ.get("ANYTOOL_DB_PORT", os.environ.get("DB_PORT", "5432")),
+            db_name=os.environ.get("ANYTOOL_DB_NAME", "metadb"),
+            db_user=os.environ.get("ANYTOOL_DB_USER", os.environ.get("DB_USER", "ayudo")),
+            db_password=os.environ.get("ANYTOOL_DB_PASSWORD", os.environ.get("DB_PASSWORD", "password")),
+            db_schema=os.environ.get("ANYTOOL_DB_SCHEMA", "anytool"),
             host=os.environ.get("HOST", "0.0.0.0"),
             port=int(os.environ.get("PORT", "8100")),
             base_url=os.environ.get("BASE_URL", "http://localhost:8100"),

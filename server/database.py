@@ -1,13 +1,18 @@
 """
-Database — flexible document store using a single records table.
+Database — PostgreSQL with flexible document store pattern.
 
-Same pattern as Ayudo's MetaRecord: one table stores all object types.
-Object type is just a string field. Data is JSON. Query by type + key.
+Separate database 'anytool' — does NOT share with Ayudo's 'ayudo_meta'.
+
+Single records table stores all object types. Object type is a string field.
+Data is JSONB. Query by type + key.
 
 Object types:
-- "account"    → {name, email, api_key, plan, limits, calls_this_month}
+- "account"    → {name, email, plan, calls_this_month}
 - "trigger"    → {trigger_type, provider, connection_id, webhook_url, filters, ...}
 - "usage_log"  → {action, provider, status_code, timestamp}
+
+Setup:
+    CREATE DATABASE anytool;
 """
 
 from __future__ import annotations
@@ -16,7 +21,11 @@ import secrets
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
-from sqlalchemy import Column, String, Boolean, Integer, DateTime, JSON, Index, select, and_
+from sqlalchemy import (
+    Column, String, Boolean, DateTime, Index,
+    select, and_, text,
+)
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from sqlalchemy.orm import DeclarativeBase
 
@@ -28,38 +37,47 @@ class Base(DeclarativeBase):
 
 
 class Record(Base):
-    """Generic record — stores any object type as JSON.
+    """Generic record — stores any object type as JSONB.
 
     Think of it as a document store with SQL query capability.
+    Same pattern as Ayudo's MetaRecord, but in a separate database.
     """
 
     __tablename__ = "records"
 
     id = Column(String(36), primary_key=True)
-    object_type = Column(String(50), nullable=False, index=True)  # "account", "trigger", etc.
-    key = Column(String(255), nullable=False, index=True)  # primary lookup key (api_key, trigger_id, etc.)
-    account_id = Column(String(36), nullable=True, index=True)  # owner account (null for accounts themselves)
-    data = Column(JSON, nullable=False, default=dict)
+    object_type = Column(String(50), nullable=False, index=True)
+    key = Column(String(255), nullable=False, index=True)
+    account_id = Column(String(36), nullable=True, index=True)
+    data = Column(JSONB, nullable=False, default=dict)
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     updated_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc),
                         onupdate=lambda: datetime.now(timezone.utc))
 
     __table_args__ = (
-        Index("idx_type_key", "object_type", "key"),
+        Index("idx_type_key", "object_type", "key", unique=True),
         Index("idx_type_account", "object_type", "account_id"),
+        Index("idx_type_active", "object_type", "is_active"),
+        {"schema": config.db_schema},
     )
 
 
 # ── Engine + Session ─────────────────────────────────────────────────
 
-engine = create_async_engine(config.database_url, echo=False)
+engine = create_async_engine(
+    config.database_url,
+    echo=False,
+    pool_size=10,
+    max_overflow=20,
+)
 async_session = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
 
 async def init_db():
-    """Create tables if they don't exist."""
+    """Create schema + tables if they don't exist."""
     async with engine.begin() as conn:
+        await conn.execute(text(f"CREATE SCHEMA IF NOT EXISTS {config.db_schema}"))
         await conn.run_sync(Base.metadata.create_all)
 
 
@@ -138,15 +156,13 @@ async def get_record(object_type: str, key: str) -> Optional[Record]:
 
 
 async def get_record_by_field(object_type: str, field: str, value: str) -> Optional[Record]:
-    """Get a record by a field inside the JSON data."""
+    """Get a record by a field inside the JSONB data."""
     async with async_session() as session:
-        # SQLite JSON extract: json_extract(data, '$.field')
-        # PostgreSQL: data->>'field'
         result = await session.execute(
             select(Record).where(
                 Record.object_type == object_type,
                 Record.is_active.is_(True),
-                Record.data[field].as_string() == value,
+                Record.data[field].astext == value,
             )
         )
         return result.scalar_one_or_none()
@@ -190,7 +206,7 @@ async def delete_record(object_type: str, key: str) -> bool:
 
 
 async def update_record_fields(object_type: str, key: str, updates: Dict[str, Any]) -> bool:
-    """Update specific fields in a record's data JSON."""
+    """Update specific fields in a record's data JSONB."""
     async with async_session() as session:
         result = await session.execute(
             select(Record).where(

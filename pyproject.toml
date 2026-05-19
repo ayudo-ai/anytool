@@ -33,7 +33,7 @@ platform = [
     "fastapi>=0.100.0",
     "uvicorn>=0.20.0",
     "sqlalchemy[asyncio]>=2.0.0",
-    "aiosqlite>=0.19.0",
+    "asyncpg>=0.29.0",
 ]
 all = ["anytool[langchain]", "anytool[platform]"]
 dev = [
