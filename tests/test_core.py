@@ -389,11 +389,81 @@ def test_github_tools_generated():
     assert len(tools) == 16
 
 
+# ── Zendesk Specs ───────────────────────────────────────────────────
+
+
+def test_zendesk_specs_registered():
+    actions = AnyTool.list_actions("zendesk")
+    names = [a["name"] for a in actions]
+    assert "zendesk_create_ticket" in names
+    assert "zendesk_add_comment" in names
+    assert "zendesk_search_tickets" in names
+    assert "zendesk_list_agents" in names
+    assert len(actions) == 13
+
+
+def test_zendesk_tools_generated():
+    api = AnyTool(nango_secret_key="fake-key")
+    tools = api.get_tools("zendesk", connection_id="test")
+    assert len(tools) == 13
+
+
+def test_zendesk_ticket_builder():
+    """Zendesk wraps everything in {ticket: {}} with nested comment."""
+    from anytool.executor import APIExecutor
+    from anytool.auth.nango import NangoClient
+
+    executor = APIExecutor(nango=NangoClient(secret_key="fake"))
+    result = executor._build_zendesk_ticket({
+        "subject": "Billing issue",
+        "body": "I was charged twice for my subscription.",
+        "requester_email": "customer@example.com",
+        "priority": "high",
+        "tags": ["billing", "duplicate-charge"],
+    })
+
+    assert result["ticket"]["subject"] == "Billing issue"
+    assert result["ticket"]["comment"]["body"] == "I was charged twice for my subscription."
+    assert result["ticket"]["requester"]["email"] == "customer@example.com"
+    assert result["ticket"]["priority"] == "high"
+    assert result["ticket"]["tags"] == ["billing", "duplicate-charge"]
+
+
+def test_zendesk_update_with_comment():
+    from anytool.executor import APIExecutor
+    from anytool.auth.nango import NangoClient
+
+    executor = APIExecutor(nango=NangoClient(secret_key="fake"))
+    result = executor._build_zendesk_ticket_update({
+        "status": "pending",
+        "comment_body": "We're looking into this.",
+        "comment_public": True,
+    })
+
+    assert result["ticket"]["status"] == "pending"
+    assert result["ticket"]["comment"]["body"] == "We're looking into this."
+    assert result["ticket"]["comment"]["public"] is True
+
+
+def test_zendesk_internal_note():
+    from anytool.executor import APIExecutor
+    from anytool.auth.nango import NangoClient
+
+    executor = APIExecutor(nango=NangoClient(secret_key="fake"))
+    result = executor._build_zendesk_comment({
+        "body": "Escalating to tier 2.",
+        "public": False,
+    })
+
+    assert result["ticket"]["comment"]["body"] == "Escalating to tier 2."
+    assert result["ticket"]["comment"]["public"] is False
+
+
 # ── All Apps Summary ─────────────────────────────────────────────────
 
 
 def test_total_specs_count():
     """Verify total spec count across all apps."""
     all_actions = AnyTool.list_actions()
-    # Google: 11, DocuSign: 6, Freshdesk: 10, Slack: 7, HubSpot: 15, GitHub: 16 = 65
-    assert len(all_actions) == 65
+    # Google: 11, DocuSign: 6, Freshdesk: 10, Slack: 7, HubSpot: 15, GitHub: 16, Zendesk: 13 = 78
+    assert len(all_actions) == 78

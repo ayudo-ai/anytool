@@ -178,6 +178,15 @@ class APIExecutor:
         if spec.request_transform == "hubspot_note":
             return self._build_hubspot_note(params)
 
+        if spec.request_transform == "zendesk_ticket":
+            return self._build_zendesk_ticket(params)
+
+        if spec.request_transform == "zendesk_ticket_update":
+            return self._build_zendesk_ticket_update(params)
+
+        if spec.request_transform == "zendesk_comment":
+            return self._build_zendesk_comment(params)
+
         if spec.body_template:
             body = {}
             for key, template in spec.body_template.items():
@@ -343,3 +352,52 @@ class APIExecutor:
             body["associations"] = associations
 
         return body
+
+    def _build_zendesk_ticket(self, params: Dict[str, Any]) -> dict:
+        """Build Zendesk create ticket payload.
+
+        Zendesk wraps everything in {"ticket": {...}} and the first
+        comment goes inside as {"comment": {"body": "..."}}.
+        """
+        ticket: Dict[str, Any] = {
+            "subject": params.get("subject", ""),
+            "comment": {"body": params.get("body", "")},
+        }
+
+        if params.get("requester_email"):
+            ticket["requester"] = {"email": params["requester_email"]}
+        elif params.get("requester_id"):
+            ticket["requester_id"] = params["requester_id"]
+
+        for field in ("priority", "status", "type", "assignee_id", "group_id", "tags", "custom_fields"):
+            if params.get(field) is not None:
+                ticket[field] = params[field]
+
+        return {"ticket": ticket}
+
+    def _build_zendesk_ticket_update(self, params: Dict[str, Any]) -> dict:
+        """Build Zendesk update ticket payload."""
+        ticket: Dict[str, Any] = {}
+
+        for field in ("status", "priority", "assignee_id", "group_id", "subject", "tags", "custom_fields", "type"):
+            if params.get(field) is not None:
+                ticket[field] = params[field]
+
+        if params.get("comment_body"):
+            ticket["comment"] = {
+                "body": params["comment_body"],
+                "public": params.get("comment_public", True),
+            }
+
+        return {"ticket": ticket}
+
+    def _build_zendesk_comment(self, params: Dict[str, Any]) -> dict:
+        """Build Zendesk add comment payload (via ticket update)."""
+        comment: Dict[str, Any] = {
+            "body": params.get("body", ""),
+            "public": params.get("public", True),
+        }
+        if params.get("author_id"):
+            comment["author_id"] = params["author_id"]
+
+        return {"ticket": {"comment": comment}}

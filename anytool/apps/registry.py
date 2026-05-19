@@ -126,6 +126,14 @@ APPS: Dict[str, AppConfig] = {
         api_base_url="https://slack.com/api",
         _extract_metadata=_slack_metadata,
     ),
+    "zendesk": AppConfig(
+        name="Zendesk",
+        slug="zendesk",
+        authorize_url="https://{subdomain}.zendesk.com/oauth/authorizations/new",
+        token_url="https://{subdomain}.zendesk.com/oauth/tokens",
+        api_base_url="https://{subdomain}.zendesk.com",  # subdomain from connection config
+        scope_separator=" ",
+    ),
     "github": AppConfig(
         name="GitHub",
         slug="github",
