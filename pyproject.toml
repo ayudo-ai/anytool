@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "anytool"
-version = "0.1.0"
+version = "0.1.1"
 description = "Agent-native API execution. No wrappers, no Composio. OAuth + API specs + direct HTTP."
 readme = "README.md"
 license = "MIT"

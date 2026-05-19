@@ -30,7 +30,7 @@ if env_path.exists():
             k, v = line.split("=", 1)
             os.environ[k.strip()] = v.strip()
 
-from anytool import AnyAPI
+from anytool import AnyTool
 
 NANGO_SECRET_KEY = os.environ.get("NANGO_SECRET_KEY", "")
 DOCUSIGN_CONNECTION_ID = os.environ.get("DOCUSIGN_CONNECTION_ID", "")
@@ -74,7 +74,7 @@ async def main():
     print(f"  Role:        {TEST_ROLE_NAME}")
     print()
 
-    api = AnyAPI(nango_secret_key=NANGO_SECRET_KEY)
+    api = AnyTool(nango_secret_key=NANGO_SECRET_KEY)
 
     # ── Step 1: Check connection ──────────────────────────────────────
     print("Step 1: Check Connection")

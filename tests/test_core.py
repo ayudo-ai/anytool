@@ -3,12 +3,12 @@ Core tests — verify the SDK works without real OAuth.
 """
 
 import pytest
-from anytool import AnyAPI, MemoryTokenStore, AppCredentials, UserTokens
+from anytool import AnyTool, MemoryTokenStore, AppCredentials, UserTokens
 
 
 @pytest.fixture
 def standalone_api():
-    api = AnyAPI(token_store=MemoryTokenStore())
+    api = AnyTool(token_store=MemoryTokenStore())
     api.register_app(AppCredentials(app="google", client_id="x", client_secret="y"))
     return api
 
@@ -17,7 +17,7 @@ def standalone_api():
 
 
 def test_list_all_actions():
-    actions = AnyAPI.list_actions()
+    actions = AnyTool.list_actions()
     assert len(actions) > 0
     names = [a["name"] for a in actions]
     assert "gmail_send_email" in names
@@ -25,7 +25,7 @@ def test_list_all_actions():
 
 
 def test_list_google_actions():
-    actions = AnyAPI.list_actions("google")
+    actions = AnyTool.list_actions("google")
     names = [a["name"] for a in actions]
     assert "gmail_send_email" in names
     assert all(a["app"] == "google" for a in actions)
@@ -35,7 +35,7 @@ def test_list_google_actions():
 
 
 def test_get_tools_nango_mode():
-    api = AnyAPI(nango_secret_key="fake-key-for-testing")
+    api = AnyTool(nango_secret_key="fake-key-for-testing")
     tools = api.get_tools("google", connection_id="test-user")
     assert len(tools) > 0
     tool_names = [t.name for t in tools]
@@ -49,7 +49,7 @@ def test_get_tools_standalone_mode(standalone_api):
 
 
 def test_get_tools_specific_actions():
-    api = AnyAPI(nango_secret_key="fake-key")
+    api = AnyTool(nango_secret_key="fake-key")
     tools = api.get_tools("google", connection_id="test", actions=["gmail_send_email"])
     assert len(tools) == 1
     assert tools[0].name == "gmail_send_email"
@@ -135,27 +135,27 @@ def test_gmail_mime_builder():
 
 
 def test_nango_mode_init():
-    api = AnyAPI(nango_secret_key="test-key")
+    api = AnyTool(nango_secret_key="test-key")
     assert api._nango is not None
     assert api._oauth is None
 
 
 def test_standalone_mode_init():
-    api = AnyAPI(token_store=MemoryTokenStore())
+    api = AnyTool(token_store=MemoryTokenStore())
     assert api._nango is None
     assert api._oauth is not None
 
 
 def test_no_args_raises():
     with pytest.raises(ValueError, match="nango_secret_key or token_store"):
-        AnyAPI()
+        AnyTool()
 
 
 # ── DocuSign Specs ───────────────────────────────────────────────────
 
 
 def test_docusign_specs_registered():
-    actions = AnyAPI.list_actions("docusign")
+    actions = AnyTool.list_actions("docusign")
     names = [a["name"] for a in actions]
     assert "docusign_create_envelope" in names
     assert "docusign_get_envelope" in names
@@ -164,7 +164,7 @@ def test_docusign_specs_registered():
 
 
 def test_docusign_tools_generated():
-    api = AnyAPI(nango_secret_key="fake-key")
+    api = AnyTool(nango_secret_key="fake-key")
     tools = api.get_tools("docusign", connection_id="test")
     assert len(tools) == 6
     tool_names = [t.name for t in tools]
@@ -258,7 +258,7 @@ def test_docusign_envelope_builder_handles_json_string():
 
 
 def test_freshdesk_specs_registered():
-    actions = AnyAPI.list_actions("freshdesk")
+    actions = AnyTool.list_actions("freshdesk")
     names = [a["name"] for a in actions]
     assert "freshdesk_create_ticket" in names
     assert "freshdesk_reply_ticket" in names
@@ -267,7 +267,7 @@ def test_freshdesk_specs_registered():
 
 
 def test_freshdesk_tools_generated():
-    api = AnyAPI(nango_secret_key="fake-key")
+    api = AnyTool(nango_secret_key="fake-key")
     tools = api.get_tools("freshdesk", connection_id="test")
     assert len(tools) == 10
 
@@ -276,7 +276,7 @@ def test_freshdesk_tools_generated():
 
 
 def test_slack_specs_registered():
-    actions = AnyAPI.list_actions("slack")
+    actions = AnyTool.list_actions("slack")
     names = [a["name"] for a in actions]
     assert "slack_send_message" in names
     assert "slack_list_channels" in names
@@ -285,7 +285,7 @@ def test_slack_specs_registered():
 
 
 def test_slack_tools_generated():
-    api = AnyAPI(nango_secret_key="fake-key")
+    api = AnyTool(nango_secret_key="fake-key")
     tools = api.get_tools("slack", connection_id="test")
     assert len(tools) == 7
 
@@ -297,7 +297,7 @@ def test_slack_tools_generated():
 
 
 def test_hubspot_specs_registered():
-    actions = AnyAPI.list_actions("hubspot")
+    actions = AnyTool.list_actions("hubspot")
     names = [a["name"] for a in actions]
     assert "hubspot_create_contact" in names
     assert "hubspot_create_deal" in names
@@ -308,7 +308,7 @@ def test_hubspot_specs_registered():
 
 
 def test_hubspot_tools_generated():
-    api = AnyAPI(nango_secret_key="fake-key")
+    api = AnyTool(nango_secret_key="fake-key")
     tools = api.get_tools("hubspot", connection_id="test")
     assert len(tools) == 15
 
@@ -374,6 +374,6 @@ def test_hubspot_note_builder():
 
 def test_total_specs_count():
     """Verify total spec count across all apps."""
-    all_actions = AnyAPI.list_actions()
+    all_actions = AnyTool.list_actions()
     # Google: 11, DocuSign: 6, Freshdesk: 10, Slack: 7, HubSpot: 15 = 49
     assert len(all_actions) == 49

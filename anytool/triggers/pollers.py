@@ -17,12 +17,12 @@ from typing import Any, Dict, List
 
 from loguru import logger
 
-from anytool.client import AnyAPI
+from anytool.client import AnyTool
 from anytool.triggers.base import TriggerConfig, TriggerEvent
 
 
 async def poll_gmail_new_message(
-    api: AnyAPI,
+    api: AnyTool,
     trigger: TriggerConfig,
 ) -> List[TriggerEvent]:
     """Poll Gmail for new messages.

@@ -1,12 +1,12 @@
 """
-AnyAPI client — the single entry point.
+AnyTool client — the single entry point.
 
 Two modes:
   1. Nango mode (recommended):
-     api = AnyAPI(nango_secret_key="nango-xxx")
+     api = AnyTool(nango_secret_key="nango-xxx")
 
   2. Standalone mode:
-     api = AnyAPI(token_store=MemoryTokenStore())
+     api = AnyTool(token_store=MemoryTokenStore())
      api.register_app(AppCredentials(app="google", ...))
 """
 
@@ -48,7 +48,7 @@ _NANGO_PROVIDERS: Dict[str, str] = {
 }
 
 
-class AnyAPI:
+class AnyTool:
     """Main client for anyapi."""
 
     def __init__(

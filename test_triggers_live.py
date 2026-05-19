@@ -32,7 +32,7 @@ if env_path.exists():
             k, v = line.split("=", 1)
             os.environ[k.strip()] = v.strip()
 
-from anytool import AnyAPI, TriggerConfig, TriggerEngine, MemoryTriggerStore
+from anytool import AnyTool, TriggerConfig, TriggerEngine, MemoryTriggerStore
 
 NANGO_SECRET_KEY = os.environ.get("NANGO_SECRET_KEY", "")
 CONNECTION_ID = os.environ.get("NANGO_CONNECTION_ID", "test-user")
@@ -81,7 +81,7 @@ async def main():
     print("✅ Webhook server running on http://localhost:9000")
 
     # 2. Initialize
-    api = AnyAPI(nango_secret_key=NANGO_SECRET_KEY)
+    api = AnyTool(nango_secret_key=NANGO_SECRET_KEY)
     store = MemoryTriggerStore()
     engine = TriggerEngine(api=api, store=store)
 
