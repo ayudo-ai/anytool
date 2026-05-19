@@ -12,6 +12,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { ScrollArea } from '@/components/ui/scroll-area'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { clearApiKey } from '@/lib/api'
 import { cn } from '@/lib/utils'
 
@@ -28,8 +29,12 @@ const NAV = [
 export function DashboardLayout() {
   const navigate = useNavigate()
 
+  const userStr = localStorage.getItem('anytool_user')
+  const user = userStr ? JSON.parse(userStr) as { name: string; email: string; picture: string } : null
+
   function handleLogout() {
     clearApiKey()
+    localStorage.removeItem('anytool_user')
     navigate('/')
   }
 
@@ -71,7 +76,21 @@ export function DashboardLayout() {
 
         <Separator />
 
-        <div className="p-2">
+        <div className="p-2 flex flex-col gap-1">
+          {user && (
+            <div className="flex items-center gap-2 px-3 py-2">
+              <Avatar className="size-7">
+                <AvatarImage src={user.picture} alt={user.name} />
+                <AvatarFallback className="text-xs">
+                  {user.name?.slice(0, 2).toUpperCase() || '??'}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-medium truncate">{user.name}</p>
+                <p className="text-[10px] text-muted-foreground truncate">{user.email}</p>
+              </div>
+            </div>
+          )}
           <Button
             variant="ghost"
             size="sm"

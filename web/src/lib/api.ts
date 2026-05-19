@@ -45,6 +45,27 @@ async function request<T>(
 
 // ── Auth ────────────────────────────────────────────────────────────
 
+export function getGoogleConfig() {
+  return request<{ client_id: string }>('/auth/google/config');
+}
+
+export interface GoogleLoginResponse {
+  api_key: string;
+  account_id: string;
+  workspace_id: string;
+  name: string;
+  email: string;
+  picture: string;
+  is_new: boolean;
+}
+
+export function googleLogin(idToken: string) {
+  return request<GoogleLoginResponse>('/auth/google', {
+    method: 'POST',
+    body: JSON.stringify({ id_token: idToken }),
+  });
+}
+
 export interface SignupResponse {
   api_key: string;
   account_id: string;

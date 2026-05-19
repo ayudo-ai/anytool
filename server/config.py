@@ -6,6 +6,9 @@ from __future__ import annotations
 
 import os
 from dataclasses import dataclass
+from dotenv import load_dotenv
+
+load_dotenv()
 
 
 @dataclass
@@ -24,6 +27,9 @@ class PlatformConfig:
     db_user: str = "ayudo"
     db_password: str = "password"
     db_schema: str = "anytool"  # all tables live here
+
+    # Google SSO (for developer login — same Client ID as Nango)
+    google_client_id: str = ""
 
     # Server
     host: str = "0.0.0.0"
@@ -52,6 +58,7 @@ class PlatformConfig:
             db_user=os.environ.get("ANYTOOL_DB_USER", os.environ.get("DB_USER", "ayudo")),
             db_password=os.environ.get("ANYTOOL_DB_PASSWORD", os.environ.get("DB_PASSWORD", "password")),
             db_schema=os.environ.get("ANYTOOL_DB_SCHEMA", "anytool"),
+            google_client_id=os.environ.get("GOOGLE_OAUTH_CLIENT_ID", ""),
             host=os.environ.get("HOST", "0.0.0.0"),
             port=int(os.environ.get("PORT", "8100")),
             base_url=os.environ.get("BASE_URL", "http://localhost:8100"),

@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { GoogleLogin } from '@react-oauth/google'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -12,12 +13,19 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { signup, setApiKey, hasApiKey } from '@/lib/api'
+import { Separator } from '@/components/ui/separator'
+import {
+  signup,
+  setApiKey,
+  hasApiKey,
+  googleLogin,
+  getGoogleConfig,
+} from '@/lib/api'
 import { Copy, Check, ArrowRight } from 'lucide-react'
 
 export function AuthPage() {
   const navigate = useNavigate()
-  const [mode, setMode] = useState<'login' | 'signup'>(hasApiKey() ? 'login' : 'signup')
+  const [mode, setMode] = useState<'login' | 'signup'>('signup')
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [apiKey, setApiKeyInput] = useState('')
@@ -25,6 +33,14 @@ export function AuthPage() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [copied, setCopied] = useState(false)
+  const [googleClientId, setGoogleClientId] = useState('')
+
+  // Fetch Google Client ID from backend
+  useEffect(() => {
+    getGoogleConfig()
+      .then((res) => setGoogleClientId(res.client_id))
+      .catch(() => {}) // SSO not configured — that's fine
+  }, [])
 
   // If already has key, go to dashboard
   if (hasApiKey() && !createdKey) {
@@ -57,13 +73,44 @@ export function AuthPage() {
     navigate('/dashboard')
   }
 
+  async function handleGoogleSuccess(credentialResponse: { credential?: string }) {
+    if (!credentialResponse.credential) {
+      setError('No credential from Google')
+      return
+    }
+    setError('')
+    setLoading(true)
+    try {
+      const res = await googleLogin(credentialResponse.credential)
+      setCreatedKey(res.api_key)
+      setApiKey(res.api_key)
+
+      // Store user info for dashboard display
+      localStorage.setItem('anytool_user', JSON.stringify({
+        name: res.name,
+        email: res.email,
+        picture: res.picture,
+      }))
+
+      if (!res.is_new) {
+        // Existing user — go straight to dashboard
+        navigate('/dashboard')
+      }
+      // New user — show the API key first
+    } catch (err: unknown) {
+      setError((err as Error).message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
   function handleCopy() {
     navigator.clipboard.writeText(createdKey)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
   }
 
-  // Show key after signup
+  // Show key after signup / first Google login
   if (createdKey) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-muted/30 p-4">
@@ -112,13 +159,41 @@ export function AuthPage() {
           </CardDescription>
         </CardHeader>
 
-        <CardContent>
+        <CardContent className="flex flex-col gap-4">
           {error && (
-            <Alert variant="destructive" className="mb-4">
+            <Alert variant="destructive">
               <AlertDescription>{error}</AlertDescription>
             </Alert>
           )}
 
+          {/* Google SSO Button */}
+          {googleClientId && (
+            <>
+              <div className="flex justify-center">
+                <GoogleLogin
+                  onSuccess={handleGoogleSuccess}
+                  onError={() => setError('Google sign-in failed')}
+                  theme="outline"
+                  size="large"
+                  width="100%"
+                  text={mode === 'signup' ? 'signup_with' : 'signin_with'}
+                />
+              </div>
+
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <Separator className="w-full" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-card px-2 text-muted-foreground">
+                    or
+                  </span>
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* Email signup / API key login */}
           {mode === 'signup' ? (
             <form onSubmit={handleSignup} className="flex flex-col gap-4">
               <div className="flex flex-col gap-2">
