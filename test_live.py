@@ -34,7 +34,7 @@ if env_path.exists():
             k, v = line.split("=", 1)
             os.environ[k.strip()] = v.strip()
 
-from anyapi import AnyAPI, MemoryTokenStore, AppCredentials
+from anytool import AnyAPI, MemoryTokenStore, AppCredentials
 
 CLIENT_ID = os.environ.get("GOOGLE_OAUTH_CLIENT_ID", "")
 CLIENT_SECRET = os.environ.get("GOOGLE_OAUTH_CLIENT_SECRET", "")

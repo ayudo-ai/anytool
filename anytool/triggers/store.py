@@ -11,7 +11,7 @@ import abc
 from datetime import datetime, timezone
 from typing import Dict, List, Optional
 
-from anyapi.triggers.base import TriggerConfig
+from anytool.triggers.base import TriggerConfig
 
 
 class TriggerStore(abc.ABC):

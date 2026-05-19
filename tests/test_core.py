@@ -3,7 +3,7 @@ Core tests — verify the SDK works without real OAuth.
 """
 
 import pytest
-from anyapi import AnyAPI, MemoryTokenStore, AppCredentials, UserTokens
+from anytool import AnyAPI, MemoryTokenStore, AppCredentials, UserTokens
 
 
 @pytest.fixture
@@ -96,7 +96,7 @@ async def test_token_expiry():
 
 
 def test_gmail_send_spec():
-    from anyapi.specs.google import GMAIL_SEND_EMAIL
+    from anytool.specs.google import GMAIL_SEND_EMAIL
 
     assert GMAIL_SEND_EMAIL.name == "gmail_send_email"
     assert GMAIL_SEND_EMAIL.method == "POST"
@@ -109,8 +109,8 @@ def test_gmail_send_spec():
 
 
 def test_gmail_mime_builder():
-    from anyapi.executor import APIExecutor
-    from anyapi.auth.nango import NangoClient
+    from anytool.executor import APIExecutor
+    from anytool.auth.nango import NangoClient
 
     nango = NangoClient(secret_key="fake")
     executor = APIExecutor(nango=nango)
@@ -177,8 +177,8 @@ def test_docusign_envelope_builder():
     Composio turned templateRoles: [{roleName: 'Signer', ...}] into [{}]
     Our builder must preserve the nested objects exactly.
     """
-    from anyapi.executor import APIExecutor
-    from anyapi.auth.nango import NangoClient
+    from anytool.executor import APIExecutor
+    from anytool.auth.nango import NangoClient
 
     nango = NangoClient(secret_key="fake")
     executor = APIExecutor(nango=nango)
@@ -218,8 +218,8 @@ def test_docusign_envelope_builder():
 
 def test_docusign_envelope_builder_handles_snake_case():
     """LLM might use snake_case instead of camelCase."""
-    from anyapi.executor import APIExecutor
-    from anyapi.auth.nango import NangoClient
+    from anytool.executor import APIExecutor
+    from anytool.auth.nango import NangoClient
 
     executor = APIExecutor(nango=NangoClient(secret_key="fake"))
 
@@ -237,8 +237,8 @@ def test_docusign_envelope_builder_handles_snake_case():
 
 def test_docusign_envelope_builder_handles_json_string():
     """LLM might pass template_roles as a JSON string."""
-    from anyapi.executor import APIExecutor
-    from anyapi.auth.nango import NangoClient
+    from anytool.executor import APIExecutor
+    from anytool.auth.nango import NangoClient
 
     executor = APIExecutor(nango=NangoClient(secret_key="fake"))
 
@@ -315,9 +315,9 @@ def test_hubspot_tools_generated():
 
 def test_hubspot_properties_builder():
     """HubSpot wraps all fields in {properties: {}}."""
-    from anyapi.executor import APIExecutor
-    from anyapi.auth.nango import NangoClient
-    from anyapi.specs.hubspot import HUBSPOT_CREATE_CONTACT
+    from anytool.executor import APIExecutor
+    from anytool.auth.nango import NangoClient
+    from anytool.specs.hubspot import HUBSPOT_CREATE_CONTACT
 
     executor = APIExecutor(nango=NangoClient(secret_key="fake"))
     result = executor._build_hubspot_properties(HUBSPOT_CREATE_CONTACT, {
@@ -337,8 +337,8 @@ def test_hubspot_properties_builder():
 
 
 def test_hubspot_search_builder():
-    from anyapi.executor import APIExecutor
-    from anyapi.auth.nango import NangoClient
+    from anytool.executor import APIExecutor
+    from anytool.auth.nango import NangoClient
 
     executor = APIExecutor(nango=NangoClient(secret_key="fake"))
     result = executor._build_hubspot_search({
@@ -355,8 +355,8 @@ def test_hubspot_search_builder():
 
 
 def test_hubspot_note_builder():
-    from anyapi.executor import APIExecutor
-    from anyapi.auth.nango import NangoClient
+    from anytool.executor import APIExecutor
+    from anytool.auth.nango import NangoClient
 
     executor = APIExecutor(nango=NangoClient(secret_key="fake"))
     result = executor._build_hubspot_note({

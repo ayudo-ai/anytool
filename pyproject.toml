@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "anyapi"
+name = "anytool"
 version = "0.1.0"
 description = "Agent-native API execution. No wrappers, no Composio. OAuth + API specs + direct HTTP."
 readme = "README.md"
@@ -29,7 +29,7 @@ dependencies = [
 
 [project.optional-dependencies]
 langchain = ["langchain-core>=0.2.0"]
-all = ["anyapi[langchain]"]
+all = ["anytool[langchain]"]
 dev = [
     "pytest>=7.0",
     "pytest-asyncio>=0.21",
@@ -37,11 +37,11 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/ayudo-ai/anyapi"
-Documentation = "https://github.com/ayudo-ai/anyapi#readme"
+Homepage = "https://github.com/ayudo-ai/anytool"
+Documentation = "https://github.com/ayudo-ai/anytool#readme"
 
 [tool.hatch.build.targets.wheel]
-packages = ["anyapi"]
+packages = ["anytool"]
 
 [tool.ruff]
 target-version = "py310"

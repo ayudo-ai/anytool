@@ -151,7 +151,7 @@ def get_app_config(app: str) -> AppConfig:
     if app not in APPS:
         raise KeyError(
             f"Unknown app '{app}'. Available: {list(APPS.keys())}. "
-            f"Register new apps in anyapi/apps/registry.py"
+            f"Register new apps in anytool/apps/registry.py"
         )
     return APPS[app]
 

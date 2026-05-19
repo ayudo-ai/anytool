@@ -30,7 +30,7 @@ if env_path.exists():
             k, v = line.split("=", 1)
             os.environ[k.strip()] = v.strip()
 
-from anyapi import AnyAPI
+from anytool import AnyAPI
 
 NANGO_SECRET_KEY = os.environ.get("NANGO_SECRET_KEY", "")
 DOCUSIGN_CONNECTION_ID = os.environ.get("DOCUSIGN_CONNECTION_ID", "")

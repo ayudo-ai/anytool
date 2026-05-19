@@ -32,7 +32,7 @@ if env_path.exists():
             k, v = line.split("=", 1)
             os.environ[k.strip()] = v.strip()
 
-from anyapi import AnyAPI, TriggerConfig, TriggerEngine, MemoryTriggerStore
+from anytool import AnyAPI, TriggerConfig, TriggerEngine, MemoryTriggerStore
 
 NANGO_SECRET_KEY = os.environ.get("NANGO_SECRET_KEY", "")
 CONNECTION_ID = os.environ.get("NANGO_CONNECTION_ID", "test-user")

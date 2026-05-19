@@ -9,7 +9,7 @@ The consuming app registers:
   - Where to send events (webhook_url)
   - Optional filters (from_contains, subject_contains, etc.)
 
-anyapi handles detection, deduplication, and delivery.
+anytool handles detection, deduplication, and delivery.
 """
 
 from __future__ import annotations

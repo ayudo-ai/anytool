@@ -16,9 +16,9 @@ from urllib.parse import urlencode
 import httpx
 from loguru import logger
 
-from anyapi.auth.models import AppCredentials, OAuthState, UserTokens
-from anyapi.auth.token_store import TokenStore
-from anyapi.apps.registry import get_app_config
+from anytool.auth.models import AppCredentials, OAuthState, UserTokens
+from anytool.auth.token_store import TokenStore
+from anytool.apps.registry import get_app_config
 
 
 class OAuthManager:
@@ -64,7 +64,7 @@ class OAuthManager:
         }
 
         url = f"{authorize_url}?{urlencode(params)}"
-        logger.info(f"[anyapi.oauth] Auth URL generated | app={credentials.app} user={user_id}")
+        logger.info(f"[anytool.oauth] Auth URL generated | app={credentials.app} user={user_id}")
         return url
 
     async def handle_callback(
@@ -104,7 +104,7 @@ class OAuthManager:
         )
 
         if not resp.is_success:
-            logger.error(f"[anyapi.oauth] Token exchange failed | app={credentials.app} | {resp.status_code} | {resp.text[:300]}")
+            logger.error(f"[anytool.oauth] Token exchange failed | app={credentials.app} | {resp.status_code} | {resp.text[:300]}")
             raise ValueError(f"Token exchange failed: {resp.status_code} — {resp.text[:300]}")
 
         token_resp = resp.json()
@@ -136,13 +136,13 @@ class OAuthManager:
                     extra_meta = app_config.extract_userinfo(userinfo.json())
                     tokens.metadata.update(extra_meta)
             except Exception as e:
-                logger.warning(f"[anyapi.oauth] Userinfo fetch failed: {e}")
+                logger.warning(f"[anytool.oauth] Userinfo fetch failed: {e}")
 
         # Save tokens
         await self._store.save_tokens(tokens)
 
         logger.info(
-            f"[anyapi.oauth] Tokens saved | app={credentials.app} "
+            f"[anytool.oauth] Tokens saved | app={credentials.app} "
             f"user={oauth_state.user_id} expires_in={expires_in}s"
         )
         return tokens
@@ -180,7 +180,7 @@ class OAuthManager:
 
         if not resp.is_success:
             logger.error(
-                f"[anyapi.oauth] Refresh failed | app={tokens.app} "
+                f"[anytool.oauth] Refresh failed | app={tokens.app} "
                 f"user={tokens.user_id} | {resp.status_code}"
             )
             raise ValueError(f"Token refresh failed: {resp.status_code} — {resp.text[:300]}")
@@ -198,7 +198,7 @@ class OAuthManager:
         await self._store.save_tokens(tokens)
 
         logger.info(
-            f"[anyapi.oauth] Refreshed | app={tokens.app} "
+            f"[anytool.oauth] Refreshed | app={tokens.app} "
             f"user={tokens.user_id} expires_in={expires_in}s"
         )
         return tokens
@@ -226,7 +226,7 @@ class OAuthManager:
     async def disconnect(self, app: str, user_id: str) -> None:
         """Disconnect an app (delete tokens)."""
         await self._store.delete_tokens(app, user_id)
-        logger.info(f"[anyapi.oauth] Disconnected | app={app} user={user_id}")
+        logger.info(f"[anytool.oauth] Disconnected | app={app} user={user_id}")
 
     async def close(self):
         """Close the HTTP client."""

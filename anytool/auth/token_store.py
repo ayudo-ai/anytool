@@ -10,7 +10,7 @@ from __future__ import annotations
 import abc
 from typing import Dict, Optional, Tuple
 
-from anyapi.auth.models import UserTokens, OAuthState
+from anytool.auth.models import UserTokens, OAuthState
 
 
 class TokenStore(abc.ABC):

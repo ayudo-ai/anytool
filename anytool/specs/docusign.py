@@ -4,7 +4,7 @@ DocuSign eSign API specs.
 This is the exact integration that was BROKEN on Composio —
 templateRoles nested objects were serialized as [{}].
 
-With anyapi, we build the exact JSON payload. No intermediate
+With anytool, we build the exact JSON payload. No intermediate
 Pydantic models. No serialization bugs. What you pass is what
 DocuSign receives.
 
@@ -20,7 +20,7 @@ Prod base: https://na1.docusign.net/restapi/v2.1 (varies by account)
 
 from __future__ import annotations
 
-from anyapi.specs.base import ActionSpec, ParamSpec
+from anytool.specs.base import ActionSpec, ParamSpec
 
 
 # ── Create Envelope from Template ────────────────────────────────────

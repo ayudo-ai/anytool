@@ -1,4 +1,4 @@
-# anyapi
+# anytool
 
 **Agent-native API execution. No wrappers. No Composio. No Pipedream.**
 
@@ -7,7 +7,7 @@ Give your AI agent curated API specs + OAuth tokens — it calls any API directl
 ## Quick Start
 
 ```python
-from anyapi import AnyAPI
+from anytool import AnyAPI
 
 # Nango mode (recommended) — Nango handles all OAuth
 api = AnyAPI(nango_secret_key="nango-secret-xxx")
@@ -53,19 +53,19 @@ No intermediate wrappers. What the LLM constructs is what the API receives.
 ## Install
 
 ```bash
-pip install anyapi                    # Core
-pip install anyapi[langchain]         # + LangChain tools
-pip install anyapi[all]               # Everything
+pip install anytool                    # Core
+pip install anytool[langchain]         # + LangChain tools
+pip install anytool[all]               # Everything
 ```
 
 Or from git:
 ```bash
-pip install git+https://github.com/ayudo-ai/anyapi.git
+pip install git+https://github.com/ayudo-ai/anytool.git
 ```
 
 Or install locally (for development):
 ```bash
-pip install -e /path/to/anyapi[all]
+pip install -e /path/to/anytool[all]
 ```
 
 ## Supported Apps — 49 Actions
@@ -87,7 +87,7 @@ pip install -e /path/to/anyapi[all]
 Nango handles OAuth for 700+ apps. You configure integrations in Nango's dashboard, then anyapi calls APIs through Nango's proxy (which auto-injects tokens).
 
 ```python
-from anyapi import AnyAPI
+from anytool import AnyAPI
 
 api = AnyAPI(nango_secret_key="nango-secret-xxx")
 
@@ -106,7 +106,7 @@ tools = api.get_tools("google", connection_id="workspace-123")
 Manage OAuth yourself. Bring your own token store.
 
 ```python
-from anyapi import AnyAPI, MemoryTokenStore, AppCredentials
+from anytool import AnyAPI, MemoryTokenStore, AppCredentials
 
 api = AnyAPI(token_store=MemoryTokenStore())
 
@@ -132,7 +132,7 @@ result = await api.call("gmail_send_email", connection_id="user-123", to="...", 
 ## LangChain Integration
 
 ```python
-from anyapi import AnyAPI
+from anytool import AnyAPI
 
 api = AnyAPI(nango_secret_key="xxx")
 
@@ -156,7 +156,7 @@ llm_with_tools = llm.bind_tools(all_tools)
 Poll-based triggers that detect new events and POST to your webhook:
 
 ```python
-from anyapi import AnyAPI, TriggerEngine, MemoryTriggerStore, TriggerConfig
+from anytool import AnyAPI, TriggerEngine, MemoryTriggerStore, TriggerConfig
 
 api = AnyAPI(nango_secret_key="xxx")
 engine = TriggerEngine(api=api, store=MemoryTriggerStore())

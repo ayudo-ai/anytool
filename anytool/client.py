@@ -16,14 +16,14 @@ from typing import Any, Dict, List, Optional
 
 from loguru import logger
 
-from anyapi.specs.base import ActionSpec
+from anytool.specs.base import ActionSpec
 
 # Import all spec modules
-from anyapi.specs.google import GOOGLE_SPECS
-from anyapi.specs.docusign import DOCUSIGN_SPECS
-from anyapi.specs.freshdesk import FRESHDESK_SPECS
-from anyapi.specs.slack import SLACK_SPECS
-from anyapi.specs.hubspot import HUBSPOT_SPECS
+from anytool.specs.google import GOOGLE_SPECS
+from anytool.specs.docusign import DOCUSIGN_SPECS
+from anytool.specs.freshdesk import FRESHDESK_SPECS
+from anytool.specs.slack import SLACK_SPECS
+from anytool.specs.hubspot import HUBSPOT_SPECS
 
 # Spec registry
 _ALL_SPECS: Dict[str, ActionSpec] = {}
@@ -70,22 +70,22 @@ class AnyAPI:
 
         if nango_secret_key:
             # Nango mode
-            from anyapi.auth.nango import NangoClient
+            from anytool.auth.nango import NangoClient
             self._nango = NangoClient(
                 secret_key=nango_secret_key,
                 base_url=nango_base_url,
             )
-            from anyapi.executor import APIExecutor
+            from anytool.executor import APIExecutor
             self._executor = APIExecutor(nango=self._nango)
-            logger.info("[anyapi] Initialized in Nango mode")
+            logger.info("[anytool] Initialized in Nango mode")
         elif token_store:
             # Standalone mode
-            from anyapi.auth.oauth import OAuthManager
-            from anyapi.executor import APIExecutor
+            from anytool.auth.oauth import OAuthManager
+            from anytool.executor import APIExecutor
             self._oauth = OAuthManager(token_store)
             self._executor = APIExecutor(oauth_manager=self._oauth)
             self._store = token_store
-            logger.info("[anyapi] Initialized in standalone mode")
+            logger.info("[anytool] Initialized in standalone mode")
         else:
             raise ValueError("Provide either nango_secret_key or token_store")
 
@@ -138,12 +138,12 @@ class AnyAPI:
         Example: api.set_provider_mapping("docusign", "docusign-prod")
         """
         _NANGO_PROVIDERS[app] = nango_key
-        logger.info(f"[anyapi] Provider mapping: {app} → {nango_key}")
+        logger.info(f"[anytool] Provider mapping: {app} → {nango_key}")
 
     def register_app(self, credentials) -> None:
         """Register OAuth credentials (standalone mode only)."""
         self._credentials[credentials.app] = credentials
-        logger.info(f"[anyapi] Registered app: {credentials.app}")
+        logger.info(f"[anytool] Registered app: {credentials.app}")
 
     async def handle_callback(self, app: str, code: str, state: str):
         """Handle OAuth callback (standalone mode only)."""
@@ -226,14 +226,14 @@ class AnyAPI:
 
         Returns tools ready for llm.bind_tools(tools).
         """
-        from anyapi.tools.langchain import build_tools
+        from anytool.tools.langchain import build_tools
 
         specs = _APP_SPECS.get(app, [])
         if actions:
             specs = [s for s in specs if s.name in actions]
 
         if not specs:
-            logger.warning(f"[anyapi] No specs for app={app} actions={actions}")
+            logger.warning(f"[anytool] No specs for app={app} actions={actions}")
             return []
 
         provider = _NANGO_PROVIDERS.get(app, app)

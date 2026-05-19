@@ -14,7 +14,7 @@ that help the LLM construct correct requests.
 
 from __future__ import annotations
 
-from anyapi.specs.base import ActionSpec, ParamSpec
+from anytool.specs.base import ActionSpec, ParamSpec
 
 # ── Gmail ────────────────────────────────────────────────────────────
 

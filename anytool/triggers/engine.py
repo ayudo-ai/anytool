@@ -2,10 +2,10 @@
 Trigger Engine — background loop that runs pollers and delivers events.
 
 Usage:
-    from anyapi import AnyAPI
-    from anyapi.triggers.engine import TriggerEngine
-    from anyapi.triggers.store import MemoryTriggerStore
-    from anyapi.triggers.base import TriggerConfig
+    from anytool import AnyAPI
+    from anytool.triggers.engine import TriggerEngine
+    from anytool.triggers.store import MemoryTriggerStore
+    from anytool.triggers.base import TriggerConfig
 
     api = AnyAPI(nango_secret_key="xxx")
     store = MemoryTriggerStore()
@@ -38,10 +38,10 @@ from typing import List, Optional
 import httpx
 from loguru import logger
 
-from anyapi.client import AnyAPI
-from anyapi.triggers.base import TriggerConfig, TriggerEvent
-from anyapi.triggers.pollers import get_poller
-from anyapi.triggers.store import TriggerStore
+from anytool.client import AnyAPI
+from anytool.triggers.base import TriggerConfig, TriggerEvent
+from anytool.triggers.pollers import get_poller
+from anytool.triggers.store import TriggerStore
 
 
 class TriggerEngine:

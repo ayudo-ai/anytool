@@ -16,8 +16,8 @@ from typing import Any, Dict, Optional
 
 from loguru import logger
 
-from anyapi.apps.registry import get_app_config
-from anyapi.specs.base import ActionSpec
+from anytool.apps.registry import get_app_config
+from anytool.specs.base import ActionSpec
 
 
 class APIExecutor:
@@ -78,7 +78,7 @@ class APIExecutor:
             headers["Content-Type"] = spec.content_type
 
         logger.info(
-            f"[anyapi.executor] {spec.method} {base_url}{path} | "
+            f"[anytool.executor] {spec.method} {base_url}{path} | "
             f"action={spec.name} connection={connection_id}"
         )
 
@@ -112,7 +112,7 @@ class APIExecutor:
         result["extracted_ids"] = extracted_ids
 
         logger.info(
-            f"[anyapi.executor] {result.get('status_code', '?')} | "
+            f"[anytool.executor] {result.get('status_code', '?')} | "
             f"action={spec.name} | ids={extracted_ids or 'none'}"
         )
 

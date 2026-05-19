@@ -17,8 +17,8 @@ from typing import Any, Dict, List
 
 from loguru import logger
 
-from anyapi.client import AnyAPI
-from anyapi.triggers.base import TriggerConfig, TriggerEvent
+from anytool.client import AnyAPI
+from anytool.triggers.base import TriggerConfig, TriggerEvent
 
 
 async def poll_gmail_new_message(

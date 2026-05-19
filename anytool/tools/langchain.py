@@ -9,8 +9,8 @@ from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, Field, create_model
 
-from anyapi.executor import APIExecutor
-from anyapi.specs.base import ActionSpec, ParamSpec
+from anytool.executor import APIExecutor
+from anytool.specs.base import ActionSpec, ParamSpec
 
 _TYPE_MAP = {
     "string": str,
@@ -51,7 +51,7 @@ def build_tools(
         from langchain_core.tools import StructuredTool
     except ImportError:
         raise ImportError(
-            "langchain-core required. Install: pip install anyapi[langchain]"
+            "langchain-core required. Install: pip install anytool[langchain]"
         )
 
     tools = []
