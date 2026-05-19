@@ -126,6 +126,15 @@ APPS: Dict[str, AppConfig] = {
         api_base_url="https://slack.com/api",
         _extract_metadata=_slack_metadata,
     ),
+    "github": AppConfig(
+        name="GitHub",
+        slug="github",
+        authorize_url="https://github.com/login/oauth/authorize",
+        token_url="https://github.com/login/oauth/access_token",
+        userinfo_url="https://api.github.com/user",
+        api_base_url="https://api.github.com",
+        scope_separator=" ",
+    ),
     "hubspot": AppConfig(
         name="HubSpot",
         slug="hubspot",

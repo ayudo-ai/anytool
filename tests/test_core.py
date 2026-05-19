@@ -369,11 +369,31 @@ def test_hubspot_note_builder():
     assert result["associations"][0]["to"]["id"] == "12345"
 
 
+# ── GitHub Specs ────────────────────────────────────────────────────
+
+
+def test_github_specs_registered():
+    actions = AnyTool.list_actions("github")
+    names = [a["name"] for a in actions]
+    assert "github_create_issue" in names
+    assert "github_create_pr" in names
+    assert "github_merge_pr" in names
+    assert "github_trigger_workflow" in names
+    assert "github_search_repos" in names
+    assert len(actions) == 16
+
+
+def test_github_tools_generated():
+    api = AnyTool(nango_secret_key="fake-key")
+    tools = api.get_tools("github", connection_id="test")
+    assert len(tools) == 16
+
+
 # ── All Apps Summary ─────────────────────────────────────────────────
 
 
 def test_total_specs_count():
     """Verify total spec count across all apps."""
     all_actions = AnyTool.list_actions()
-    # Google: 11, DocuSign: 6, Freshdesk: 10, Slack: 7, HubSpot: 15 = 49
-    assert len(all_actions) == 49
+    # Google: 11, DocuSign: 6, Freshdesk: 10, Slack: 7, HubSpot: 15, GitHub: 16 = 65
+    assert len(all_actions) == 65
