@@ -1,16 +1,17 @@
 """
-Database — PostgreSQL with MetaObject + MetaRecord pattern.
+Database — PostgreSQL with MetaObject + MetaField + MetaRecord pattern.
 
 Same architecture as Ayudo's meta tables but in 'anytool' schema.
 Fully isolated from Ayudo's public schema.
 
 Tables:
-- meta_object: Defines object types (account, trigger, usage_log, etc.)
+- meta_object: Defines object types (account, workspace, trigger, etc.)
+- meta_field:  Defines fields per object type (typed, validated)
 - meta_record: Stores actual data for any object type (JSONB)
 
 Setup:
-    The 'anytool' schema is created automatically on first startup.
-    Tables are created inside the schema.
+    1. Run seed script once:  python -m server.scripts.seed_system_objects
+    2. Start server:          uvicorn server.main:app --port 8100
 """
 
 from __future__ import annotations
@@ -52,10 +53,10 @@ class Base(DeclarativeBase):
 # ── MetaObject ───────────────────────────────────────────────────────
 
 class MetaObject(Base):
-    """Defines object types — account, trigger, usage_log, etc.
+    """Defines object types — account, workspace, trigger, etc.
 
     Same pattern as Ayudo's MetaObject. Each object type gets one row.
-    Records reference this via object_id FK.
+    Seeded by seed_system_objects.py before first use.
     """
 
     __tablename__ = "meta_object"
@@ -65,28 +66,69 @@ class MetaObject(Base):
     )
 
     object_id = Column(String(36), primary_key=True, default=_uuid)
-    slug = Column(String(100), nullable=False)          # "account", "trigger"
-    label = Column(String(255), nullable=False)          # "Account", "Trigger"
+    slug = Column(String(100), nullable=False)
+    label = Column(String(255), nullable=False)
     description = Column(String(500), default="")
     version = Column(Integer, nullable=False, default=1)
     status = Column(String(20), nullable=False, default="published")
     created_at = Column(DateTime(timezone=True), server_default=text("CURRENT_TIMESTAMP"))
     updated_at = Column(DateTime(timezone=True), server_default=text("CURRENT_TIMESTAMP"))
 
+    fields = relationship("MetaField", back_populates="object_def", cascade="all, delete-orphan")
     records = relationship("MetaRecord", back_populates="object_definition")
+
+
+# ── MetaField ────────────────────────────────────────────────────────
+
+class MetaField(Base):
+    """Defines individual fields within a MetaObject.
+
+    Same pattern as Ayudo's MetaField. Typed, validated, ordered.
+    Seeded alongside MetaObject by seed_system_objects.py.
+    """
+
+    __tablename__ = "meta_field"
+    __table_args__ = (
+        Index(
+            "uq_anytool_field_object_version_apiname",
+            "object_id", "object_version", "api_name",
+            unique=True,
+        ),
+        {"schema": SCHEMA},
+    )
+
+    field_id = Column(String(36), primary_key=True, default=_uuid)
+    object_id = Column(
+        String(36),
+        ForeignKey(f"{SCHEMA}.meta_object.object_id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    object_version = Column(Integer, nullable=False, default=1)
+    api_name = Column(String(100), nullable=False)
+    label = Column(String(255), nullable=False)
+    type = Column(String(50), nullable=False)
+    # string|text|number|integer|boolean|enum|date|datetime|
+    # email|phone|url|json|list|reference
+    required = Column(Boolean, nullable=False, default=False)
+    unique = Column(Boolean, nullable=False, default=False)
+    default = Column(JSONB, nullable=True)
+    validation_rules = Column(JSONB, nullable=True)
+    display_order = Column(Integer, nullable=True)
+
+    object_def = relationship("MetaObject", back_populates="fields")
 
 
 # ── MetaRecord ───────────────────────────────────────────────────────
 
 class MetaRecord(Base):
-    """Stores actual data for any meta object type.
+    """Stores actual data for any MetaObject type.
 
     Same pattern as Ayudo's MetaRecord:
     - object_id: FK to MetaObject
     - object_slug: denormalized for fast queries
     - custom_data: JSONB — the actual record data
     - primary_field_value: indexed lookup key (api_key, trigger_id, etc.)
-    - account_id: owner account (multi-tenant isolation)
+    - account_id + workspace_id: multi-tenant isolation
     """
 
     __tablename__ = "meta_record"
@@ -96,6 +138,7 @@ class MetaRecord(Base):
         Index("ix_anytool_record_primary_field", "primary_field_value"),
         Index("ix_anytool_record_slug_primary", "object_slug", "primary_field_value"),
         Index("ix_anytool_record_slug_account", "object_slug", "account_id"),
+        Index("ix_anytool_record_slug_workspace", "object_slug", "workspace_id"),
         Index("ix_anytool_record_is_deleted", "is_deleted"),
         Index(
             "ix_anytool_record_custom_data_gin",
@@ -112,16 +155,16 @@ class MetaRecord(Base):
         ForeignKey(f"{SCHEMA}.meta_object.object_id", ondelete="CASCADE"),
         nullable=False,
     )
-    object_slug = Column(String(100), nullable=False)   # Denormalized
-    account_id = Column(String(36), nullable=True)      # Owner account
-    workspace_id = Column(String(36), nullable=True)    # End-user / workspace
+    object_slug = Column(String(100), nullable=False)
+    account_id = Column(String(36), nullable=True)
+    workspace_id = Column(String(36), nullable=True)
+    schema_version = Column(Integer, nullable=False, default=1)
 
     # Core data
     custom_data = Column(JSONB, nullable=False, default=dict)
-    primary_field_value = Column(String(255), nullable=True)  # Indexed lookup key
+    primary_field_value = Column(String(255), nullable=True)
 
     # Metadata
-    schema_version = Column(Integer, nullable=False, default=1)
     created_by = Column(String(36), nullable=True)
     updated_by = Column(String(36), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=text("CURRENT_TIMESTAMP"))
@@ -146,46 +189,20 @@ async_session = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit
 
 
 # ── Object type cache ────────────────────────────────────────────────
-# Cache object_id lookups to avoid a query per record insert.
 
 _object_cache: Dict[str, str] = {}  # slug → object_id
 
 
-# ── Init ─────────────────────────────────────────────────────────────
-
-# Default object types — created on first startup
-_DEFAULT_OBJECTS = [
-    {"slug": "account", "label": "Account", "description": "Developer accounts (company/team)"},
-    {"slug": "workspace", "label": "Workspace", "description": "Isolated environment within an account (project, team, customer)"},
-    {"slug": "api_key", "label": "API Key", "description": "API keys scoped to account + workspace"},
-    {"slug": "trigger", "label": "Trigger", "description": "Deployed triggers for event polling"},
-    {"slug": "usage_log", "label": "Usage Log", "description": "API call usage tracking"},
-    {"slug": "webhook_log", "label": "Webhook Log", "description": "Trigger webhook delivery logs"},
-]
-
-
 async def init_db():
-    """Create schema, tables, and seed default object types."""
+    """Verify schema + tables exist and warm the object cache.
+
+    Does NOT create objects — that's seed_system_objects.py's job.
+    Only creates schema/tables if missing (for fresh deploys).
+    """
     async with engine.begin() as conn:
         await conn.execute(text(f"CREATE SCHEMA IF NOT EXISTS {SCHEMA}"))
         await conn.run_sync(Base.metadata.create_all)
 
-    # Seed default object types
-    async with async_session() as session:
-        for obj in _DEFAULT_OBJECTS:
-            existing = await session.execute(
-                select(MetaObject).where(MetaObject.slug == obj["slug"])
-            )
-            if not existing.scalar_one_or_none():
-                session.add(MetaObject(
-                    object_id=_uuid(),
-                    slug=obj["slug"],
-                    label=obj["label"],
-                    description=obj["description"],
-                ))
-        await session.commit()
-
-    # Warm the cache
     await _warm_object_cache()
 
 
@@ -196,12 +213,20 @@ async def _warm_object_cache():
         for obj in result.scalars().all():
             _object_cache[obj.slug] = obj.object_id
 
+    if not _object_cache:
+        from loguru import logger
+        logger.warning(
+            "⚠️  No system objects found! "
+            "Run: python -m server.scripts.seed_system_objects"
+        )
+
 
 async def _get_object_id(slug: str) -> str:
-    """Get object_id for a slug. Creates the object if missing."""
+    """Get object_id for a slug. Raises if not seeded."""
     if slug in _object_cache:
         return _object_cache[slug]
 
+    # Try DB in case cache is stale
     async with async_session() as session:
         result = await session.execute(
             select(MetaObject).where(MetaObject.slug == slug)
@@ -211,20 +236,13 @@ async def _get_object_id(slug: str) -> str:
             _object_cache[slug] = obj.object_id
             return obj.object_id
 
-        # Auto-create
-        obj_id = _uuid()
-        session.add(MetaObject(
-            object_id=obj_id,
-            slug=slug,
-            label=slug.replace("_", " ").title(),
-        ))
-        await session.commit()
-        _object_cache[slug] = obj_id
-        return obj_id
+    raise ValueError(
+        f"Object type '{slug}' not found. "
+        f"Run: python -m server.scripts.seed_system_objects"
+    )
 
 
 # ── Helpers ──────────────────────────────────────────────────────────
-
 
 def generate_api_key() -> str:
     return f"at_{secrets.token_urlsafe(32)}"
@@ -239,7 +257,6 @@ def now() -> datetime:
 
 
 # ── Generic CRUD ─────────────────────────────────────────────────────
-
 
 async def put_record(
     object_slug: str,
@@ -267,6 +284,8 @@ async def put_record(
             record.updated_at = now()
             if account_id is not None:
                 record.account_id = account_id
+            if workspace_id is not None:
+                record.workspace_id = workspace_id
         else:
             record = MetaRecord(
                 id=record_id or _uuid(),
