@@ -15,9 +15,8 @@ load_dotenv()
 class PlatformConfig:
     """Platform settings."""
 
-    # Nango (auth layer — hidden from developers)
-    nango_secret_key: str = ""
-    nango_base_url: str = "https://api.nango.dev"
+    # Token encryption key (Fernet — generate with: python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())")
+    token_encryption_key: str = ""
 
     # PostgreSQL — uses 'anytool' schema in the same Postgres instance
     # Fully isolated from Ayudo's tables (different schema)
@@ -50,8 +49,7 @@ class PlatformConfig:
     @classmethod
     def from_env(cls) -> "PlatformConfig":
         return cls(
-            nango_secret_key=os.environ.get("NANGO_SECRET_KEY", ""),
-            nango_base_url=os.environ.get("NANGO_BASE_URL", "https://api.nango.dev"),
+            token_encryption_key=os.environ.get("ANYTOOL_TOKEN_KEY", ""),
             db_host=os.environ.get("ANYTOOL_DB_HOST", os.environ.get("DB_HOST", "localhost")),
             db_port=os.environ.get("ANYTOOL_DB_PORT", os.environ.get("DB_PORT", "5432")),
             db_name=os.environ.get("ANYTOOL_DB_NAME", "metadb"),

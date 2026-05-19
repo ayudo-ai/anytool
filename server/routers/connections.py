@@ -1,11 +1,9 @@
 """
-Connection management — per user_id (end-user in developer's app).
+Connection management — OAuth flows + status tracking.
 
-Each user connects their own apps. Connections are scoped to user_id,
-not workspace. The workspace just owns the API key for billing.
-
-POST /v1/connections           → start OAuth for a user
-GET  /v1/connections           → list connections (filter by user_id)
+POST /v1/connections           → start OAuth for an end-user
+GET  /v1/connections/callback  → handle OAuth callback (redirect from Google/Slack/etc)
+GET  /v1/connections           → list connections
 GET  /v1/connections/check     → check if user has connected a provider
 DELETE /v1/connections         → disconnect a user's app
 """
@@ -14,11 +12,12 @@ from __future__ import annotations
 
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
 
 from server.auth import get_auth_context, AuthContext
-from server.database import put_record, list_records, delete_record, new_id, get_record
+from server.database import put_record, list_records, delete_record, now
 from server.engine import get_api
 
 router = APIRouter(prefix="/connections", tags=["connections"])
@@ -47,12 +46,6 @@ PROVIDER_MAP = {
 
 class ConnectRequest(BaseModel):
     provider: str   # gmail, slack, docusign, etc.
-    user_id: str    # end-user in YOUR app (customer-123, john@acme.com, etc.)
-    callback_url: str = ""
-
-
-class ConnectSessionRequest(BaseModel):
-    provider: str   # gmail, slack, docusign, etc.
     user_id: str    # end-user in YOUR app
 
 
@@ -67,16 +60,17 @@ class DisconnectRequest(BaseModel):
 async def connect_app(body: ConnectRequest, ctx: AuthContext = Depends(get_auth_context)):
     """Start OAuth flow for an end-user to connect an app.
 
-    The user_id is YOUR user — a customer, employee, or workspace member.
-    Each user manages their own OAuth connections independently.
+    Returns an auth_url to redirect the end-user to.
+    After they authorize, they'll be redirected to /v1/connections/callback
+    which exchanges the code for tokens and stores them encrypted in our DB.
 
     Example:
         POST /v1/connections
         {"provider": "gmail", "user_id": "customer-123"}
         → {"auth_url": "https://accounts.google.com/o/oauth2/..."}
     """
-    nango_provider = PROVIDER_MAP.get(body.provider.lower())
-    if not nango_provider:
+    provider = PROVIDER_MAP.get(body.provider.lower())
+    if not provider:
         raise HTTPException(
             400,
             f"Unknown provider: {body.provider}. "
@@ -86,57 +80,127 @@ async def connect_app(body: ConnectRequest, ctx: AuthContext = Depends(get_auth_
     api = get_api()
     try:
         auth_url = await api.get_auth_url(
-            provider=nango_provider,
+            provider=provider,
             connection_id=body.user_id,
-            callback_url=body.callback_url,
         )
+
+        # Track the connection attempt
+        connection_key = f"{body.user_id}:{provider}"
+        await put_record(
+            object_slug="connection",
+            primary_key=connection_key,
+            account_id=ctx.account_id,
+            workspace_id=ctx.workspace_id,
+            data={
+                "user_id": body.user_id,
+                "provider": provider,
+                "status": "pending",
+                "connected_at": "",
+            },
+        )
+
         return {
             "auth_url": auth_url,
             "user_id": body.user_id,
             "provider": body.provider,
         }
+    except ValueError as e:
+        raise HTTPException(400, str(e))
     except Exception as e:
         raise HTTPException(500, f"Failed to start OAuth: {e}")
 
 
-@router.post("/session")
-async def create_connect_session(
-    body: ConnectSessionRequest,
-    ctx: AuthContext = Depends(get_auth_context),
+@router.get("/callback")
+async def oauth_callback(
+    code: str = Query(...),
+    state: str = Query(...),
 ):
-    """Create a Nango Connect session for frontend OAuth widget.
+    """Handle OAuth callback from providers (Google, Slack, etc).
 
-    Returns a session token you pass to Nango's ConnectUI in your frontend.
-    The end-user completes OAuth in their browser — no server-side redirect needed.
+    The provider redirects here after the user authorizes.
+    We exchange the code for tokens, store them encrypted, and show a success page.
 
-    Example:
-        POST /v1/connections/session
-        {"provider": "gmail", "user_id": "customer-123"}
-        → {"session_token": "nango_sess_xxxx", "provider": "gmail", "user_id": "customer-123"}
+    This is a GET endpoint (browser redirect) — no auth header needed.
+    The state parameter links back to the original connect request.
     """
-    nango_provider = PROVIDER_MAP.get(body.provider.lower())
-    if not nango_provider:
-        raise HTTPException(
-            400,
-            f"Unknown provider: {body.provider}. "
-            f"Available: {list(PROVIDER_MAP.keys())}"
+    api = get_api()
+
+    try:
+        # The OAuth manager verifies state, exchanges code, saves tokens
+        # It knows which app + user_id from the stored OAuth state
+        tokens = await api.handle_callback(
+            app="",  # Will be resolved from state
+            code=code,
+            state=state,
         )
 
-    api = get_api()
-    try:
-        session_data = await api.get_connect_session(
-            provider=nango_provider,
-            connection_id=body.user_id,
+        # Update connection status to active
+        connection_key = f"{tokens.user_id}:{tokens.app}"
+        await put_record(
+            object_slug="connection",
+            primary_key=connection_key,
+            data={
+                "user_id": tokens.user_id,
+                "provider": tokens.app,
+                "status": "active",
+                "connected_at": now().isoformat(),
+                "scopes": tokens.scopes,
+            },
         )
-        return {
-            "session_token": session_data.get("token", session_data.get("session_token", "")),
-            "provider": body.provider,
-            "user_id": body.user_id,
-            "connect_url": session_data.get("connect_url", ""),
-            "expires_at": session_data.get("expires_at", ""),
-        }
-    except Exception as e:
-        raise HTTPException(500, f"Failed to create connect session: {e}")
+
+        # Return a simple success page (this is a browser redirect)
+        return HTMLResponse(content=f"""
+        <!DOCTYPE html>
+        <html>
+        <head><title>Connected!</title>
+        <style>
+            body {{ font-family: Inter, system-ui, sans-serif; display: flex;
+                   align-items: center; justify-content: center; min-height: 100vh;
+                   margin: 0; background: #fafafa; }}
+            .card {{ background: white; border-radius: 12px; padding: 40px;
+                    text-align: center; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }}
+            h1 {{ font-size: 24px; margin: 0 0 8px; }}
+            p {{ color: #666; font-size: 14px; margin: 0; }}
+            .check {{ font-size: 48px; margin-bottom: 16px; }}
+        </style>
+        </head>
+        <body>
+            <div class="card">
+                <div class="check">✅</div>
+                <h1>Connected!</h1>
+                <p>{tokens.app.title()} connected for user {tokens.user_id}</p>
+                <p style="margin-top: 12px; font-size: 12px; color: #999;">
+                    You can close this window.
+                </p>
+            </div>
+        </body>
+        </html>
+        """)
+
+    except ValueError as e:
+        return HTMLResponse(content=f"""
+        <!DOCTYPE html>
+        <html>
+        <head><title>Connection Failed</title>
+        <style>
+            body {{ font-family: Inter, system-ui, sans-serif; display: flex;
+                   align-items: center; justify-content: center; min-height: 100vh;
+                   margin: 0; background: #fafafa; }}
+            .card {{ background: white; border-radius: 12px; padding: 40px;
+                    text-align: center; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }}
+            h1 {{ font-size: 24px; margin: 0 0 8px; color: #dc2626; }}
+            p {{ color: #666; font-size: 14px; margin: 0; }}
+        </style>
+        </head>
+        <body>
+            <div class="card">
+                <div style="font-size: 48px; margin-bottom: 16px;">❌</div>
+                <h1>Connection Failed</h1>
+                <p>{str(e)}</p>
+            </div>
+        </body>
+        </html>
+        """, status_code=400)
 
 
 @router.get("")
@@ -144,74 +208,23 @@ async def list_connections(
     user_id: Optional[str] = None,
     ctx: AuthContext = Depends(get_auth_context),
 ):
-    """List connected apps, optionally filtered by user_id.
+    """List connected apps from our DB, optionally filtered by user_id."""
+    records = await list_records("connection", account_id=ctx.account_id)
 
-    Without user_id: returns ALL connections across all users.
-    With user_id: returns only that user's connections.
-    """
-    api = get_api()
-    try:
-        connections = await api.list_connections(connection_id=user_id or "")
-        result = []
-        for conn in connections:
-            if isinstance(conn, dict):
-                result.append({
-                    "provider": conn.get("provider_config_key", ""),
-                    "user_id": conn.get("connection_id", ""),
-                    "status": "active",
-                })
-        return {"connections": result, "total": len(result)}
-    except Exception as e:
-        raise HTTPException(500, f"Failed to list connections: {e}")
+    connections = []
+    for r in records:
+        data = r.custom_data or {}
+        if user_id and data.get("user_id") != user_id:
+            continue
+        connections.append({
+            "provider": data.get("provider", ""),
+            "user_id": data.get("user_id", ""),
+            "status": data.get("status", "unknown"),
+            "connected_at": data.get("connected_at", ""),
+            "scopes": data.get("scopes", []),
+        })
 
-
-@router.post("/confirm")
-async def confirm_connection(
-    body: ConnectRequest,
-    ctx: AuthContext = Depends(get_auth_context),
-):
-    """Confirm a connection after OAuth completes.
-
-    Call this from your OAuth callback handler after Nango finishes.
-    Stores connection metadata in our DB for tracking and dashboard display.
-    Idempotent — safe to call multiple times.
-
-    Example:
-        POST /v1/connections/confirm
-        {"provider": "gmail", "user_id": "customer-123"}
-    """
-    nango_provider = PROVIDER_MAP.get(body.provider.lower())
-    if not nango_provider:
-        raise HTTPException(400, f"Unknown provider: {body.provider}")
-
-    api = get_api()
-    connected = await api.is_connected(nango_provider, body.user_id)
-    if not connected:
-        raise HTTPException(400, f"No active connection found for {body.provider}:{body.user_id} in Nango")
-
-    # Store in our DB for tracking
-    connection_key = f"{body.user_id}:{nango_provider}"
-    from server.database import now
-    await put_record(
-        object_slug="connection",
-        primary_key=connection_key,
-        account_id=ctx.account_id,
-        workspace_id=ctx.workspace_id,
-        data={
-            "user_id": body.user_id,
-            "provider": nango_provider,
-            "nango_connection_id": body.user_id,
-            "status": "active",
-            "connected_at": now().isoformat(),
-        },
-    )
-
-    return {
-        "confirmed": True,
-        "provider": body.provider,
-        "user_id": body.user_id,
-        "status": "active",
-    }
+    return {"connections": connections, "total": len(connections)}
 
 
 @router.get("/check")
@@ -221,22 +234,21 @@ async def check_connection(
     ctx: AuthContext = Depends(get_auth_context),
 ):
     """Check if a specific user has connected a provider."""
-    nango_provider = PROVIDER_MAP.get(provider.lower(), provider)
+    app = PROVIDER_MAP.get(provider.lower(), provider)
     api = get_api()
-    connected = await api.is_connected(nango_provider, user_id)
+    connected = await api.is_connected(app, user_id)
     return {"connected": connected, "provider": provider, "user_id": user_id}
 
 
 @router.delete("")
 async def disconnect_app(body: DisconnectRequest, ctx: AuthContext = Depends(get_auth_context)):
-    """Disconnect an app for a user. Removes from Nango + our DB."""
-    nango_provider = PROVIDER_MAP.get(body.provider.lower(), body.provider)
+    """Disconnect an app for a user. Removes tokens + connection record."""
+    provider = PROVIDER_MAP.get(body.provider.lower(), body.provider)
     api = get_api()
     try:
-        await api.disconnect(nango_provider, body.user_id)
+        await api.disconnect(provider, body.user_id)
 
-        # Remove from our DB too
-        connection_key = f"{body.user_id}:{nango_provider}"
+        connection_key = f"{body.user_id}:{provider}"
         await delete_record("connection", connection_key)
 
         return {"disconnected": True, "provider": body.provider, "user_id": body.user_id}

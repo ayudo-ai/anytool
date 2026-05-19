@@ -151,9 +151,22 @@ class AnyTool:
         logger.info(f"[anytool] Registered app: {credentials.app}")
 
     async def handle_callback(self, app: str, code: str, state: str):
-        """Handle OAuth callback (standalone mode only)."""
+        """Handle OAuth callback (standalone mode only).
+
+        If app is empty, resolves it from the stored OAuth state.
+        """
         if self._nango:
             raise ValueError("In Nango mode, Nango handles callbacks automatically")
+
+        # If app not provided, peek at the state to find the app
+        if not app:
+            oauth_state = await self._store.get_oauth_state(state)
+            if not oauth_state:
+                raise ValueError("Invalid or expired OAuth state")
+            app = oauth_state.app
+            # Re-save state so handle_callback can consume it
+            await self._store.save_oauth_state(oauth_state)
+
         creds = self._get_credentials(app)
         return await self._oauth.handle_callback(creds, code, state)
 

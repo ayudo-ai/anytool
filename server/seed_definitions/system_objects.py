@@ -379,7 +379,61 @@ SYSTEM_OBJECTS: List[Dict[str, Any]] = [
         ],
     },
 
-    # ── Connection (metadata only — tokens live in Nango) ────────────
+    # ── OAuth Token (encrypted token storage) ─────────────────
+    {
+        "slug": "oauth_token",
+        "label": "OAuth Token",
+        "description": (
+            "Encrypted OAuth tokens for end-user app connections. "
+            "Keyed by 'app:user_id'. Tokens encrypted with Fernet (AES-128-CBC)."
+        ),
+        "fields": [
+            {
+                "api_name": "encrypted",
+                "label": "Encrypted Token Data",
+                "type": "text",
+                "required": True,
+            },
+        ],
+    },
+
+    # ── OAuth State (transient CSRF protection) ─────────────
+    {
+        "slug": "oauth_state",
+        "label": "OAuth State",
+        "description": (
+            "Transient CSRF state during OAuth authorization flow. "
+            "One-time use — deleted after callback."
+        ),
+        "fields": [
+            {
+                "api_name": "app",
+                "label": "App",
+                "type": "string",
+                "required": True,
+            },
+            {
+                "api_name": "user_id",
+                "label": "User ID",
+                "type": "string",
+                "required": True,
+            },
+            {
+                "api_name": "redirect_uri",
+                "label": "Redirect URI",
+                "type": "url",
+                "required": True,
+            },
+            {
+                "api_name": "scopes",
+                "label": "Scopes",
+                "type": "list",
+                "default": [],
+            },
+        ],
+    },
+
+    # ── Connection (metadata — tracks which users connected which apps) ──
     {
         "slug": "connection",
         "label": "Connection",
