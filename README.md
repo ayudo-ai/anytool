@@ -7,26 +7,40 @@ Give your AI agent curated API specs + OAuth tokens — it calls any API directl
 ## Quick Start
 
 ```python
-from anytool import AnyTool
+from anytool import AnyTool, MemoryTokenStore, AppCredentials
 
-api = AnyTool(nango_secret_key="nango-secret-xxx")
+api = AnyTool(token_store=MemoryTokenStore())
 
-# Call any API by action name
+api.register_app(AppCredentials(
+    app="google",
+    client_id="xxx.apps.googleusercontent.com",
+    client_secret="GOCSPX-xxx",
+    scopes=["https://www.googleapis.com/auth/gmail.send"],
+    redirect_uri="http://localhost:8000/oauth/callback",
+))
+
+# 1. Start OAuth → redirect user to this URL
+auth_url = await api.get_auth_url("google", connection_id="user-123")
+
+# 2. Handle callback → tokens stored + auto-refreshed
+tokens = await api.handle_callback("google", code="xxx", state="xxx")
+
+# 3. Call any API by action name
 result = await api.call(
     "gmail_send_email",
-    connection_id="workspace-123",
+    connection_id="user-123",
     to="vendor@example.com",
     subject="Invoice Follow-up",
     body="Hi, please send the updated invoice.",
 )
-# → {"data": {"id": "msg-123", "threadId": "thread-456"}, "successful": True, "extracted_ids": {"message_id": "msg-123", "thread_id": "thread-456"}}
+# → {"data": {"id": "msg-123", "threadId": "thread-456"}, "successful": True}
 
 # Get LangChain tools for an app
-tools = api.get_tools("google", connection_id="workspace-123")
-# → [gmail_send_email, gmail_search, gmail_get_thread, sheets_append_row, ...]
+tools = api.get_tools("google", connection_id="user-123")
+# → [gmail_send_email, gmail_search, sheets_append_row, ...]
 
 # Or get tools for ALL apps at once
-all_tools = api.get_all_tools(connection_id="workspace-123")
+all_tools = api.get_all_tools(connection_id="user-123")
 # → 98 tools across 8 apps, ready for llm.bind_tools()
 ```
 
@@ -44,11 +58,11 @@ Existing integration platforms pre-build wrappers for each API action. These wra
 
 | Layer | What | How |
 |-------|------|-----|
-| **Auth** | OAuth, token refresh, storage | **Built-in** (standalone) or **Nango** (optional) |
+| **Auth** | OAuth, token refresh, storage | **Built-in** OAuth manager with pluggable token store |
 | **Knowledge** | Curated API specs — params, paths, descriptions | **anytool specs** (~15 lines per action) |
 | **Execution** | Build HTTP request, handle API quirks, parse response | **anytool executor** (direct HTTP) |
 
-No intermediate wrappers. No serialization layers. What the LLM constructs is what the API receives.
+No intermediate wrappers. No serialization layers. No third-party proxy. What the LLM constructs is what the API receives.
 
 ## Install
 
@@ -74,11 +88,11 @@ pip install anytool[langchain]         # + LangChain tool generation
 | **Zendesk** | 13 — tickets (CRUD), comments, search, agents, groups, users | OAuth2 |
 | **WhatsApp** | 9 — send template/text/image/document, reactions, read receipts | Bearer Token |
 
-## Two Modes
+## Usage
 
-### Mode 1: Standalone (Recommended)
+### Standalone Mode (Recommended)
 
-Manage OAuth yourself. Full control over tokens, no third-party dependencies.
+Full control. Manage OAuth yourself. No third-party dependencies.
 
 ```python
 from anytool import AnyTool, MemoryTokenStore, AppCredentials
@@ -103,40 +117,22 @@ tokens = await api.handle_callback("google", code="xxx", state="xxx")
 result = await api.call("gmail_send_email", connection_id="user-123", to="...", subject="...", body="...")
 ```
 
-### Mode 2: Nango (Optional)
-
-[Nango](https://nango.dev) handles OAuth for 700+ apps. Use if you prefer a managed auth layer.
+### LangChain Integration
 
 ```python
-from anytool import AnyTool
+from anytool import AnyTool, MemoryTokenStore
 
-api = AnyTool(nango_secret_key="nango-secret-xxx")
-
-# Check connection
-connected = await api.is_connected("google", "workspace-123")
-
-# Call API
-result = await api.call("gmail_search", connection_id="workspace-123", q="from:vendor@example.com is:unread")
-
-# Get LangChain tools
-tools = api.get_tools("google", connection_id="workspace-123")
-```
-
-## LangChain Integration
-
-```python
-from anytool import AnyTool
-
-api = AnyTool(nango_secret_key="xxx")
+api = AnyTool(token_store=MemoryTokenStore())
+# ... register apps ...
 
 # Get tools for one app
-gmail_tools = api.get_tools("google", connection_id="workspace-123")
+gmail_tools = api.get_tools("google", connection_id="user-123")
 
 # Get tools for specific actions only
-send_tools = api.get_tools("google", connection_id="workspace-123", actions=["gmail_send_email", "gmail_search"])
+send_tools = api.get_tools("google", connection_id="user-123", actions=["gmail_send_email", "gmail_search"])
 
 # Get tools for multiple apps
-all_tools = api.get_all_tools(connection_id="workspace-123", apps=["google", "slack", "freshdesk"])
+all_tools = api.get_all_tools(connection_id="user-123", apps=["google", "slack", "freshdesk"])
 
 # Use with LangChain
 from langchain_openai import ChatOpenAI
@@ -144,27 +140,52 @@ llm = ChatOpenAI(model="gpt-4o")
 llm_with_tools = llm.bind_tools(all_tools)
 ```
 
-## Triggers (Event Detection)
+### Triggers (Event Detection)
 
 Poll-based triggers that detect new events and POST to your webhook:
 
 ```python
-from anytool import AnyTool, TriggerEngine, MemoryTriggerStore, TriggerConfig
+from anytool import AnyTool, MemoryTokenStore, TriggerEngine, MemoryTriggerStore, TriggerConfig
 
-api = AnyTool(nango_secret_key="xxx")
+api = AnyTool(token_store=MemoryTokenStore())
+# ... register apps ...
+
 engine = TriggerEngine(api=api, store=MemoryTriggerStore())
 
 await engine.register(TriggerConfig(
     id="t1",
     trigger_type="gmail_new_message",
     provider="google",
-    connection_id="workspace-123",
+    connection_id="user-123",
     webhook_url="https://your-app.com/api/webhook/trigger",
     filters={"from_contains": "vendor@example.com"},
     poll_interval_seconds=90,
 ))
 
 await engine.start()
+```
+
+### Custom Token Store
+
+Implement `TokenStore` for your database:
+
+```python
+from anytool.auth.token_store import TokenStore
+from anytool.auth.models import UserTokens, OAuthState
+
+class PostgresTokenStore(TokenStore):
+    async def save_tokens(self, tokens: UserTokens) -> None:
+        # Encrypt and store in your DB
+        ...
+
+    async def get_tokens(self, app: str, user_id: str) -> Optional[UserTokens]:
+        # Decrypt and return from your DB
+        ...
+
+    async def delete_tokens(self, app: str, user_id: str) -> None: ...
+    async def list_connected(self, user_id: str) -> list[UserTokens]: ...
+    async def save_oauth_state(self, state: OAuthState) -> None: ...
+    async def get_oauth_state(self, state_key: str) -> Optional[OAuthState]: ...
 ```
 
 ## Adding a New App
