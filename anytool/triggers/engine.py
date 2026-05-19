@@ -156,7 +156,10 @@ class TriggerEngine:
         return all_events
 
     async def _poll_trigger(self, trigger: TriggerConfig) -> List[TriggerEvent]:
-        """Poll a single trigger, deliver events, update state."""
+        """Poll a single trigger, deliver events, update state.
+
+        Tracks consecutive errors. Auto-disables trigger after 10 failures.
+        """
         try:
             poller = get_poller(trigger.trigger_type)
         except ValueError as e:
@@ -164,7 +167,16 @@ class TriggerEngine:
             return []
 
         # Run the poller
-        events = await poller(self._api, trigger)
+        try:
+            events = await poller(self._api, trigger)
+        except Exception as e:
+            # Track consecutive errors — store may auto-disable after threshold
+            error_count = await self._store.track_error(trigger.id, str(e))
+            logger.error(
+                f"[trigger.engine] Poll error | trigger={trigger.id} | "
+                f"consecutive_errors={error_count} | {e}"
+            )
+            return []
 
         if not events:
             # Update last_poll_at even with no results
@@ -190,6 +202,8 @@ class TriggerEngine:
                 last_seen_id=newest_id,
                 last_poll_at=datetime.now(timezone.utc),
             )
+            # Clear error counter on success
+            await self._store.clear_errors(trigger.id)
 
         logger.info(
             f"[trigger.engine] Poll complete | trigger={trigger.id} | "
@@ -198,36 +212,53 @@ class TriggerEngine:
 
         return delivered
 
-    async def _deliver_event(self, event: TriggerEvent, webhook_url: str) -> bool:
-        """POST an event to the webhook URL."""
+    async def _deliver_event(
+        self,
+        event: TriggerEvent,
+        webhook_url: str,
+        max_retries: int = 3,
+    ) -> bool:
+        """POST an event to the webhook URL with exponential backoff retries."""
         payload = event.to_webhook_payload()
+        delays = [1, 5, 15]  # seconds between retries
 
-        try:
-            resp = await self._http.post(
-                webhook_url,
-                json=payload,
-                headers={"Content-Type": "application/json"},
-            )
-
-            if resp.is_success:
-                logger.info(
-                    f"[trigger.engine] Delivered | trigger={event.trigger_id} | "
-                    f"message_id={event.data.get('message_id', '?')} | "
-                    f"→ {webhook_url}"
+        for attempt in range(max_retries):
+            try:
+                resp = await self._http.post(
+                    webhook_url,
+                    json=payload,
+                    headers={"Content-Type": "application/json"},
                 )
-                return True
-            else:
-                logger.warning(
-                    f"[trigger.engine] Delivery failed | {resp.status_code} | "
-                    f"trigger={event.trigger_id} | {resp.text[:200]}"
-                )
-                return False
 
-        except Exception as e:
-            logger.error(
-                f"[trigger.engine] Delivery error | trigger={event.trigger_id} | {e}"
-            )
-            return False
+                if resp.is_success:
+                    logger.info(
+                        f"[trigger.engine] Delivered | trigger={event.trigger_id} | "
+                        f"message_id={event.data.get('message_id', '?')} | "
+                        f"attempt={attempt + 1} | → {webhook_url}"
+                    )
+                    return True
+                else:
+                    logger.warning(
+                        f"[trigger.engine] Delivery failed | {resp.status_code} | "
+                        f"trigger={event.trigger_id} | attempt={attempt + 1}/{max_retries} | "
+                        f"{resp.text[:200]}"
+                    )
+            except Exception as e:
+                logger.error(
+                    f"[trigger.engine] Delivery error | trigger={event.trigger_id} | "
+                    f"attempt={attempt + 1}/{max_retries} | {e}"
+                )
+
+            # Retry with backoff (unless last attempt)
+            if attempt < max_retries - 1:
+                delay = delays[min(attempt, len(delays) - 1)]
+                await asyncio.sleep(delay)
+
+        logger.error(
+            f"[trigger.engine] Delivery exhausted | trigger={event.trigger_id} | "
+            f"all {max_retries} attempts failed | {webhook_url}"
+        )
+        return False
 
     # ── Background Loop ──────────────────────────────────────────────
 

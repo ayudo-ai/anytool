@@ -38,6 +38,14 @@ class TriggerStore(abc.ABC):
     async def delete_trigger(self, trigger_id: str) -> None:
         ...
 
+    async def track_error(self, trigger_id: str, error: str) -> int:
+        """Record a consecutive error. Returns new error count. Override in DB stores."""
+        return 0
+
+    async def clear_errors(self, trigger_id: str) -> None:
+        """Reset error counter on successful poll. Override in DB stores."""
+        pass
+
 
 class MemoryTriggerStore(TriggerStore):
     """In-memory trigger store for testing."""
@@ -65,3 +73,17 @@ class MemoryTriggerStore(TriggerStore):
 
     async def delete_trigger(self, trigger_id: str) -> None:
         self._triggers.pop(trigger_id, None)
+
+    async def track_error(self, trigger_id: str, error: str) -> int:
+        # Simple in-memory error tracking
+        t = self._triggers.get(trigger_id)
+        if t:
+            count = getattr(t, '_error_count', 0) + 1
+            t._error_count = count
+            return count
+        return 0
+
+    async def clear_errors(self, trigger_id: str) -> None:
+        t = self._triggers.get(trigger_id)
+        if t:
+            t._error_count = 0

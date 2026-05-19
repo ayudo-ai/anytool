@@ -48,6 +48,10 @@ class CreateWorkspaceRequest(BaseModel):
     name: str            # "Production", "Staging", "Customer-X"
 
 
+class CreateKeyRequest(BaseModel):
+    label: str = ""      # optional label for this key
+
+
 class WorkspaceResponse(BaseModel):
     workspace_id: str
     name: str
@@ -185,6 +189,85 @@ async def list_workspaces(ctx: AuthContext = Depends(get_auth_context)):
             "created_at": str(r.created_at) if r.created_at else "",
         })
     return {"workspaces": workspaces, "total": len(workspaces)}
+
+
+# ── API Key Management ───────────────────────────────────────────────
+
+
+@router.get("/keys")
+async def list_api_keys(ctx: AuthContext = Depends(get_auth_context)):
+    """List all API keys for this account.
+
+    Keys are masked — only first 6 and last 4 chars shown.
+    """
+    records = await list_records("api_key", account_id=ctx.account_id)
+    keys = []
+    for r in records:
+        data = r.custom_data or {}
+        if not data.get("is_active", True):
+            continue
+        raw_key = r.primary_field_value or ""
+        masked = f"{raw_key[:6]}...{raw_key[-4:]}" if len(raw_key) > 10 else "at_****"
+        keys.append({
+            "key_id": r.id,
+            "key_masked": masked,
+            "label": data.get("label", ""),
+            "workspace_id": r.workspace_id or "",
+            "created_at": str(r.created_at) if r.created_at else "",
+        })
+    return {"keys": keys, "total": len(keys)}
+
+
+@router.post("/keys")
+async def create_api_key(
+    body: CreateKeyRequest,
+    ctx: AuthContext = Depends(get_auth_context),
+):
+    """Create an additional API key for this workspace.
+
+    The full key is shown ONLY in this response. Store it securely.
+    """
+    api_key = generate_api_key()
+    await put_record(
+        object_slug="api_key",
+        primary_key=api_key,
+        account_id=ctx.account_id,
+        workspace_id=ctx.workspace_id,
+        data={
+            "label": body.label or "Additional key",
+            "is_active": True,
+        },
+    )
+    return {
+        "api_key": api_key,
+        "label": body.label or "Additional key",
+        "workspace_id": ctx.workspace_id,
+        "message": "Store this key securely — it won't be shown again.",
+    }
+
+
+@router.delete("/keys/{key_id}")
+async def revoke_api_key(key_id: str, ctx: AuthContext = Depends(get_auth_context)):
+    """Revoke an API key. Cannot revoke the key used in this request."""
+    # Find the key record by ID
+    records = await list_records("api_key", account_id=ctx.account_id)
+    target = None
+    for r in records:
+        if r.id == key_id:
+            target = r
+            break
+
+    if not target:
+        from fastapi import HTTPException
+        raise HTTPException(404, "API key not found")
+
+    # Deactivate (soft revoke — don't delete, for audit trail)
+    from server.database import update_record_fields
+    await update_record_fields("api_key", target.primary_field_value, {
+        "is_active": False,
+    })
+
+    return {"revoked": True, "key_id": key_id}
 
 
 @router.get("/accounts/me")

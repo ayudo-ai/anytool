@@ -14,7 +14,9 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
 from server.auth import get_auth_context, AuthContext
-from server.database import get_record, update_record_fields, atomic_increment
+import time
+
+from server.database import get_record, update_record_fields, atomic_increment, put_record, new_id
 from server.engine import get_api
 
 router = APIRouter(tags=["execute"])
@@ -60,6 +62,10 @@ async def execute_action(body: ExecuteRequest, ctx: AuthContext = Depends(get_au
 
     api = get_api()
 
+    start_time = time.monotonic()
+    result = None
+    error_msg = None
+
     try:
         result = await api.call(
             body.action,
@@ -67,12 +73,41 @@ async def execute_action(body: ExecuteRequest, ctx: AuthContext = Depends(get_au
             **body.params,
         )
     except ValueError as e:
-        raise HTTPException(400, str(e))
+        error_msg = str(e)
+        raise HTTPException(400, error_msg)
     except Exception as e:
-        raise HTTPException(500, f"Execution failed: {e}")
+        error_msg = f"Execution failed: {e}"
+        raise HTTPException(500, error_msg)
+    finally:
+        duration_ms = int((time.monotonic() - start_time) * 1000)
 
-    # Atomically increment usage counter (no read-modify-write race)
-    await atomic_increment("workspace", ctx.workspace_id, "calls_this_month")
+        # Atomically increment usage counter (no read-modify-write race)
+        await atomic_increment("workspace", ctx.workspace_id, "calls_this_month")
+
+        # Write usage log (fire-and-forget, don't block response)
+        try:
+            # Determine provider from action name
+            action_app = body.action.split("_")[0] if "_" in body.action else ""
+            provider = APP_MAP.get(action_app, action_app)
+
+            await put_record(
+                object_slug="usage_log",
+                primary_key=new_id(),
+                account_id=ctx.account_id,
+                workspace_id=ctx.workspace_id,
+                data={
+                    "workspace_id": ctx.workspace_id,
+                    "user_id": body.user_id,
+                    "action": body.action,
+                    "provider": provider,
+                    "status_code": result.get("status_code", 0) if result else 0,
+                    "successful": result.get("successful", False) if result else False,
+                    "duration_ms": duration_ms,
+                    "error": error_msg or (result.get("error") if result else None),
+                },
+            )
+        except Exception:
+            pass  # Never fail the request over logging
 
     return {
         "successful": result.get("successful", False),

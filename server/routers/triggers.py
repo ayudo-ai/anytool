@@ -12,7 +12,9 @@ GET    /v1/triggers/types → list available trigger types
 
 from __future__ import annotations
 
+import ipaddress
 from typing import Any, Dict, Optional
+from urllib.parse import urlparse
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
@@ -32,6 +34,32 @@ TRIGGER_MAP = {
     "gmail_new_message": {"trigger_type": "gmail_new_message", "provider": "google"},
     "gmail_new_email": {"trigger_type": "gmail_new_message", "provider": "google"},
 }
+
+
+def _validate_webhook_url(url: str) -> None:
+    """Validate webhook URL — block private IPs and non-HTTPS (except localhost)."""
+    parsed = urlparse(url)
+
+    if parsed.scheme not in ("http", "https"):
+        raise HTTPException(400, "Webhook URL must use http or https")
+
+    hostname = parsed.hostname or ""
+
+    # Allow localhost for development
+    if hostname in ("localhost", "127.0.0.1", "::1"):
+        return
+
+    # Require HTTPS for non-localhost
+    if parsed.scheme != "https":
+        raise HTTPException(400, "Webhook URL must use HTTPS (http only allowed for localhost)")
+
+    # Block private/reserved IPs
+    try:
+        ip = ipaddress.ip_address(hostname)
+        if ip.is_private or ip.is_reserved or ip.is_loopback or ip.is_link_local:
+            raise HTTPException(400, "Webhook URL cannot point to private/reserved IP addresses")
+    except ValueError:
+        pass  # hostname is a domain, not an IP — that's fine
 
 
 class DeployTriggerRequest(BaseModel):
@@ -70,6 +98,9 @@ async def deploy_trigger(body: DeployTriggerRequest, ctx: AuthContext = Depends(
             429,
             f"Trigger limit reached ({max_triggers}). Upgrade at anytool.dev"
         )
+
+    # Validate webhook URL (SSRF protection)
+    _validate_webhook_url(body.webhook_url)
 
     # Validate trigger type
     trigger_info = TRIGGER_MAP.get(body.trigger_type.lower())

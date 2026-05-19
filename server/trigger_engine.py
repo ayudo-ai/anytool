@@ -70,6 +70,33 @@ class DBTriggerStore(TriggerStore):
     async def delete_trigger(self, trigger_id: str) -> None:
         await delete_record("trigger", trigger_id)
 
+    async def track_error(self, trigger_id: str, error: str) -> int:
+        """Increment error count, store last error. Returns new count."""
+        record = await get_record("trigger", trigger_id)
+        if not record:
+            return 0
+        data = record.custom_data or {}
+        error_count = data.get("error_count", 0) + 1
+        updates = {
+            "error_count": error_count,
+            "last_error": str(error)[:500],
+        }
+        # Auto-disable after 10 consecutive errors
+        if error_count >= 10:
+            updates["enabled"] = False
+            logger.warning(
+                f"[trigger.store] Auto-disabled trigger {trigger_id} after {error_count} errors"
+            )
+        await update_record_fields("trigger", trigger_id, updates)
+        return error_count
+
+    async def clear_errors(self, trigger_id: str) -> None:
+        """Reset error counter on success."""
+        await update_record_fields("trigger", trigger_id, {
+            "error_count": 0,
+            "last_error": "",
+        })
+
     def _to_config(self, trigger_id: str, data: dict) -> TriggerConfig:
         last_poll = data.get("last_poll_at")
         if last_poll and isinstance(last_poll, str):
