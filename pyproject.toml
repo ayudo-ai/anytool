@@ -29,7 +29,13 @@ dependencies = [
 
 [project.optional-dependencies]
 langchain = ["langchain-core>=0.2.0"]
-all = ["anytool[langchain]"]
+platform = [
+    "fastapi>=0.100.0",
+    "uvicorn>=0.20.0",
+    "sqlalchemy[asyncio]>=2.0.0",
+    "aiosqlite>=0.19.0",
+]
+all = ["anytool[langchain]", "anytool[platform]"]
 dev = [
     "pytest>=7.0",
     "pytest-asyncio>=0.21",
