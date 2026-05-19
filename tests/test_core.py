@@ -293,8 +293,87 @@ def test_slack_tools_generated():
 # ── All Apps Summary ────────────────────────────────────────────────
 
 
+# ── HubSpot Specs ────────────────────────────────────────────────────
+
+
+def test_hubspot_specs_registered():
+    actions = AnyAPI.list_actions("hubspot")
+    names = [a["name"] for a in actions]
+    assert "hubspot_create_contact" in names
+    assert "hubspot_create_deal" in names
+    assert "hubspot_create_note" in names
+    assert "hubspot_associate" in names
+    assert "hubspot_list_owners" in names
+    assert len(actions) == 15
+
+
+def test_hubspot_tools_generated():
+    api = AnyAPI(nango_secret_key="fake-key")
+    tools = api.get_tools("hubspot", connection_id="test")
+    assert len(tools) == 15
+
+
+def test_hubspot_properties_builder():
+    """HubSpot wraps all fields in {properties: {}}."""
+    from anyapi.executor import APIExecutor
+    from anyapi.auth.nango import NangoClient
+    from anyapi.specs.hubspot import HUBSPOT_CREATE_CONTACT
+
+    executor = APIExecutor(nango=NangoClient(secret_key="fake"))
+    result = executor._build_hubspot_properties(HUBSPOT_CREATE_CONTACT, {
+        "email": "john@acme.com",
+        "firstname": "John",
+        "lastname": "Doe",
+        "phone": "+1-555-0100",
+    })
+    assert result == {
+        "properties": {
+            "email": "john@acme.com",
+            "firstname": "John",
+            "lastname": "Doe",
+            "phone": "+1-555-0100",
+        }
+    }
+
+
+def test_hubspot_search_builder():
+    from anyapi.executor import APIExecutor
+    from anyapi.auth.nango import NangoClient
+
+    executor = APIExecutor(nango=NangoClient(secret_key="fake"))
+    result = executor._build_hubspot_search({
+        "filter_property": "email",
+        "filter_operator": "EQ",
+        "filter_value": "john@acme.com",
+        "limit": 5,
+        "properties": ["email", "firstname", "lastname"],
+    })
+    assert result["filterGroups"][0]["filters"][0]["propertyName"] == "email"
+    assert result["filterGroups"][0]["filters"][0]["value"] == "john@acme.com"
+    assert result["limit"] == 5
+    assert result["properties"] == ["email", "firstname", "lastname"]
+
+
+def test_hubspot_note_builder():
+    from anyapi.executor import APIExecutor
+    from anyapi.auth.nango import NangoClient
+
+    executor = APIExecutor(nango=NangoClient(secret_key="fake"))
+    result = executor._build_hubspot_note({
+        "body": "Called customer, resolved billing issue.",
+        "contact_id": "12345",
+        "deal_id": "67890",
+    })
+    assert result["properties"]["hs_note_body"] == "Called customer, resolved billing issue."
+    assert len(result["associations"]) == 2
+    assert result["associations"][0]["to"]["id"] == "12345"
+
+
+# ── All Apps Summary ─────────────────────────────────────────────────
+
+
 def test_total_specs_count():
     """Verify total spec count across all apps."""
     all_actions = AnyAPI.list_actions()
-    # Google: 11, DocuSign: 6, Freshdesk: 10, Slack: 7 = 34
-    assert len(all_actions) == 34
+    # Google: 11, DocuSign: 6, Freshdesk: 10, Slack: 7, HubSpot: 15 = 49
+    assert len(all_actions) == 49

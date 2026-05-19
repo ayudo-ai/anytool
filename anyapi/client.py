@@ -23,12 +23,13 @@ from anyapi.specs.google import GOOGLE_SPECS
 from anyapi.specs.docusign import DOCUSIGN_SPECS
 from anyapi.specs.freshdesk import FRESHDESK_SPECS
 from anyapi.specs.slack import SLACK_SPECS
+from anyapi.specs.hubspot import HUBSPOT_SPECS
 
 # Spec registry
 _ALL_SPECS: Dict[str, ActionSpec] = {}
 _APP_SPECS: Dict[str, List[ActionSpec]] = {}
 
-for spec in GOOGLE_SPECS + DOCUSIGN_SPECS + FRESHDESK_SPECS + SLACK_SPECS:
+for spec in GOOGLE_SPECS + DOCUSIGN_SPECS + FRESHDESK_SPECS + SLACK_SPECS + HUBSPOT_SPECS:
     _ALL_SPECS[spec.name] = spec
     _APP_SPECS.setdefault(spec.app, []).append(spec)
 

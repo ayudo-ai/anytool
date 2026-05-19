@@ -169,6 +169,15 @@ class APIExecutor:
         if spec.request_transform == "docusign_resend":
             return {"resend_envelope": "true"}
 
+        if spec.request_transform == "hubspot_properties":
+            return self._build_hubspot_properties(spec, params)
+
+        if spec.request_transform == "hubspot_search":
+            return self._build_hubspot_search(params)
+
+        if spec.request_transform == "hubspot_note":
+            return self._build_hubspot_note(params)
+
         if spec.body_template:
             body = {}
             for key, template in spec.body_template.items():
@@ -258,5 +267,79 @@ class APIExecutor:
             body["emailSubject"] = params["email_subject"]
         if params.get("email_body"):
             body["emailBlurb"] = params["email_body"]
+
+        return body
+
+    def _build_hubspot_properties(self, spec: "ActionSpec", params: Dict[str, Any]) -> dict:
+        """Build HubSpot CRM object payload.
+
+        HubSpot wraps all fields in {"properties": {"key": "value"}}.
+        Path params (like contact_id) are excluded from properties.
+        """
+        path_param_names = {p.name for p in spec.path_params}
+        properties = {}
+        for param in spec.body_params:
+            if param.name in path_param_names:
+                continue
+            value = params.get(param.name)
+            if value is not None:
+                properties[param.name] = str(value) if not isinstance(value, str) else value
+        return {"properties": properties}
+
+    def _build_hubspot_search(self, params: Dict[str, Any]) -> dict:
+        """Build HubSpot search payload with filterGroups."""
+        body: Dict[str, Any] = {}
+
+        if params.get("query"):
+            body["query"] = params["query"]
+
+        if params.get("filter_property") and params.get("filter_value"):
+            body["filterGroups"] = [{
+                "filters": [{
+                    "propertyName": params["filter_property"],
+                    "operator": params.get("filter_operator", "EQ"),
+                    "value": params["filter_value"],
+                }]
+            }]
+
+        if params.get("limit"):
+            body["limit"] = params["limit"]
+
+        if params.get("properties"):
+            props = params["properties"]
+            if isinstance(props, str):
+                props = [p.strip() for p in props.split(",")]
+            body["properties"] = props
+
+        return body
+
+    def _build_hubspot_note(self, params: Dict[str, Any]) -> dict:
+        """Build HubSpot note with associations."""
+        body: Dict[str, Any] = {
+            "properties": {
+                "hs_note_body": params.get("body", ""),
+            }
+        }
+
+        if params.get("hubspot_owner_id"):
+            body["properties"]["hubspot_owner_id"] = params["hubspot_owner_id"]
+
+        # Build associations
+        associations = []
+        assoc_map = {
+            "contact_id": ("contacts", "note_to_contact"),
+            "company_id": ("companies", "note_to_company"),
+            "deal_id": ("deals", "note_to_deal"),
+        }
+        for param_name, (obj_type, assoc_type) in assoc_map.items():
+            obj_id = params.get(param_name)
+            if obj_id:
+                associations.append({
+                    "to": {"id": str(obj_id)},
+                    "types": [{"associationCategory": "HUBSPOT_DEFINED", "associationTypeId": assoc_type}]
+                })
+
+        if associations:
+            body["associations"] = associations
 
         return body
