@@ -1,42 +1,37 @@
 """
-API execution — call any action by name.
+API execution — call any action for a user_id.
 
-POST /v1/execute → execute an action
-GET  /v1/actions → list available actions
-GET  /v1/tools   → get LangChain-compatible tool definitions
+POST /v1/execute  → execute an action using a user's connection
+GET  /v1/actions  → list available actions
+GET  /v1/tools    → get tool definitions (OpenAI-compatible)
 """
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
-from server.auth import get_account
-from server.database import update_record_fields
+from server.auth import get_auth_context, AuthContext
+from server.database import get_record, update_record_fields
 from server.engine import get_api
 
 router = APIRouter(tags=["execute"])
 
 
 class ExecuteRequest(BaseModel):
-    action: str  # gmail_send_email, slack_send_message, etc.
-    user_id: str  # end-user whose connection to use
-    params: Dict[str, Any] = {}  # action parameters
+    action: str              # gmail_send_email, slack_send_message, etc.
+    user_id: str             # end-user whose connection to use
+    params: Dict[str, Any] = {}
 
 
-class ExecuteResponse(BaseModel):
-    successful: bool
-    data: Any = None
-    error: Optional[str] = None
-    extracted_ids: Dict[str, str] = {}
-    status_code: int = 0
+@router.post("/execute")
+async def execute_action(body: ExecuteRequest, ctx: AuthContext = Depends(get_auth_context)):
+    """Execute an API action using a user's connected account.
 
-
-@router.post("/execute", response_model=ExecuteResponse)
-async def execute_action(body: ExecuteRequest, account: dict = Depends(get_account)):
-    """Execute an API action.
+    The user_id must have already connected the relevant provider
+    via POST /v1/connections.
 
     Example:
         POST /v1/execute
@@ -50,14 +45,16 @@ async def execute_action(body: ExecuteRequest, account: dict = Depends(get_accou
             }
         }
     """
-    # Check usage limit
-    limits = account.get("limits", {})
-    max_calls = limits.get("max_calls", 1000)
-    calls_used = account.get("calls_this_month", 0)
+    # Check workspace usage limit
+    workspace_record = await get_record("workspace", ctx.workspace_id)
+    workspace_data = workspace_record.custom_data if workspace_record else {}
+    calls_used = workspace_data.get("calls_this_month", 0)
+    max_calls = ctx.limits.get("max_calls", 1000)
+
     if max_calls > 0 and calls_used >= max_calls:
         raise HTTPException(
             429,
-            f"Monthly API call limit reached ({max_calls}). Upgrade your plan at anytool.dev"
+            f"Monthly call limit reached ({max_calls}). Upgrade at anytool.dev"
         )
 
     api = get_api()
@@ -73,41 +70,42 @@ async def execute_action(body: ExecuteRequest, account: dict = Depends(get_accou
     except Exception as e:
         raise HTTPException(500, f"Execution failed: {e}")
 
-    # Increment usage counter
-    await update_record_fields("account", account["api_key"], {
+    # Increment workspace usage
+    await update_record_fields("workspace", ctx.workspace_id, {
         "calls_this_month": calls_used + 1,
     })
 
-    return ExecuteResponse(
-        successful=result.get("successful", False),
-        data=result.get("data"),
-        error=result.get("error"),
-        extracted_ids=result.get("extracted_ids", {}),
-        status_code=result.get("status_code", 0),
-    )
+    return {
+        "successful": result.get("successful", False),
+        "data": result.get("data"),
+        "error": result.get("error"),
+        "extracted_ids": result.get("extracted_ids", {}),
+        "status_code": result.get("status_code", 0),
+    }
+
+
+# ── App mapping ──────────────────────────────────────────────────────
+
+APP_MAP = {
+    "gmail": "google", "google_drive": "google", "google_sheets": "google",
+    "google_calendar": "google", "google_docs": "google", "google": "google",
+    "slack": "slack", "docusign": "docusign", "freshdesk": "freshdesk",
+    "hubspot": "hubspot", "github": "github", "zendesk": "zendesk",
+    "whatsapp": "whatsapp",
+}
 
 
 @router.get("/actions")
 async def list_actions(
     app: Optional[str] = None,
-    account: dict = Depends(get_account),
+    ctx: AuthContext = Depends(get_auth_context),
 ):
     """List all available actions, optionally filtered by app.
 
     Example:
         GET /v1/actions?app=gmail
-        GET /v1/actions  (all apps)
     """
     from anytool import AnyTool
-
-    # Map friendly names to anytool app names
-    APP_MAP = {
-        "gmail": "google", "google_drive": "google", "google_sheets": "google",
-        "google_calendar": "google", "google_docs": "google", "google": "google",
-        "slack": "slack", "docusign": "docusign", "freshdesk": "freshdesk",
-        "hubspot": "hubspot", "github": "github", "zendesk": "zendesk",
-        "whatsapp": "whatsapp",
-    }
 
     anytool_app = APP_MAP.get(app.lower(), app.lower()) if app else None
     actions = AnyTool.list_actions(anytool_app)
@@ -117,30 +115,20 @@ async def list_actions(
 @router.get("/tools")
 async def get_tool_definitions(
     app: str,
-    user_id: str,
-    account: dict = Depends(get_account),
+    ctx: AuthContext = Depends(get_auth_context),
 ):
-    """Get LangChain-compatible tool definitions for an app.
+    """Get OpenAI-compatible tool definitions for an app.
 
-    Returns tool schemas that can be used with any LLM framework.
+    Use these with any LLM that supports function calling.
 
     Example:
-        GET /v1/tools?app=gmail&user_id=customer-123
+        GET /v1/tools?app=gmail
     """
     from anytool import AnyTool as AnyToolClass
-
-    APP_MAP = {
-        "gmail": "google", "google_drive": "google", "google_sheets": "google",
-        "google_calendar": "google", "google_docs": "google", "google": "google",
-        "slack": "slack", "docusign": "docusign", "freshdesk": "freshdesk",
-        "hubspot": "hubspot", "github": "github", "zendesk": "zendesk",
-        "whatsapp": "whatsapp",
-    }
 
     anytool_app = APP_MAP.get(app.lower(), app.lower())
     actions = AnyToolClass.list_actions(anytool_app)
 
-    # Build OpenAI-compatible function definitions
     tools = []
     for action in actions:
         tools.append({

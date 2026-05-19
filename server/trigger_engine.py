@@ -77,11 +77,15 @@ class DBTriggerStore(TriggerStore):
         else:
             last_poll = None
 
+        # user_id is the end-user whose connection to poll
+        # stored as "user_id" in data, maps to TriggerConfig.connection_id
+        connection_id = data.get("user_id", data.get("connection_id", ""))
+
         return TriggerConfig(
             id=trigger_id,
             trigger_type=data.get("trigger_type", ""),
             provider=data.get("provider", ""),
-            connection_id=data.get("connection_id", ""),
+            connection_id=connection_id,
             webhook_url=data.get("webhook_url", ""),
             filters=data.get("filters", {}),
             poll_interval_seconds=data.get("poll_interval_seconds", 90),

@@ -1,10 +1,13 @@
 """
-Connection management — OAuth flows + listing connected apps.
+Connection management — per user_id (end-user in developer's app).
 
-POST /v1/connections       → start OAuth flow, get auth URL
-GET  /v1/connections       → list connected apps
-GET  /v1/connections/check → check if user+provider is connected
-DELETE /v1/connections     → disconnect
+Each user connects their own apps. Connections are scoped to user_id,
+not workspace. The workspace just owns the API key for billing.
+
+POST /v1/connections           → start OAuth for a user
+GET  /v1/connections           → list connections (filter by user_id)
+GET  /v1/connections/check     → check if user has connected a provider
+DELETE /v1/connections         → disconnect a user's app
 """
 
 from __future__ import annotations
@@ -14,14 +17,13 @@ from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
-from server.auth import get_account
+from server.auth import get_auth_context, AuthContext
 from server.engine import get_api
 
 router = APIRouter(prefix="/connections", tags=["connections"])
 
 
 # ── Provider mapping ─────────────────────────────────────────────────
-# Developers use friendly names. We map to Nango provider keys.
 
 PROVIDER_MAP = {
     "gmail": "google",
@@ -40,11 +42,11 @@ PROVIDER_MAP = {
 }
 
 
-# ── Request/Response models ──────────────────────────────────────────
+# ── Models ───────────────────────────────────────────────────────────
 
 class ConnectRequest(BaseModel):
-    provider: str  # gmail, slack, docusign, etc.
-    user_id: str  # end-user in YOUR app
+    provider: str   # gmail, slack, docusign, etc.
+    user_id: str    # end-user in YOUR app (customer-123, john@acme.com, etc.)
     callback_url: str = ""
 
 
@@ -56,10 +58,11 @@ class DisconnectRequest(BaseModel):
 # ── Routes ───────────────────────────────────────────────────────────
 
 @router.post("")
-async def connect_app(body: ConnectRequest, account: dict = Depends(get_account)):
+async def connect_app(body: ConnectRequest, ctx: AuthContext = Depends(get_auth_context)):
     """Start OAuth flow for an end-user to connect an app.
 
-    Returns an auth_url — redirect your user there.
+    The user_id is YOUR user — a customer, employee, or workspace member.
+    Each user manages their own OAuth connections independently.
 
     Example:
         POST /v1/connections
@@ -68,7 +71,11 @@ async def connect_app(body: ConnectRequest, account: dict = Depends(get_account)
     """
     nango_provider = PROVIDER_MAP.get(body.provider.lower())
     if not nango_provider:
-        raise HTTPException(400, f"Unknown provider: {body.provider}. Available: {list(PROVIDER_MAP.keys())}")
+        raise HTTPException(
+            400,
+            f"Unknown provider: {body.provider}. "
+            f"Available: {list(PROVIDER_MAP.keys())}"
+        )
 
     api = get_api()
     try:
@@ -89,9 +96,13 @@ async def connect_app(body: ConnectRequest, account: dict = Depends(get_account)
 @router.get("")
 async def list_connections(
     user_id: Optional[str] = None,
-    account: dict = Depends(get_account),
+    ctx: AuthContext = Depends(get_auth_context),
 ):
-    """List all connected apps, optionally filtered by user_id."""
+    """List connected apps, optionally filtered by user_id.
+
+    Without user_id: returns ALL connections across all users.
+    With user_id: returns only that user's connections.
+    """
     api = get_api()
     try:
         connections = await api.list_connections(connection_id=user_id or "")
@@ -112,9 +123,9 @@ async def list_connections(
 async def check_connection(
     provider: str,
     user_id: str,
-    account: dict = Depends(get_account),
+    ctx: AuthContext = Depends(get_auth_context),
 ):
-    """Check if a specific user+provider connection exists."""
+    """Check if a specific user has connected a provider."""
     nango_provider = PROVIDER_MAP.get(provider.lower(), provider)
     api = get_api()
     connected = await api.is_connected(nango_provider, user_id)
@@ -122,7 +133,7 @@ async def check_connection(
 
 
 @router.delete("")
-async def disconnect_app(body: DisconnectRequest, account: dict = Depends(get_account)):
+async def disconnect_app(body: DisconnectRequest, ctx: AuthContext = Depends(get_auth_context)):
     """Disconnect an app for a user."""
     nango_provider = PROVIDER_MAP.get(body.provider.lower(), body.provider)
     api = get_api()
