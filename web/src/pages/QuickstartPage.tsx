@@ -37,10 +37,12 @@ function CodeBlock({ code, language }: { code: string; language: string }) {
   )
 }
 
+import { getStoredApiKey } from '@/lib/api'
+
 const API_KEY_PLACEHOLDER = 'YOUR_API_KEY'
 
 export function QuickstartPage() {
-  const apiKey = localStorage.getItem('anytool_api_key') || API_KEY_PLACEHOLDER
+  const apiKey = getStoredApiKey() || API_KEY_PLACEHOLDER
 
   return (
     <div className="flex flex-col gap-6">

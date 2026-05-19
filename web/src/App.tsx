@@ -1,5 +1,5 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
-import { hasApiKey } from '@/lib/api'
+import { isLoggedIn } from '@/lib/api'
 import { AuthPage } from '@/pages/AuthPage'
 import { DashboardLayout } from '@/layouts/DashboardLayout'
 import { OverviewPage } from '@/pages/OverviewPage'
@@ -11,7 +11,7 @@ import { KeysPage } from '@/pages/KeysPage'
 import { QuickstartPage } from '@/pages/QuickstartPage'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  if (!hasApiKey()) return <Navigate to="/" replace />
+  if (!isLoggedIn()) return <Navigate to="/" replace />
   return <>{children}</>
 }
 

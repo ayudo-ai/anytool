@@ -361,6 +361,24 @@ SYSTEM_OBJECTS: List[Dict[str, Any]] = [
         ],
     },
 
+    # ── Session (dashboard login sessions) ───────────────────────
+    {
+        "slug": "session",
+        "label": "Session",
+        "description": (
+            "Dashboard login session. Created on sign-in (Google SSO or email/password). "
+            "Short-lived (7 days). Stored as sess_xxxx token."
+        ),
+        "fields": [
+            {
+                "api_name": "expires_at",
+                "label": "Expires At",
+                "type": "datetime",
+                "required": True,
+            },
+        ],
+    },
+
     # ── Connection (metadata only — tokens live in Nango) ────────────
     {
         "slug": "connection",

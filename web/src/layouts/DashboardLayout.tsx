@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { clearApiKey } from '@/lib/api'
+import { clearSession } from '@/lib/api'
 import { cn } from '@/lib/utils'
 
 const NAV = [
@@ -33,8 +33,7 @@ export function DashboardLayout() {
   const user = userStr ? JSON.parse(userStr) as { name: string; email: string; picture: string } : null
 
   function handleLogout() {
-    clearApiKey()
-    localStorage.removeItem('anytool_user')
+    clearSession()
     navigate('/')
   }
 

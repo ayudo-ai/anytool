@@ -1,36 +1,85 @@
 /**
  * API client for anytool platform.
- * All requests go through the Vite proxy → /v1/* → localhost:8100
+ * 
+ * Auth: Two tokens:
+ * - session_token (sess_xxx): for dashboard access, stored in localStorage
+ * - api_key (at_xxx): for API access, shown in dashboard Keys page
+ * 
+ * Dashboard requests use session_token.
+ * The API key is only for developers to use in their code.
  */
 
 const API_BASE = '/v1';
 
-function getApiKey(): string {
-  return localStorage.getItem('anytool_api_key') || '';
+// ── Session management ──────────────────────────────────────────────
+
+function getSessionToken(): string {
+  return localStorage.getItem('anytool_session') || '';
 }
 
-export function setApiKey(key: string) {
-  localStorage.setItem('anytool_api_key', key);
+export function setSession(token: string) {
+  localStorage.setItem('anytool_session', token);
 }
 
-export function clearApiKey() {
+export function clearSession() {
+  localStorage.removeItem('anytool_session');
+  localStorage.removeItem('anytool_user');
   localStorage.removeItem('anytool_api_key');
 }
 
-export function hasApiKey(): boolean {
-  return !!getApiKey();
+export function isLoggedIn(): boolean {
+  return !!getSessionToken();
 }
+
+// Store API key separately (shown in Keys page, used in quickstart snippets)
+export function getStoredApiKey(): string {
+  return localStorage.getItem('anytool_api_key') || '';
+}
+
+export function setStoredApiKey(key: string) {
+  localStorage.setItem('anytool_api_key', key);
+}
+
+// ── HTTP client ─────────────────────────────────────────────────────
 
 async function request<T>(
   path: string,
   options: RequestInit = {},
 ): Promise<T> {
-  const key = getApiKey();
+  const token = getSessionToken();
   const res = await fetch(`${API_BASE}${path}`, {
     ...options,
     headers: {
       'Content-Type': 'application/json',
-      ...(key ? { Authorization: `Bearer ${key}` } : {}),
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...((options.headers as Record<string, string>) || {}),
+    },
+  });
+
+  if (res.status === 401) {
+    // Session expired — clear and redirect
+    clearSession();
+    window.location.href = '/';
+    throw new Error('Session expired');
+  }
+
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({ detail: res.statusText }));
+    throw new Error(body.detail || body.message || `HTTP ${res.status}`);
+  }
+
+  return res.json();
+}
+
+// Unauthenticated request (for auth endpoints)
+async function publicRequest<T>(
+  path: string,
+  options: RequestInit = {},
+): Promise<T> {
+  const res = await fetch(`${API_BASE}${path}`, {
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
       ...((options.headers as Record<string, string>) || {}),
     },
   });
@@ -46,10 +95,11 @@ async function request<T>(
 // ── Auth ────────────────────────────────────────────────────────────
 
 export function getGoogleConfig() {
-  return request<{ client_id: string }>('/auth/google/config');
+  return publicRequest<{ client_id: string }>('/auth/google/config');
 }
 
-export interface GoogleLoginResponse {
+export interface AuthResponse {
+  session_token: string;
   api_key: string;
   account_id: string;
   workspace_id: string;
@@ -60,35 +110,34 @@ export interface GoogleLoginResponse {
 }
 
 export function googleLogin(idToken: string) {
-  return request<GoogleLoginResponse>('/auth/google', {
+  return publicRequest<AuthResponse>('/auth/google', {
     method: 'POST',
     body: JSON.stringify({ id_token: idToken }),
   });
 }
 
-export interface SignupResponse {
-  api_key: string;
-  account_id: string;
-  workspace_id: string;
-  workspace_name: string;
-  plan: string;
-  message: string;
+export function emailSignup(name: string, email: string, password: string) {
+  return publicRequest<AuthResponse>('/auth/signup', {
+    method: 'POST',
+    body: JSON.stringify({ name, email, password }),
+  });
 }
 
-export function signup(name: string, email: string) {
-  return request<SignupResponse>('/accounts', {
+export function emailLogin(email: string, password: string) {
+  return publicRequest<AuthResponse>('/auth/login', {
     method: 'POST',
-    body: JSON.stringify({ name, email }),
+    body: JSON.stringify({ email, password }),
   });
 }
 
 export function getMe() {
   return request<{
-    account: { id: string; name: string; email: string; plan: string };
-    workspace: { id: string; name: string };
-    usage: { calls_this_month: number; max_calls: number };
-    limits: Record<string, number>;
-  }>('/accounts/me');
+    account_id: string;
+    name: string;
+    email: string;
+    picture: string;
+    plan: string;
+  }>('/auth/me');
 }
 
 // ── Dashboard ───────────────────────────────────────────────────────
@@ -153,19 +202,6 @@ export function getDashboardConnections(userId?: string) {
     }[];
     total: number;
   }>(`/dashboard/connections${qs}`);
-}
-
-// ── Connections ─────────────────────────────────────────────────────
-
-export function connectApp(provider: string, userId: string) {
-  return request<{ auth_url: string }>('/connections', {
-    method: 'POST',
-    body: JSON.stringify({ provider, user_id: userId }),
-  });
-}
-
-export function checkConnection(provider: string, userId: string) {
-  return request<{ connected: boolean }>(`/connections/check?provider=${provider}&user_id=${userId}`);
 }
 
 // ── Actions ─────────────────────────────────────────────────────────
