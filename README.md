@@ -27,7 +27,7 @@ tools = api.get_tools("google", connection_id="workspace-123")
 
 # Or get tools for ALL apps at once
 all_tools = api.get_all_tools(connection_id="workspace-123")
-# → 49 tools across 5 apps, ready for llm.bind_tools()
+# → 98 tools across 8 apps, ready for llm.bind_tools()
 ```
 
 ## The Problem
@@ -44,7 +44,7 @@ Existing integration platforms pre-build wrappers for each API action. These wra
 
 | Layer | What | How |
 |-------|------|-----|
-| **Auth** | OAuth, token refresh, storage | **Nango** (700+ apps, open-source) |
+| **Auth** | OAuth, token refresh, storage | **Built-in** (standalone) or **Nango** (optional) |
 | **Knowledge** | Curated API specs — params, paths, descriptions | **anytool specs** (~15 lines per action) |
 | **Execution** | Build HTTP request, handle API quirks, parse response | **anytool executor** (direct HTTP) |
 
@@ -57,42 +57,28 @@ pip install anytool                    # Core (httpx + pydantic + loguru)
 pip install anytool[langchain]         # + LangChain tool generation
 ```
 
-## Supported Apps — 49 Actions
+## Supported Apps — 98 Actions
 
 | App | Actions | Auth |
 |-----|---------|------|
 | **Gmail** | 7 — send, search, get, thread, reply, labels, modify | OAuth2 |
 | **Google Sheets** | 2 — append row, read range | OAuth2 |
 | **Google Drive** | 2 — list files, get file | OAuth2 |
+| **Google Calendar** | 6 — list/get/create/update/delete events, list calendars | OAuth2 |
+| **Google Docs** | 5 — get/create doc, batch update, insert/replace text | OAuth2 |
 | **DocuSign** | 6 — create envelope, get status, list, recipients, void, resend | OAuth2 |
 | **Freshdesk** | 10 — create/get/update/delete ticket, reply, note, list, search, conversations, agents | API Key |
 | **Slack** | 7 — send/update message, channels, history, thread, reaction, lookup user | OAuth2 |
 | **HubSpot** | 15 — contacts, companies, deals (CRUD + search), notes, associations, owners | OAuth2 |
+| **GitHub** | 16 — issues, PRs, repos, commits, workflows, branches, search | OAuth2 |
+| **Zendesk** | 13 — tickets (CRUD), comments, search, agents, groups, users | OAuth2 |
+| **WhatsApp** | 9 — send template/text/image/document, reactions, read receipts | Bearer Token |
 
 ## Two Modes
 
-### Mode 1: Nango (Recommended)
+### Mode 1: Standalone (Recommended)
 
-[Nango](https://nango.dev) handles OAuth for 700+ apps. anytool calls APIs through Nango's proxy which auto-injects tokens.
-
-```python
-from anytool import AnyTool
-
-api = AnyTool(nango_secret_key="nango-secret-xxx")
-
-# Check connection
-connected = await api.is_connected("google", "workspace-123")
-
-# Call API
-result = await api.call("gmail_search", connection_id="workspace-123", q="from:vendor@example.com is:unread")
-
-# Get LangChain tools
-tools = api.get_tools("google", connection_id="workspace-123")
-```
-
-### Mode 2: Standalone
-
-Manage OAuth yourself. Bring your own token store.
+Manage OAuth yourself. Full control over tokens, no third-party dependencies.
 
 ```python
 from anytool import AnyTool, MemoryTokenStore, AppCredentials
@@ -110,11 +96,30 @@ api.register_app(AppCredentials(
 # Start OAuth flow
 auth_url = await api.get_auth_url("google", connection_id="user-123")
 
-# Handle callback
+# Handle callback (after user authorizes)
 tokens = await api.handle_callback("google", code="xxx", state="xxx")
 
-# Call APIs
+# Call APIs — tokens auto-refresh when expired
 result = await api.call("gmail_send_email", connection_id="user-123", to="...", subject="...", body="...")
+```
+
+### Mode 2: Nango (Optional)
+
+[Nango](https://nango.dev) handles OAuth for 700+ apps. Use if you prefer a managed auth layer.
+
+```python
+from anytool import AnyTool
+
+api = AnyTool(nango_secret_key="nango-secret-xxx")
+
+# Check connection
+connected = await api.is_connected("google", "workspace-123")
+
+# Call API
+result = await api.call("gmail_search", connection_id="workspace-123", q="from:vendor@example.com is:unread")
+
+# Get LangChain tools
+tools = api.get_tools("google", connection_id="workspace-123")
 ```
 
 ## LangChain Integration
@@ -183,8 +188,8 @@ await engine.start()
          ┌─────────▼─────────┐
          │  anytool client   │
          │                   │
-         │  Spec Registry    │  ← 49 curated ActionSpecs
-         │  Provider Mapping │  ← app slug → Nango key
+         │  Spec Registry    │  ← 98 curated ActionSpecs
+         │  OAuth Manager    │  ← token refresh, CSRF
          └─────────┬─────────┘
                    │
          ┌─────────▼─────────┐
@@ -196,10 +201,11 @@ await engine.start()
          │  Extract IDs      │  ← response_ids mapping
          └─────────┬─────────┘
                    │
-         ┌─────────▼─────────┐         ┌──────────────┐
-         │  Nango Proxy      │────────▶│  Real API    │
-         │  (auth injection) │◀────────│  (Gmail etc) │
-         └───────────────────┘         └──────────────┘
+         ┌─────────▼─────────┐
+         │  Direct HTTP      │────────▶  Gmail, Slack,
+         │  (auto-injects    │◀────────  HubSpot, etc.
+         │   OAuth tokens)   │
+         └───────────────────┘
 ```
 
 ## License

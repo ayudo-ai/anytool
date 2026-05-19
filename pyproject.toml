@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "anytool"
-version = "0.1.2"
+version = "0.1.3"
 description = "Agent-native API integration SDK. Curated specs. Direct execution. Zero wrappers."
 readme = "README.md"
 license = "MIT"
@@ -48,6 +48,14 @@ Documentation = "https://github.com/ayudo-ai/anytool#readme"
 
 [tool.hatch.build.targets.wheel]
 packages = ["anytool"]
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "anytool/",
+    "README.md",
+    "pyproject.toml",
+    "LICENSE",
+]
 
 [tool.ruff]
 target-version = "py310"
