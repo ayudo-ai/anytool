@@ -28,26 +28,3 @@ jobs:
 
           sudo systemctl restart anytool
           echo "Anytool production US deploy complete."
-
-  # ===============================
-  # PRODUCTION - IND
-  # ===============================
-  deploy-prod-ind:
-    runs-on: ec2-prod-ind
-
-    steps:
-      - name: Deploy Anytool (Production IND)
-        run: |
-          set -e
-          cd /home/ubuntu/anytool
-
-          echo "Deploying ANYTOOL PRODUCTION IND..."
-          git fetch origin
-          git checkout main
-          git reset --hard origin/main
-
-          source venv/bin/activate || true
-          pip install -r requirements.txt
-
-          sudo systemctl restart anytool
-          echo "Anytool production IND deploy complete."
