@@ -207,3 +207,71 @@ async def dashboard_connections(
         })
 
     return {"connections": connections, "total": len(connections)}
+
+
+@router.get("/webhook-logs")
+async def dashboard_webhook_logs(
+    limit: int = Query(default=50, ge=1, le=200),
+    offset: int = Query(default=0, ge=0),
+    trigger_id: Optional[str] = None,
+    user_id: Optional[str] = None,
+    successful: Optional[bool] = None,
+    ctx: AuthContext = Depends(get_auth_context),
+):
+    """Recent webhook delivery logs from trigger polls.
+
+    Reads from the webhook_log MetaObject.
+
+    Example:
+        GET /v1/dashboard/webhook-logs?trigger_id=abc123&limit=20
+    """
+    async with async_session() as session:
+        conditions = [
+            MetaRecord.object_slug == "webhook_log",
+            MetaRecord.workspace_id == ctx.workspace_id,
+            MetaRecord.is_deleted.is_(False),
+        ]
+
+        if trigger_id:
+            conditions.append(MetaRecord.custom_data["trigger_id"].astext == trigger_id)
+        if user_id:
+            conditions.append(MetaRecord.custom_data["user_id"].astext == user_id)
+        if successful is not None:
+            conditions.append(
+                MetaRecord.custom_data["successful"].astext == str(successful).lower()
+            )
+
+        result = await session.execute(
+            select(MetaRecord)
+            .where(and_(*conditions))
+            .order_by(MetaRecord.created_at.desc())
+            .offset(offset)
+            .limit(limit)
+        )
+        records = result.scalars().all()
+
+        count_result = await session.execute(
+            select(func.count(MetaRecord.id))
+            .where(and_(*conditions))
+        )
+        total = count_result.scalar() or 0
+
+    logs = []
+    for r in records:
+        data = r.custom_data or {}
+        logs.append({
+            "id": r.id,
+            "trigger_id": data.get("trigger_id", ""),
+            "user_id": data.get("user_id", ""),
+            "webhook_url": data.get("webhook_url", ""),
+            "event_type": data.get("event_type", ""),
+            "event_data": data.get("event_data", {}),
+            "status_code": data.get("status_code", 0),
+            "successful": data.get("successful", False),
+            "retry_count": data.get("retry_count", 0),
+            "error": data.get("error"),
+            "duration_ms": data.get("duration_ms", 0),
+            "created_at": str(r.created_at) if r.created_at else "",
+        })
+
+    return {"logs": logs, "total": total, "limit": limit, "offset": offset}

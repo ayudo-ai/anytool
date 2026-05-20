@@ -133,6 +133,7 @@ export function emailLogin(email: string, password: string) {
 export function getMe() {
   return request<{
     account_id: string;
+    workspace_id: string;
     name: string;
     email: string;
     picture: string;
@@ -202,6 +203,61 @@ export function getDashboardConnections(userId?: string) {
     }[];
     total: number;
   }>(`/dashboard/connections${qs}`);
+}
+
+// ── Connections ─────────────────────────────────────────────────────
+
+export function connectUser(provider: string, userId: string) {
+  return request<{ auth_url: string; user_id: string; provider: string }>('/connections', {
+    method: 'POST',
+    body: JSON.stringify({ provider, user_id: userId }),
+  });
+}
+
+export function disconnectUser(provider: string, userId: string) {
+  return request<{ disconnected: boolean }>('/connections', {
+    method: 'DELETE',
+    body: JSON.stringify({ provider, user_id: userId }),
+  });
+}
+
+export function connectApiKey(provider: string, userId: string, apiKey: string, domain: string) {
+  return request<{ connected: boolean; provider: string; user_id: string }>('/connections/api-key', {
+    method: 'POST',
+    body: JSON.stringify({ provider, user_id: userId, api_key: apiKey, domain }),
+  });
+}
+
+export function getDashboardWebhookLogs(params?: {
+  limit?: number;
+  offset?: number;
+  trigger_id?: string;
+  user_id?: string;
+  successful?: boolean;
+}) {
+  const qs = new URLSearchParams();
+  if (params?.limit) qs.set('limit', String(params.limit));
+  if (params?.offset) qs.set('offset', String(params.offset));
+  if (params?.trigger_id) qs.set('trigger_id', params.trigger_id);
+  if (params?.user_id) qs.set('user_id', params.user_id);
+  if (params?.successful !== undefined) qs.set('successful', String(params.successful));
+  return request<{
+    logs: {
+      id: string;
+      trigger_id: string;
+      user_id: string;
+      webhook_url: string;
+      event_type: string;
+      event_data: Record<string, unknown>;
+      status_code: number;
+      successful: boolean;
+      retry_count: number;
+      error: string | null;
+      duration_ms: number;
+      created_at: string;
+    }[];
+    total: number;
+  }>(`/dashboard/webhook-logs?${qs}`);
 }
 
 // ── Actions ─────────────────────────────────────────────────────────
@@ -371,4 +427,25 @@ export function createApiKey(label?: string) {
 
 export function revokeApiKey(keyId: string) {
   return request<{ revoked: boolean }>(`/keys/${keyId}`, { method: 'DELETE' });
+}
+
+// ── Webhook Test ────────────────────────────────────────────────────
+
+export function listTestWebhooks(params?: { limit?: number; offset?: number }) {
+  const qs = new URLSearchParams();
+  if (params?.limit) qs.set('limit', String(params.limit));
+  if (params?.offset) qs.set('offset', String(params.offset));
+  return request<{
+    webhooks: {
+      id: string;
+      trigger_id: string;
+      trigger_type: string;
+      connection_id: string;
+      event_data: Record<string, unknown>;
+      full_payload: Record<string, unknown>;
+      signature: string;
+      received_at: string;
+    }[];
+    total: number;
+  }>(`/webhook-test?${qs}`);
 }

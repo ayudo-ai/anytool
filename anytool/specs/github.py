@@ -403,6 +403,56 @@ GITHUB_TRIGGER_WORKFLOW = ActionSpec(
 
 # ── Export ────────────────────────────────────────────────────────────
 
+GITHUB_CREATE_WEBHOOK = ActionSpec(
+    name="github_create_webhook",
+    app="github",
+    description=(
+        "Create a webhook on a GitHub repository. Sends events to the specified URL. "
+        "Used internally by anytool to set up real-time triggers."
+    ),
+    method="POST",
+    path="/repos/{owner}/{repo}/hooks",
+    content_type="application/json",
+    params=[
+        ParamSpec(name="owner", type="string", required=True, location="path",
+                  description="Repository owner"),
+        ParamSpec(name="repo", type="string", required=True, location="path",
+                  description="Repository name"),
+        ParamSpec(name="url", type="string", required=True,
+                  description="Webhook URL to receive events"),
+        ParamSpec(name="events", type="list", required=False,
+                  description="Events to subscribe to. Default: ['push']"),
+        ParamSpec(name="secret", type="string", required=False,
+                  description="Secret for HMAC signature verification"),
+    ],
+    body_template={
+        "name": "web",
+        "active": True,
+        "config": {
+            "url": "{url}",
+            "content_type": "json",
+            "secret": "{secret}",
+        },
+    },
+)
+
+GITHUB_DELETE_WEBHOOK = ActionSpec(
+    name="github_delete_webhook",
+    app="github",
+    description="Delete a webhook from a GitHub repository.",
+    method="DELETE",
+    path="/repos/{owner}/{repo}/hooks/{hook_id}",
+    params=[
+        ParamSpec(name="owner", type="string", required=True, location="path",
+                  description="Repository owner"),
+        ParamSpec(name="repo", type="string", required=True, location="path",
+                  description="Repository name"),
+        ParamSpec(name="hook_id", type="string", required=True, location="path",
+                  description="Webhook ID to delete"),
+    ],
+)
+
+
 GITHUB_SPECS = [
     # Issues
     GITHUB_CREATE_ISSUE,
@@ -424,4 +474,7 @@ GITHUB_SPECS = [
     # Actions
     GITHUB_LIST_WORKFLOW_RUNS,
     GITHUB_TRIGGER_WORKFLOW,
+    # Webhooks
+    GITHUB_CREATE_WEBHOOK,
+    GITHUB_DELETE_WEBHOOK,
 ]

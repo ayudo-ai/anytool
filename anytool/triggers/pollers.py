@@ -12,6 +12,7 @@ Adding a new poller = one function. Same pattern every time.
 
 from __future__ import annotations
 
+import base64
 from datetime import datetime, timezone
 from typing import Any, Dict, List
 
@@ -21,6 +22,64 @@ from anytool.client import AnyTool
 from anytool.triggers.base import TriggerConfig, TriggerEvent
 
 
+# ── Helpers ──────────────────────────────────────────────────────────
+
+def _extract_parts(
+    payload: dict,
+    attachments: list,
+    body_text_parts: list,
+) -> None:
+    """Recursively walk Gmail MIME parts to extract body text and attachment metadata.
+
+    - Body text (text/plain, text/html) is decoded and appended to body_text_parts
+    - Attachments get metadata only (filename, mimeType, size, attachmentId)
+      The developer can fetch actual bytes via gmail_get_attachment action
+    - Inline images (Content-Disposition: inline) are also included as attachments
+    """
+    mime_type = payload.get("mimeType", "")
+    filename = payload.get("filename", "")
+    body = payload.get("body", {})
+    parts = payload.get("parts", [])
+    part_headers = {}
+    for h in payload.get("headers", []):
+        part_headers[h.get("name", "").lower()] = h.get("value", "")
+
+    # Attachment: has attachmentId + (filename OR is an image/file mime type)
+    is_attachment = bool(body.get("attachmentId")) and (
+        filename
+        or mime_type.startswith("image/")
+        or mime_type.startswith("audio/")
+        or mime_type.startswith("video/")
+        or mime_type.startswith("application/")
+    )
+
+    if is_attachment:
+        content_disposition = part_headers.get("content-disposition", "")
+        content_id = part_headers.get("content-id", "").strip("<>")
+        attachments.append({
+            "filename": filename or f"attachment.{mime_type.split('/')[-1]}",
+            "mime_type": mime_type,
+            "size": body.get("size", 0),
+            "attachment_id": body.get("attachmentId", ""),
+            "content_id": content_id,  # for inline images (cid:xxx)
+            "inline": "inline" in content_disposition,
+        })
+    elif mime_type in ("text/plain", "text/html") and body.get("data"):
+        # Decode base64url body
+        try:
+            decoded = base64.urlsafe_b64decode(body["data"]).decode("utf-8", errors="replace")
+            if mime_type == "text/plain":
+                body_text_parts.insert(0, decoded)  # prefer plain text first
+            else:
+                body_text_parts.append(decoded)
+        except Exception:
+            pass
+
+    # Recurse into multipart
+    for part in parts:
+        _extract_parts(part, attachments, body_text_parts)
+
+
 # ── Gmail ────────────────────────────────────────────────────────────
 
 async def poll_gmail_new_message(
@@ -28,7 +87,7 @@ async def poll_gmail_new_message(
     trigger: TriggerConfig,
 ) -> List[TriggerEvent]:
     """Poll Gmail for new messages."""
-    query_parts = ["is:unread", "newer_than:3m"]
+    query_parts = ["newer_than:3m"]
 
     filters = trigger.filters or {}
     if filters.get("from_contains"):
@@ -70,6 +129,9 @@ async def poll_gmail_new_message(
     if not new_message_ids:
         return []
 
+    # Reverse to chronological order (oldest first) — Gmail returns newest first
+    new_message_ids.reverse()
+
     logger.info(f"[trigger.gmail] Found {len(new_message_ids)} new | trigger={trigger.id}")
 
     events = []
@@ -78,7 +140,7 @@ async def poll_gmail_new_message(
             "gmail_get_message",
             connection_id=trigger.connection_id,
             message_id=msg_id,
-            format="metadata",
+            format="full",
         )
         if not msg_result.get("successful"):
             continue
@@ -87,18 +149,30 @@ async def poll_gmail_new_message(
         headers = {}
         for h in msg_data.get("payload", {}).get("headers", []):
             name = h.get("name", "").lower()
-            if name in ("from", "to", "subject", "date", "cc", "message-id"):
+            if name in ("from", "to", "subject", "date", "cc", "message-id", "content-type"):
                 headers[name] = h.get("value", "")
+
+        # Extract attachment metadata from parts
+        attachments = []
+        body_text = ""
+        _extract_parts(msg_data.get("payload", {}), attachments, body_text_parts := [])
+        body_text = "\n".join(body_text_parts)[:2000]  # cap at 2KB
 
         event_data = {
             "message_id": msg_data.get("id", msg_id),
             "thread_id": msg_data.get("threadId", ""),
             "from": headers.get("from", ""),
             "to": headers.get("to", ""),
+            "cc": headers.get("cc", ""),
             "subject": headers.get("subject", ""),
             "date": headers.get("date", ""),
+            "message_id_header": headers.get("message-id", ""),
             "snippet": msg_data.get("snippet", ""),
+            "body": body_text,
             "label_ids": msg_data.get("labelIds", []),
+            "has_attachments": len(attachments) > 0,
+            "attachment_count": len(attachments),
+            "attachments": attachments,
         }
 
         if filters.get("body_contains"):

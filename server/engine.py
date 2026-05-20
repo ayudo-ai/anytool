@@ -50,6 +50,8 @@ _DEFAULT_SCOPES = {
         "crm.objects.deals.read",
         "crm.objects.deals.write",
         "crm.objects.owners.read",
+        "crm.objects.leads.read",
+        "crm.objects.leads.write",
     ],
     "github": [
         "repo",
@@ -136,9 +138,15 @@ def _load_app_credentials() -> list[AppCredentials]:
             redirect_uri=callback_url,
         ))
 
-    # Zendesk (needs subdomain — loaded per-connection)
-    # WhatsApp (uses Bearer token, not OAuth — loaded per-connection)
-    # Freshdesk (uses API key, not OAuth — loaded per-connection)
+    # API key providers — register with empty OAuth creds so the executor
+    # can find them. Actual auth comes from stored UserTokens (api_key field).
+    for api_key_app in ["freshdesk", "zendesk", "whatsapp"]:
+        credentials.append(AppCredentials(
+            app=api_key_app,
+            auth_type="api_key",
+            client_id="",
+            client_secret="",
+        ))
 
     return credentials
 

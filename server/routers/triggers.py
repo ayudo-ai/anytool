@@ -21,9 +21,11 @@ from pydantic import BaseModel
 
 from server.auth import get_auth_context, AuthContext
 from server.database import (
-    put_record, get_record, list_records, delete_record, new_id,
+    put_record, get_record, list_records, delete_record, update_record_fields, new_id,
 )
 from server.trigger_engine import get_trigger_engine
+from server.engine import get_api_for_workspace
+from server.config import config as server_config
 
 router = APIRouter(prefix="/triggers", tags=["triggers"])
 
@@ -31,22 +33,25 @@ router = APIRouter(prefix="/triggers", tags=["triggers"])
 # ── Supported triggers ───────────────────────────────────────────────
 
 TRIGGER_MAP = {
-    # Gmail
-    "gmail_new_message": {"trigger_type": "gmail_new_message", "provider": "google"},
-    "gmail_new_email": {"trigger_type": "gmail_new_message", "provider": "google"},
-    # Slack
-    "slack_new_message": {"trigger_type": "slack_new_message", "provider": "slack"},
-    # GitHub
-    "github_new_issue": {"trigger_type": "github_new_issue", "provider": "github"},
-    "github_new_pr": {"trigger_type": "github_new_pr", "provider": "github"},
-    "github_new_pull_request": {"trigger_type": "github_new_pr", "provider": "github"},
-    # HubSpot
-    "hubspot_new_contact": {"trigger_type": "hubspot_new_contact", "provider": "hubspot"},
-    "hubspot_new_deal": {"trigger_type": "hubspot_new_deal", "provider": "hubspot"},
-    # Freshdesk
-    "freshdesk_new_ticket": {"trigger_type": "freshdesk_new_ticket", "provider": "freshdesk"},
-    # Zendesk
-    "zendesk_new_ticket": {"trigger_type": "zendesk_new_ticket", "provider": "zendesk"},
+    # Gmail (polling)
+    "gmail_new_message": {"trigger_type": "gmail_new_message", "provider": "google", "mode": "poll"},
+    "gmail_new_email": {"trigger_type": "gmail_new_message", "provider": "google", "mode": "poll"},
+    # Slack (polling)
+    "slack_new_message": {"trigger_type": "slack_new_message", "provider": "slack", "mode": "poll"},
+    # GitHub (webhook — real-time!)
+    "github_new_issue": {"trigger_type": "github_new_issue", "provider": "github", "mode": "webhook", "events": ["issues"]},
+    "github_new_pr": {"trigger_type": "github_new_pr", "provider": "github", "mode": "webhook", "events": ["pull_request"]},
+    "github_new_pull_request": {"trigger_type": "github_new_pr", "provider": "github", "mode": "webhook", "events": ["pull_request"]},
+    "github_push": {"trigger_type": "github_push", "provider": "github", "mode": "webhook", "events": ["push"]},
+    "github_star": {"trigger_type": "github_star", "provider": "github", "mode": "webhook", "events": ["star"]},
+    "github_issue_comment": {"trigger_type": "github_issue_comment", "provider": "github", "mode": "webhook", "events": ["issue_comment"]},
+    # HubSpot (polling)
+    "hubspot_new_contact": {"trigger_type": "hubspot_new_contact", "provider": "hubspot", "mode": "poll"},
+    "hubspot_new_deal": {"trigger_type": "hubspot_new_deal", "provider": "hubspot", "mode": "poll"},
+    # Freshdesk (polling)
+    "freshdesk_new_ticket": {"trigger_type": "freshdesk_new_ticket", "provider": "freshdesk", "mode": "poll"},
+    # Zendesk (polling)
+    "zendesk_new_ticket": {"trigger_type": "zendesk_new_ticket", "provider": "zendesk", "mode": "poll"},
 }
 
 
@@ -82,6 +87,78 @@ class DeployTriggerRequest(BaseModel):
     webhook_url: str                    # where to POST events (unique per trigger)
     filters: Dict[str, Any] = {}       # from_contains, subject_contains, etc.
     poll_interval_seconds: int = 90
+
+
+async def _setup_provider_webhook(
+    trigger_id: str,
+    trigger_info: dict,
+    filters: dict,
+    user_id: str,
+    ctx: "AuthContext",
+) -> Optional[dict]:
+    """Auto-register a webhook on the provider (e.g. GitHub) for real-time triggers.
+
+    Returns setup info (hook_id, webhook_url) or None on failure.
+    """
+    provider = trigger_info["provider"]
+    events = trigger_info.get("events", [])
+
+    if provider == "github":
+        owner = filters.get("owner", "")
+        repo = filters.get("repo", "")
+        if not owner or not repo:
+            raise HTTPException(
+                400,
+                "GitHub webhook triggers require 'owner' and 'repo' in filters."
+            )
+
+        # Build the inbound webhook URL that GitHub will POST to
+        inbound_url = f"{server_config.base_url}{server_config.api_prefix}/webhooks/github/{trigger_id}"
+
+        # Generate a secret for signature verification
+        import secrets
+        webhook_secret = secrets.token_hex(20)
+
+        # Register webhook on GitHub using the user's connection
+        api = await get_api_for_workspace(ctx.workspace_id, ctx.account_id)
+        try:
+            result = await api.call(
+                "github_create_webhook",
+                connection_id=user_id,
+                owner=owner,
+                repo=repo,
+                url=inbound_url,
+                events=events,
+                secret=webhook_secret,
+            )
+
+            if result.get("successful"):
+                hook_id = result.get("data", {}).get("id", "")
+                from loguru import logger
+                logger.info(
+                    f"[triggers] GitHub webhook registered | trigger={trigger_id} "
+                    f"repo={owner}/{repo} hook_id={hook_id} events={events}"
+                )
+                # Store webhook secret for signature verification
+                await update_record_fields("trigger", trigger_id, {
+                    "webhook_secret": webhook_secret,
+                })
+                return {
+                    "hook_id": str(hook_id),
+                    "inbound_url": inbound_url,
+                    "events": events,
+                    "repo": f"{owner}/{repo}",
+                }
+            else:
+                error = result.get("error", "Unknown error")
+                raise HTTPException(500, f"Failed to create GitHub webhook: {error}")
+
+        except HTTPException:
+            raise
+        except Exception as e:
+            raise HTTPException(500, f"Failed to register GitHub webhook: {e}")
+
+    return None
 
 
 # ── Routes ───────────────────────────────────────────────────────────
@@ -127,45 +204,69 @@ async def deploy_trigger(body: DeployTriggerRequest, ctx: AuthContext = Depends(
 
     trigger_id = new_id()
 
-    # Save to DB — scoped to account + workspace, keyed on trigger_id
+    trigger_mode = trigger_info.get("mode", "poll")
+
+    # Save to DB
+    trigger_data = {
+        "trigger_type": trigger_info["trigger_type"],
+        "provider": trigger_info["provider"],
+        "user_id": body.user_id,
+        "webhook_url": body.webhook_url,
+        "filters": body.filters,
+        "poll_interval_seconds": body.poll_interval_seconds,
+        "enabled": False,  # enabled after setup completes
+        "mode": trigger_mode,
+        "last_seen_id": "",
+        "last_poll_at": None,
+    }
+
     await put_record(
         object_slug="trigger",
         primary_key=trigger_id,
         account_id=ctx.account_id,
         workspace_id=ctx.workspace_id,
-        data={
-            "trigger_type": trigger_info["trigger_type"],
-            "provider": trigger_info["provider"],
-            "user_id": body.user_id,
-            "webhook_url": body.webhook_url,
-            "filters": body.filters,
-            "poll_interval_seconds": body.poll_interval_seconds,
-            "enabled": True,
-            "last_seen_id": "",
-            "last_poll_at": None,
-        },
+        data=trigger_data,
     )
 
-    # Register with the live trigger engine
-    engine = await get_trigger_engine()
-    from anytool.triggers.base import TriggerConfig
+    webhook_setup = None
 
-    await engine.register(TriggerConfig(
-        id=trigger_id,
-        trigger_type=trigger_info["trigger_type"],
-        provider=trigger_info["provider"],
-        connection_id=body.user_id,
-        webhook_url=body.webhook_url,
-        filters=body.filters,
-        poll_interval_seconds=body.poll_interval_seconds,
-    ))
+    if trigger_mode == "webhook":
+        # Webhook mode — register a webhook on the provider (e.g. GitHub)
+        webhook_setup = await _setup_provider_webhook(
+            trigger_id=trigger_id,
+            trigger_info=trigger_info,
+            filters=body.filters,
+            user_id=body.user_id,
+            ctx=ctx,
+        )
+        # Enable the trigger (no polling needed)
+        await update_record_fields("trigger", trigger_id, {
+            "enabled": True,
+            "webhook_setup": webhook_setup,
+        })
+    else:
+        # Polling mode — baseline then enable via trigger engine
+        engine = await get_trigger_engine()
+        from anytool.triggers.base import TriggerConfig
+
+        await engine.register(TriggerConfig(
+            id=trigger_id,
+            trigger_type=trigger_info["trigger_type"],
+            provider=trigger_info["provider"],
+            connection_id=body.user_id,
+            webhook_url=body.webhook_url,
+            filters=body.filters,
+            poll_interval_seconds=body.poll_interval_seconds,
+        ))
 
     return {
         "trigger_id": trigger_id,
         "trigger_type": body.trigger_type,
         "user_id": body.user_id,
         "webhook_url": body.webhook_url,
+        "mode": trigger_mode,
         "status": "active",
+        "webhook_setup": webhook_setup,
     }
 
 

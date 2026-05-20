@@ -32,6 +32,13 @@ class AppConfig:
     scope_separator: str = " "  # Google/Microsoft use space, Slack uses comma
     extra_auth_params: Dict[str, str] = field(default_factory=dict)
 
+    # User scopes (Slack-specific: sent as user_scope param, returns user token)
+    user_scopes: list = field(default_factory=list)
+
+    # Token extraction: which field to use as access_token from OAuth response
+    # Default: "access_token". Slack user mode: "authed_user.access_token"
+    token_path: str = "access_token"
+
     # API base URL (for constructing API calls)
     api_base_url: str = ""
 
@@ -104,7 +111,7 @@ APPS: Dict[str, AppConfig] = {
     "freshdesk": AppConfig(
         name="Freshdesk",
         slug="freshdesk",
-        api_base_url="https://{domain}/api/v2",  # domain filled at runtime
+        api_base_url="https://{domain}",  # domain filled at runtime, paths already include /api/v2
         # No OAuth — uses API key auth
     ),
     "docusign": AppConfig(
@@ -125,6 +132,12 @@ APPS: Dict[str, AppConfig] = {
         scope_separator=",",
         api_base_url="https://slack.com/api",
         _extract_metadata=_slack_metadata,
+        # Request user scopes so we get a user token (messages appear as the user)
+        user_scopes=[
+            "channels:read", "channels:history", "chat:write",
+            "users:read", "users:read.email", "reactions:write",
+        ],
+        token_path="authed_user.access_token",  # prefer user token
     ),
     "whatsapp": AppConfig(
         name="WhatsApp Business",

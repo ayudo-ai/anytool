@@ -536,6 +536,55 @@ SYSTEM_OBJECTS: List[Dict[str, Any]] = [
         ],
     },
 
+    # ── Webhook Test (echo server for testing triggers) ──────────────
+    {
+        "slug": "webhook_test",
+        "label": "Webhook Test",
+        "description": (
+            "Test webhooks received by the built-in echo server. "
+            "Developers use /v1/webhook-test/<workspace_id> as their webhook_url "
+            "during trigger testing."
+        ),
+        "fields": [
+            {
+                "api_name": "workspace_id",
+                "label": "Workspace",
+                "type": "reference",
+                "required": True,
+            },
+            {
+                "api_name": "trigger_id",
+                "label": "Trigger ID",
+                "type": "string",
+            },
+            {
+                "api_name": "trigger_type",
+                "label": "Trigger Type",
+                "type": "string",
+            },
+            {
+                "api_name": "connection_id",
+                "label": "Connection ID",
+                "type": "string",
+            },
+            {
+                "api_name": "event_data",
+                "label": "Event Data",
+                "type": "json",
+            },
+            {
+                "api_name": "full_payload",
+                "label": "Full Payload",
+                "type": "json",
+            },
+            {
+                "api_name": "signature",
+                "label": "HMAC Signature",
+                "type": "string",
+            },
+        ],
+    },
+
     # ── Connection (metadata — tracks which users connected which apps) ──
     {
         "slug": "connection",

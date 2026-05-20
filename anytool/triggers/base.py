@@ -57,8 +57,12 @@ class TriggerEvent:
     timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
     def to_webhook_payload(self) -> dict:
-        """Convert to the payload POSTed to the webhook URL."""
-        return {
+        """Convert to the payload POSTed to the webhook URL.
+
+        Includes both normalized `data` (standard format across all providers)
+        and `raw` (original provider payload for full access).
+        """
+        payload = {
             "trigger_id": self.trigger_id,
             "trigger_type": self.trigger_type,
             "provider": self.provider,
@@ -66,3 +70,6 @@ class TriggerEvent:
             "data": self.data,
             "timestamp": self.timestamp.isoformat(),
         }
+        if self.raw:
+            payload["raw"] = self.raw
+        return payload

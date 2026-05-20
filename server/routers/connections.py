@@ -54,6 +54,17 @@ class DisconnectRequest(BaseModel):
     user_id: str
 
 
+class ApiKeyConnectRequest(BaseModel):
+    provider: str     # freshdesk, zendesk
+    user_id: str      # end-user in YOUR app
+    api_key: str      # the end-user's API key for this provider
+    domain: str = ""  # e.g. "yourcompany.freshdesk.com"
+
+
+# Providers that use API key auth instead of OAuth
+API_KEY_PROVIDERS = {"freshdesk", "zendesk", "whatsapp"}
+
+
 # ── Routes ───────────────────────────────────────────────────────────
 
 @router.post("")
@@ -110,6 +121,75 @@ async def connect_app(body: ConnectRequest, ctx: AuthContext = Depends(get_auth_
         raise HTTPException(400, str(e))
     except Exception as e:
         raise HTTPException(500, f"Failed to start OAuth: {e}")
+
+
+@router.post("/api-key")
+async def connect_api_key(body: ApiKeyConnectRequest, ctx: AuthContext = Depends(get_auth_context)):
+    """Connect an app using API key auth (Freshdesk, Zendesk, WhatsApp).
+
+    No OAuth flow needed — the developer provides the API key directly.
+    The key is encrypted and stored, same as OAuth tokens.
+
+    Example:
+        POST /v1/connections/api-key
+        {"provider": "freshdesk", "user_id": "customer-123",
+         "api_key": "your-freshdesk-key", "domain": "yourcompany.freshdesk.com"}
+    """
+    provider = PROVIDER_MAP.get(body.provider.lower(), body.provider.lower())
+    if provider not in API_KEY_PROVIDERS:
+        raise HTTPException(
+            400,
+            f"Provider '{body.provider}' uses OAuth, not API key auth. "
+            f"Use POST /v1/connections instead. "
+            f"API key providers: {list(API_KEY_PROVIDERS)}"
+        )
+
+    if not body.api_key:
+        raise HTTPException(400, "api_key is required")
+
+    # Clean domain — strip protocol and trailing slashes
+    domain = body.domain.strip()
+    domain = domain.replace("https://", "").replace("http://", "").rstrip("/")
+
+    # Store as UserTokens with api_key field
+    from anytool.auth.models import UserTokens
+    from server.token_store import PostgresTokenStore
+
+    store = PostgresTokenStore()
+    tokens = UserTokens(
+        app=provider,
+        user_id=body.user_id,
+        access_token="",
+        api_key=body.api_key,
+        domain=body.domain,
+        token_type="api_key",
+        scopes=[],
+    )
+    await store.save_tokens(tokens)
+
+    # Track connection
+    connection_key = f"{body.user_id}:{provider}"
+    await put_record(
+        object_slug="connection",
+        primary_key=connection_key,
+        account_id=ctx.account_id,
+        workspace_id=ctx.workspace_id,
+        data={
+            "user_id": body.user_id,
+            "provider": provider,
+            "status": "active",
+            "connected_at": now().isoformat(),
+            "auth_type": "api_key",
+            "domain": body.domain,
+        },
+    )
+
+    return {
+        "connected": True,
+        "provider": provider,
+        "user_id": body.user_id,
+        "auth_type": "api_key",
+    }
 
 
 @router.get("/callback")

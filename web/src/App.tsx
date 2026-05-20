@@ -12,6 +12,8 @@ import { LogsPage } from '@/pages/LogsPage'
 import { KeysPage } from '@/pages/KeysPage'
 import { SettingsPage } from '@/pages/SettingsPage'
 import { QuickstartPage } from '@/pages/QuickstartPage'
+import { WebhookLogsPage } from '@/pages/WebhookLogsPage'
+import { ApiDocsPage } from '@/pages/ApiDocsPage'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   if (!isLoggedIn()) return <Navigate to="/" replace />
@@ -40,6 +42,8 @@ export default function App() {
         <Route path="keys" element={<KeysPage />} />
         <Route path="settings" element={<SettingsPage />} />
         <Route path="quickstart" element={<QuickstartPage />} />
+        <Route path="webhook-logs" element={<WebhookLogsPage />} />
+        <Route path="api-docs" element={<ApiDocsPage />} />
       </Route>
     </Routes>
   )

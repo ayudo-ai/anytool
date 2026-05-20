@@ -126,7 +126,13 @@ class APIExecutor:
 
         tokens = await self._oauth.get_valid_tokens(credentials, user_id)
         headers["Authorization"] = tokens.auth_header
-        url = f"{base_url.rstrip('/')}{path}"
+
+        # Substitute domain in base_url (e.g. Freshdesk: https://{domain}/api/v2)
+        resolved_base = base_url
+        if "{domain}" in resolved_base and tokens.domain:
+            resolved_base = resolved_base.replace("{domain}", tokens.domain)
+
+        url = f"{resolved_base.rstrip('/')}{path}"
 
         async with httpx.AsyncClient(timeout=30.0) as client:
             try:

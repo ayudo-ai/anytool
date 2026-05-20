@@ -331,9 +331,14 @@ async def get_current_user(authorization: str = Header(...)):
         if not account:
             raise HTTPException(401, "Account not found")
 
+        # Find workspace for this account
+        workspaces = await list_records("workspace", account_id=account_id)
+        workspace_id = workspaces[0].primary_field_value if workspaces else ""
+
         account_data = account.custom_data or {}
         return {
             "account_id": account_id,
+            "workspace_id": workspace_id,
             "name": account_data.get("name", ""),
             "email": account_data.get("email", ""),
             "picture": account_data.get("picture", ""),

@@ -76,15 +76,30 @@ class TriggerEngine:
         If skip_baseline=False (default), runs an initial poll to set
         last_seen_id WITHOUT delivering events. This prevents old
         messages from flooding your webhook on first registration.
+
+        The trigger is saved as disabled during baseline to prevent the
+        background loop from polling it before baseline completes.
         """
+        needs_baseline = not skip_baseline and not config.last_seen_id
+
+        if needs_baseline:
+            # Save disabled so background loop won't pick it up during baseline
+            config.enabled = False
+
         await self._store.save_trigger(config)
         logger.info(
             f"[trigger.engine] Registered | id={config.id} "
             f"type={config.trigger_type} connection={config.connection_id}"
         )
 
-        if not skip_baseline and not config.last_seen_id:
+        if needs_baseline:
             await self._baseline_trigger(config)
+            # Re-read from store to get the baselined last_seen_id
+            updated = await self._store.get_trigger(config.id)
+            if updated:
+                config = updated
+            config.enabled = True
+            await self._store.save_trigger(config)
 
         return config
 
@@ -97,7 +112,7 @@ class TriggerEngine:
 
         events = await poller(self._api, trigger)
         if events:
-            newest_id = events[0].data.get("message_id", "")
+            newest_id = events[-1].data.get("message_id", "")
             await self._store.update_state(
                 trigger.id,
                 last_seen_id=newest_id,
@@ -163,8 +178,15 @@ class TriggerEngine:
     async def _poll_trigger(self, trigger: TriggerConfig) -> List[TriggerEvent]:
         """Poll a single trigger, deliver events, update state.
 
+        Re-reads trigger from store to get latest state (e.g. after baseline).
         Tracks consecutive errors. Auto-disables trigger after 10 failures.
         """
+        # Re-read from store to get latest last_seen_id (may have been updated by baseline)
+        fresh = await self._store.get_trigger(trigger.id)
+        if fresh:
+            trigger = fresh
+        if not trigger.enabled:
+            return []
         try:
             poller = get_poller(trigger.trigger_type)
         except ValueError as e:
@@ -199,9 +221,9 @@ class TriggerEngine:
             if success:
                 delivered.append(event)
 
-        # Update state with newest message ID
+        # Update state with newest message ID (last in list = most recent)
         if delivered:
-            newest_id = delivered[0].data.get("message_id", "")
+            newest_id = delivered[-1].data.get("message_id", "")
             await self._store.update_state(
                 trigger.id,
                 last_seen_id=newest_id,

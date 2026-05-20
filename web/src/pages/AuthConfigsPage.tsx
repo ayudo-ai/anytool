@@ -132,7 +132,8 @@ export function AuthConfigsPage() {
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Auth Configs</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            OAuth credentials for each app. One config per provider per workspace.
+            By default, anytool manages all OAuth credentials for you — your users connect with one click.
+            Custom auth configs are an <strong>Enterprise feature</strong> for whitelabel OAuth (your own consent screen, your brand).
           </p>
         </div>
         <Dialog open={open} onOpenChange={setOpen}>

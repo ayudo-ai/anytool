@@ -270,22 +270,29 @@ async def put_record(
     object_id = await _get_object_id(object_slug)
 
     async with async_session() as session:
+        # Find ANY matching record (including soft-deleted) to prevent duplicates
         result = await session.execute(
             select(MetaRecord).where(
                 MetaRecord.object_slug == object_slug,
                 MetaRecord.primary_field_value == primary_key,
-                MetaRecord.is_deleted.is_(False),
-            )
+            ).order_by(MetaRecord.is_deleted.asc())  # prefer non-deleted
         )
-        record = result.scalar_one_or_none()
+        records = result.scalars().all()
+        record = records[0] if records else None
 
         if record:
             record.custom_data = data
             record.updated_at = now()
+            record.is_deleted = False
+            record.deleted_at = None
             if account_id is not None:
                 record.account_id = account_id
             if workspace_id is not None:
                 record.workspace_id = workspace_id
+            # Clean up any extra duplicates
+            for dup in records[1:]:
+                dup.is_deleted = True
+                dup.deleted_at = now()
         else:
             record = MetaRecord(
                 id=record_id or _uuid(),
@@ -354,7 +361,7 @@ async def list_records(
 
 
 async def delete_record(object_slug: str, primary_key: str) -> bool:
-    """Soft-delete a record."""
+    """Soft-delete a record. Handles duplicates gracefully."""
     async with async_session() as session:
         result = await session.execute(
             select(MetaRecord).where(
@@ -362,11 +369,12 @@ async def delete_record(object_slug: str, primary_key: str) -> bool:
                 MetaRecord.primary_field_value == primary_key,
             )
         )
-        record = result.scalar_one_or_none()
-        if record:
-            record.is_deleted = True
-            record.deleted_at = now()
-            record.updated_at = now()
+        records = result.scalars().all()
+        if records:
+            for record in records:
+                record.is_deleted = True
+                record.deleted_at = now()
+                record.updated_at = now()
             await session.commit()
             return True
         return False
@@ -378,21 +386,23 @@ async def atomic_increment(object_slug: str, primary_key: str, field: str, amoun
     Uses a single UPDATE with jsonb_set + COALESCE to avoid read-modify-write races.
     """
     async with async_session() as session:
+        # Note: field name is embedded in SQL (not parameterized) because
+        # jsonb_set path must be a text[] literal, and asyncpg can't bind strings as arrays.
+        # Field names come from our own code, never user input, so this is safe.
         result = await session.execute(
             text(
                 f"UPDATE {SCHEMA}.meta_record "
                 f"SET custom_data = jsonb_set("
                 f"  custom_data, "
-                f"  :path, "
-                f"  to_jsonb(COALESCE((custom_data->>:field)::int, 0) + :amount)"
+                f"  array['{field}'], "
+                f"  to_jsonb(COALESCE((custom_data->>'{field}')::int, 0) + :amount)"
                 f"), updated_at = CURRENT_TIMESTAMP "
                 f"WHERE object_slug = :slug "
                 f"  AND primary_field_value = :pk "
                 f"  AND is_deleted = false "
-                f"RETURNING (custom_data->>:field)::int"
+                f"RETURNING (custom_data->>'{field}')::int"
             ),
-            {"path": f"{{{field}}}", "field": field, "amount": amount,
-             "slug": object_slug, "pk": primary_key},
+            {"amount": amount, "slug": object_slug, "pk": primary_key},
         )
         row = result.fetchone()
         await session.commit()

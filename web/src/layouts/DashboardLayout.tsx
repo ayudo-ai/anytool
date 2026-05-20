@@ -14,6 +14,8 @@ import {
   Sun,
   Moon,
   Monitor,
+  Webhook,
+  FileText,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
@@ -29,17 +31,39 @@ import { clearSession } from '@/lib/api'
 import { useTheme } from '@/lib/theme'
 import { cn } from '@/lib/utils'
 
-const NAV = [
-  { to: '/dashboard', icon: LayoutDashboard, label: 'Overview', end: true },
-  { to: '/dashboard/auth-configs', icon: KeyRound, label: 'Auth Configs' },
-  { to: '/dashboard/connections', icon: Plug, label: 'Connections' },
-  { to: '/dashboard/entities', icon: Users, label: 'Entities' },
-  { to: '/dashboard/actions', icon: Wrench, label: 'Actions' },
-  { to: '/dashboard/triggers', icon: Zap, label: 'Triggers' },
-  { to: '/dashboard/logs', icon: ScrollText, label: 'Logs' },
-  { to: '/dashboard/keys', icon: Key, label: 'API Keys' },
-  { to: '/dashboard/settings', icon: Settings, label: 'Settings' },
-  { to: '/dashboard/quickstart', icon: BookOpen, label: 'Quickstart' },
+const NAV_SECTIONS = [
+  {
+    label: 'Get Started',
+    items: [
+      { to: '/dashboard', icon: LayoutDashboard, label: 'Overview', end: true },
+      { to: '/dashboard/quickstart', icon: BookOpen, label: 'Quickstart' },
+      { to: '/dashboard/keys', icon: Key, label: 'API Keys' },
+    ],
+  },
+  {
+    label: 'Integrate',
+    items: [
+      { to: '/dashboard/connections', icon: Plug, label: 'Connected Users' },
+    ],
+  },
+  {
+    label: 'Build',
+    items: [
+      { to: '/dashboard/actions', icon: Wrench, label: 'Actions' },
+      { to: '/dashboard/triggers', icon: Zap, label: 'Triggers' },
+      { to: '/dashboard/webhook-logs', icon: Webhook, label: 'Webhook Logs' },
+      { to: '/dashboard/api-docs', icon: FileText, label: 'API Reference' },
+    ],
+  },
+  {
+    label: 'Monitor',
+    items: [
+      { to: '/dashboard/logs', icon: ScrollText, label: 'Logs' },
+      { to: '/dashboard/settings', icon: Settings, label: 'Settings' },
+      // Auth Configs hidden — Enterprise-only feature
+      // { to: '/dashboard/auth-configs', icon: KeyRound, label: 'Auth Configs' },
+    ],
+  },
 ]
 
 export function DashboardLayout() {
@@ -99,24 +123,33 @@ export function DashboardLayout() {
         <Separator />
 
         <ScrollArea className="flex-1 px-2 py-2">
-          <nav className="flex flex-col gap-1">
-            {NAV.map((item) => (
-              <NavLink
-                key={item.to}
-                to={item.to}
-                end={item.end}
-                className={({ isActive }) =>
-                  cn(
-                    'flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors',
-                    isActive
-                      ? 'bg-accent text-accent-foreground'
-                      : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
-                  )
-                }
-              >
-                <item.icon className="size-4" />
-                {item.label}
-              </NavLink>
+          <nav className="flex flex-col gap-3">
+            {NAV_SECTIONS.map((section) => (
+              <div key={section.label}>
+                <p className="px-3 mb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60">
+                  {section.label}
+                </p>
+                <div className="flex flex-col gap-0.5">
+                  {section.items.map((item) => (
+                    <NavLink
+                      key={item.to}
+                      to={item.to}
+                      end={'end' in item ? (item as { end?: boolean }).end : undefined}
+                      className={({ isActive }) =>
+                        cn(
+                          'flex items-center gap-3 rounded-md px-3 py-1.5 text-sm font-medium transition-colors',
+                          isActive
+                            ? 'bg-accent text-accent-foreground'
+                            : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
+                        )
+                      }
+                    >
+                      <item.icon className="size-4" />
+                      {item.label}
+                    </NavLink>
+                  ))}
+                </div>
+              </div>
             ))}
           </nav>
         </ScrollArea>

@@ -122,6 +122,7 @@ app.add_middleware(RateLimitMiddleware)
 from server.routers import (
     accounts, connections, execute, triggers,
     dashboard, sso, auth_configs, entities, billing, mcp,
+    webhook_test, webhooks_inbound,
 )
 
 app.include_router(sso.router, prefix=config.api_prefix)
@@ -134,6 +135,26 @@ app.include_router(triggers.router, prefix=config.api_prefix)
 app.include_router(dashboard.router, prefix=config.api_prefix)
 app.include_router(billing.router, prefix=config.api_prefix)
 app.include_router(mcp.router, prefix=config.api_prefix)
+app.include_router(webhook_test.router, prefix=config.api_prefix)
+app.include_router(webhooks_inbound.router, prefix=config.api_prefix)
+
+
+# ── Static files (connect widget) ─────────────────────────────────────
+
+from fastapi.responses import FileResponse
+import pathlib
+
+_STATIC_DIR = pathlib.Path(__file__).parent.parent / "anytool" / "static"
+
+
+@app.get("/v1/connect.js")
+async def serve_connect_js():
+    """Serve the embeddable connect widget JavaScript."""
+    return FileResponse(
+        _STATIC_DIR / "anytool-connect.js",
+        media_type="application/javascript",
+        headers={"Cache-Control": "public, max-age=3600"},
+    )
 
 
 @app.get("/")

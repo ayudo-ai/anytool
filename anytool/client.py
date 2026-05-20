@@ -114,7 +114,7 @@ class AnyTool:
     def __init__(
         self,
         api_key: str = "",
-        base_url: str = "http://localhost:8100/v1",
+        base_url: str = "http://localhost:8000/v1",
         nango_secret_key: str = "",
         nango_base_url: str = "",
         token_store=None,

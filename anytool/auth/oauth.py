@@ -67,6 +67,10 @@ class OAuthManager:
             **app_config.extra_auth_params,
         }
 
+        # Slack: add user_scope for user-level token
+        if app_config.user_scopes:
+            params["user_scope"] = app_config.scope_separator.join(app_config.user_scopes)
+
         url = f"{authorize_url}?{urlencode(params)}"
         logger.info(f"[anytool.oauth] Auth URL generated | app={credentials.app} user={user_id}")
         return url
@@ -117,11 +121,22 @@ class OAuthManager:
         expires_in = token_resp.get("expires_in", 3600)
         expires_at = datetime.now(timezone.utc) + timedelta(seconds=expires_in)
 
+        # Extract access token using token_path (supports nested paths like "authed_user.access_token")
+        access_token = token_resp.get("access_token", "")
+        if app_config.token_path and app_config.token_path != "access_token":
+            # Walk nested path (e.g. "authed_user.access_token")
+            obj = token_resp
+            for key in app_config.token_path.split("."):
+                obj = obj.get(key, {}) if isinstance(obj, dict) else ""
+            if obj and isinstance(obj, str):
+                access_token = obj
+                logger.info(f"[anytool.oauth] Using token from {app_config.token_path}")
+
         # Build tokens
         tokens = UserTokens(
             app=credentials.app,
             user_id=oauth_state.user_id,
-            access_token=token_resp["access_token"],
+            access_token=access_token,
             refresh_token=token_resp.get("refresh_token", ""),
             token_type=token_resp.get("token_type", "Bearer"),
             expires_at=expires_at,

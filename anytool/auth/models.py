@@ -82,8 +82,13 @@ class UserTokens(BaseModel):
     def auth_header(self) -> str:
         """Returns the Authorization header value."""
         if self.api_key:
-            return f"Basic {self.api_key}"  # Freshdesk uses base64(api_key:X)
-        return f"{self.token_type} {self.access_token}"
+            # Freshdesk/Zendesk use Basic auth: base64(api_key:X)
+            import base64
+            encoded = base64.b64encode(f"{self.api_key}:X".encode()).decode()
+            return f"Basic {encoded}"
+        # Always use "Bearer" — some providers return non-standard token_type
+        # (e.g. Slack returns "bot") but all accept Bearer
+        return f"Bearer {self.access_token}"
 
 
 class OAuthState(BaseModel):

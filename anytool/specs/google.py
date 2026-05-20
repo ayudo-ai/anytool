@@ -110,6 +110,21 @@ GMAIL_REPLY = ActionSpec(
     response_ids={"id": "message_id", "threadId": "thread_id"},
 )
 
+GMAIL_GET_ATTACHMENT = ActionSpec(
+    name="gmail_get_attachment",
+    app="google",
+    description=(
+        "Download an attachment from a Gmail message. Returns the attachment data as base64. "
+        "Use the attachment_id from trigger webhook payloads or from gmail_get_message response."
+    ),
+    method="GET",
+    path="/gmail/v1/users/me/messages/{message_id}/attachments/{attachment_id}",
+    params=[
+        ParamSpec(name="message_id", type="string", required=True, location="path", description="The message ID containing the attachment"),
+        ParamSpec(name="attachment_id", type="string", required=True, location="path", description="The attachment ID to download"),
+    ],
+)
+
 GMAIL_CREATE_LABEL = ActionSpec(
     name="gmail_create_label",
     app="google",
@@ -460,6 +475,7 @@ GOOGLE_SPECS = [
     GMAIL_GET_MESSAGE,
     GMAIL_GET_THREAD,
     GMAIL_REPLY,
+    GMAIL_GET_ATTACHMENT,
     GMAIL_CREATE_LABEL,
     GMAIL_MODIFY_LABELS,
     # Sheets
