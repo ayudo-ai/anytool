@@ -25,7 +25,7 @@ jobs:
         working-directory: web
         run: |
           rm -rf node_modules package-lock.json
-          npm install --no-optional
+          npm install
 
       - name: Build frontend
         working-directory: web
