@@ -21,11 +21,24 @@ jobs:
         with:
           node-version: 22
 
+      - name: Debug
+        run: |
+          echo "PWD: $(pwd)"
+          ls -la
+          echo "---"
+          ls -la web/
+          echo "---"
+          cat web/package.json | head 5
+          echo "---"
+          node --version
+          npm --version
+
       - name: Install dependencies
         working-directory: web
         run: |
+          echo "PWD: $(pwd)"
           rm -rf node_modules
-          npm ci
+          npm ci 2>&1 || (cat /home/ubuntu/.npm/_logs/*-debug-0.log | tail -50 && exit 1)
 
       - name: Build frontend
         working-directory: web
