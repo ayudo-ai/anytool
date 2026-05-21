@@ -24,10 +24,8 @@ jobs:
       - name: Install dependencies
         working-directory: web
         run: |
-          echo "Node: $(node --version) | npm: $(npm --version)"
-          echo "PWD: $(pwd)"
-          rm -rf node_modules
-          npm ci 2>&1 || (echo '--- NPM DEBUG LOG ---' && cat /home/ubuntu/.npm/_logs/*-debug-0.log | tail -80 && exit 1)
+          rm -rf node_modules package-lock.json
+          npm install --no-optional
 
       - name: Build frontend
         working-directory: web
