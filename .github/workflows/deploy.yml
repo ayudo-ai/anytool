@@ -1,6 +1,7 @@
 name: Deploy Anytool Backend
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - main
@@ -13,7 +14,7 @@ jobs:
   # PRODUCTION - US
   # ===============================
   deploy-prod-us:
-    runs-on: ec2-prod-us
+    runs-on: ec2-prod-anytool
 
     steps:
       - name: Deploy Anytool (Production US)
