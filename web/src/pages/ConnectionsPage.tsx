@@ -3,9 +3,6 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
 } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -88,11 +85,11 @@ export function ConnectionsPage() {
   })
 
   const connectMut = useMutation({
-    mutationFn: () => {
+    mutationFn: async () => {
       if (isApiKeyProvider) {
         return connectApiKey(form.provider, form.user_id, form.api_key, form.domain)
       }
-      return connectUser(form.provider, form.user_id)
+      return connectUser(form.provider, form.user_id) as Promise<{ auth_url: string; user_id: string; provider: string }>
     },
     onSuccess: (result) => {
       if ('auth_url' in result && result.auth_url) {

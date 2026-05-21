@@ -8,7 +8,6 @@ import {
 } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Separator } from '@/components/ui/separator'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Copy, Check, ExternalLink } from 'lucide-react'
 import { getStoredApiKey } from '@/lib/api'

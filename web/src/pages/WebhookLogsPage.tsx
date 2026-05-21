@@ -3,9 +3,6 @@ import { useQuery } from '@tanstack/react-query'
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
 } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -263,11 +260,11 @@ export function WebhookLogsPage() {
                 </code>
               </div>
 
-              {selectedLog.error && (
+              {selectedLog.error != null && (
                 <div>
                   <p className="text-xs text-muted-foreground mb-1">Error</p>
                   <pre className="text-xs bg-destructive/10 text-destructive rounded-md p-3 whitespace-pre-wrap">
-                    {String(selectedLog.error)}
+                    {String(selectedLog.error as string)}
                   </pre>
                 </div>
               )}

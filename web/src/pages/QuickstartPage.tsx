@@ -9,7 +9,6 @@ import {
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Separator } from '@/components/ui/separator'
 import { Copy, Check, ArrowRight, Plug, Wrench, Zap } from 'lucide-react'
 
 function CodeBlock({ code, language }: { code: string; language: string }) {

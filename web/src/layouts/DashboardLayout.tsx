@@ -1,9 +1,7 @@
 import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard,
-  KeyRound,
   Plug,
-  Users,
   Zap,
   ScrollText,
   Key,

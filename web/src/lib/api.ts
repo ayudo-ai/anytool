@@ -9,7 +9,16 @@
  * The API key is only for developers to use in their code.
  */
 
-const API_BASE = '/v1';
+const isDevelopment = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+
+const getApiBase = () => {
+  if (isDevelopment) {
+    return '/v1'; // Vite proxy handles this
+  }
+  return 'https://api-anytool.ayudo.ai/v1';
+};
+
+const API_BASE = getApiBase();
 
 // ── Session management ──────────────────────────────────────────────
 

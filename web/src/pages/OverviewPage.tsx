@@ -11,7 +11,6 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { getDashboardOverview, getDashboardUsage, getMe } from '@/lib/api'
 import { Plug, Zap, Activity, AlertTriangle, ArrowRight, BookOpen, Wrench, Key, Copy, Check } from 'lucide-react'
 import { UsageChart } from '@/components/UsageChart'
-import { getStoredApiKey } from '@/lib/api'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 

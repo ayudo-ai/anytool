@@ -351,8 +351,8 @@ export function ActionsPage() {
           </DialogFooter>
 
           {/* Result */}
-          {tryResult && (
-            <ResultBlock result={tryResult} />
+          {tryResult != null && (
+            <ResultBlock result={tryResult as Record<string, unknown>} />
           )}
         </DialogContent>
       </Dialog>
