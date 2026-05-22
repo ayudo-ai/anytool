@@ -1,0 +1,32 @@
+# Auto-migrated from old spec format
+# Review and enhance: add examples, refine body_schema nesting
+
+name: zendesk_get_user
+app: zendesk
+description: Get a user by ID. Returns name, email, role, organization, and custom fields.
+method: GET
+path: /api/v2/users/{user_id}
+base_url: https://{subdomain}.zendesk.com
+auth:
+  type: oauth2
+  header: 'Authorization: Bearer {access_token}'
+  inject_from_metadata:
+    subdomain: subdomain
+request:
+  content_type: application/json
+  body_schema:
+    type: object
+    properties:
+      user_id:
+        type: integer
+        description: Zendesk user ID
+    required:
+    - user_id
+response:
+  success_codes:
+  - 200
+  extract:
+    id: user_id
+tags:
+- support
+- helpdesk

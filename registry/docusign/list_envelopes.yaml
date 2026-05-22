@@ -1,0 +1,38 @@
+# Auto-migrated from old spec format
+# Review and enhance: add examples, refine body_schema nesting
+
+name: docusign_list_envelopes
+app: docusign
+description: List envelopes in the account. Filter by date, status, or search text. Returns envelope IDs, subjects, statuses,
+  and timestamps.
+method: GET
+path: /restapi/v2.1/accounts/{account_id}/envelopes
+base_url: https://demo.docusign.net
+auth:
+  type: oauth2
+  header: 'Authorization: Bearer {access_token}'
+  inject_from_metadata:
+    account_id: account_id
+request:
+  content_type: application/json
+  body_schema:
+    type: object
+    properties:
+      from_date:
+        type: string
+        description: Start date (ISO 8601, e.g. '2024-01-01T00:00:00Z')
+      status:
+        type: string
+        description: 'Filter by status: sent, delivered, completed, voided, declined'
+      search_text:
+        type: string
+        description: Search in envelope subjects and recipient names
+      count:
+        type: integer
+        description: Max envelopes to return (default 10)
+response:
+  success_codes:
+  - 200
+tags:
+- esignature
+- documents

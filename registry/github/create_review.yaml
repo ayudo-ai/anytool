@@ -1,0 +1,46 @@
+# Auto-migrated from old spec format
+# Review and enhance: add examples, refine body_schema nesting
+
+name: github_create_review
+app: github
+description: 'Submit a review on a pull request. Event: ''APPROVE'', ''REQUEST_CHANGES'', or ''COMMENT''.'
+method: POST
+path: /repos/{owner}/{repo}/pulls/{pull_number}/reviews
+base_url: https://api.github.com
+auth:
+  type: oauth2
+  header: 'Authorization: Bearer {access_token}'
+request:
+  content_type: application/json
+  body_schema:
+    type: object
+    properties:
+      body:
+        type: string
+        description: Review body text
+      event:
+        type: string
+        description: '''APPROVE'', ''REQUEST_CHANGES'', or ''COMMENT'''
+      owner:
+        type: string
+        description: Repository owner
+      repo:
+        type: string
+        description: Repository name
+      pull_number:
+        type: integer
+        description: Pull request number
+    required:
+    - event
+    - owner
+    - repo
+    - pull_number
+response:
+  success_codes:
+  - 200
+  - 201
+  extract:
+    id: review_id
+tags:
+- development
+- git

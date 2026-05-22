@@ -1,0 +1,28 @@
+# Auto-migrated from old spec format
+# Review and enhance: add examples, refine body_schema nesting
+
+name: freshdesk_delete_ticket
+app: freshdesk
+description: Delete (trash) a ticket. Can be restored from trash within 30 days.
+method: DELETE
+path: /api/v2/tickets/{ticket_id}
+base_url: https://{domain}
+auth:
+  type: api_key
+  header: 'Authorization: Basic {base64(api_key:X)}'
+request:
+  content_type: application/json
+  body_schema:
+    type: object
+    properties:
+      ticket_id:
+        type: integer
+        description: Freshdesk ticket ID to delete
+    required:
+    - ticket_id
+response:
+  success_codes:
+  - 200
+tags:
+- support
+- helpdesk

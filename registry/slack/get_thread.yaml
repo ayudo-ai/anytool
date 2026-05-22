@@ -1,0 +1,38 @@
+# Auto-migrated from old spec format
+# Review and enhance: add examples, refine body_schema nesting
+
+name: slack_get_thread
+app: slack
+description: Get all replies in a message thread. Requires the channel and the parent message timestamp.
+method: GET
+path: /conversations.replies
+base_url: https://slack.com/api
+auth:
+  type: oauth2
+  header: 'Authorization: Bearer {access_token}'
+request:
+  content_type: application/json
+  body_schema:
+    type: object
+    properties:
+      channel:
+        type: string
+        description: Channel ID containing the thread
+      ts:
+        type: string
+        description: Timestamp of the parent message
+      limit:
+        type: integer
+        description: Number of replies to return (default 20)
+      cursor:
+        type: string
+        description: Pagination cursor
+    required:
+    - channel
+    - ts
+response:
+  success_codes:
+  - 200
+tags:
+- messaging
+- chat

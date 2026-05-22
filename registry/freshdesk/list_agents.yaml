@@ -1,0 +1,29 @@
+# Auto-migrated from old spec format
+# Review and enhance: add examples, refine body_schema nesting
+
+name: freshdesk_list_agents
+app: freshdesk
+description: List all agents in the Freshdesk account. Useful for finding agent IDs for ticket assignment.
+method: GET
+path: /api/v2/agents
+base_url: https://{domain}
+auth:
+  type: api_key
+  header: 'Authorization: Basic {base64(api_key:X)}'
+request:
+  content_type: application/json
+  body_schema:
+    type: object
+    properties:
+      email:
+        type: string
+        description: Filter by agent email
+      page:
+        type: integer
+        description: Page number
+response:
+  success_codes:
+  - 200
+tags:
+- support
+- helpdesk

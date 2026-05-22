@@ -1,0 +1,37 @@
+# Auto-migrated from old spec format
+# Review and enhance: add examples, refine body_schema nesting
+
+name: zendesk_list_tickets
+app: zendesk
+description: List tickets. Returns most recently created tickets first.
+method: GET
+path: /api/v2/tickets
+base_url: https://{subdomain}.zendesk.com
+auth:
+  type: oauth2
+  header: 'Authorization: Bearer {access_token}'
+  inject_from_metadata:
+    subdomain: subdomain
+request:
+  content_type: application/json
+  body_schema:
+    type: object
+    properties:
+      sort_by:
+        type: string
+        description: 'Sort by: ''created_at'', ''updated_at'', ''priority'', ''status''. Default: ''created_at'''
+      sort_order:
+        type: string
+        description: '''asc'' or ''desc''. Default: ''desc'''
+      per_page:
+        type: integer
+        description: Results per page (max 100)
+      page:
+        type: integer
+        description: Page number
+response:
+  success_codes:
+  - 200
+tags:
+- support
+- helpdesk

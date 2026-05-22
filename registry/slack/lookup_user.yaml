@@ -1,0 +1,28 @@
+# Auto-migrated from old spec format
+# Review and enhance: add examples, refine body_schema nesting
+
+name: slack_lookup_user
+app: slack
+description: Find a Slack user by their email address. Returns user ID, display name, and profile info.
+method: GET
+path: /users.lookupByEmail
+base_url: https://slack.com/api
+auth:
+  type: oauth2
+  header: 'Authorization: Bearer {access_token}'
+request:
+  content_type: application/json
+  body_schema:
+    type: object
+    properties:
+      email:
+        type: string
+        description: Email address to look up
+    required:
+    - email
+response:
+  success_codes:
+  - 200
+tags:
+- messaging
+- chat

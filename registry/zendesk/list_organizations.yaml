@@ -1,0 +1,31 @@
+# Auto-migrated from old spec format
+# Review and enhance: add examples, refine body_schema nesting
+
+name: zendesk_list_organizations
+app: zendesk
+description: List all organizations.
+method: GET
+path: /api/v2/organizations
+base_url: https://{subdomain}.zendesk.com
+auth:
+  type: oauth2
+  header: 'Authorization: Bearer {access_token}'
+  inject_from_metadata:
+    subdomain: subdomain
+request:
+  content_type: application/json
+  body_schema:
+    type: object
+    properties:
+      per_page:
+        type: integer
+        description: Results per page (max 100)
+      page:
+        type: integer
+        description: Page number
+response:
+  success_codes:
+  - 200
+tags:
+- support
+- helpdesk

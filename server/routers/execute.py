@@ -1,9 +1,10 @@
 """
 API execution — call any action for a user_id.
 
-POST /v1/execute  → execute an action using a user's connection
-GET  /v1/actions  → list available actions
-GET  /v1/tools    → get tool definitions (OpenAI-compatible)
+POST /v1/execute    → execute an action (v2 spec-first engine)
+GET  /v1/actions    → list available actions
+GET  /v1/tools      → get OpenAI-compatible tool definitions
+GET  /v1/tools/mcp  → get MCP-compatible tool definitions
 """
 
 from __future__ import annotations
@@ -17,7 +18,7 @@ from server.auth import get_auth_context, AuthContext
 import time
 
 from server.database import get_record, update_record_fields, atomic_increment, put_record, new_id
-from server.engine import get_api, get_api_for_workspace
+from server.engine import get_api_for_workspace
 
 router = APIRouter(tags=["execute"])
 
@@ -28,28 +29,35 @@ class ExecuteRequest(BaseModel):
     params: Dict[str, Any] = {}
 
 
-@router.post("/execute")
-async def execute_action(body: ExecuteRequest, ctx: AuthContext = Depends(get_auth_context)):
-    """Execute an API action using a user's connected account.
+# ── v2 Execute (spec-first, pass-through) ────────────────────────────
 
-    The user_id must have already connected the relevant provider
-    via POST /v1/connections.
+@router.post("/execute")
+async def execute_action_v2(body: ExecuteRequest, ctx: AuthContext = Depends(get_auth_context)):
+    """Execute an API action using the v2 spec-first engine.
+
+    The LLM constructs the exact request body. Anytool sends it through
+    unchanged to the API. No intermediate models. No data loss.
+
+    For Tier 1/2 actions: params IS the API request body.
+    For Tier 3 actions (e.g. gmail_send_email): params are agent-friendly
+    fields that get encoded (MIME, etc.) before sending.
 
     Example:
         POST /v1/execute
         {
-            "action": "gmail_send_email",
+            "action": "docusign_create_envelope",
             "user_id": "customer-123",
             "params": {
-                "to": "vendor@example.com",
-                "subject": "Invoice follow-up",
-                "body": "Hi, please send the updated invoice."
+                "templateId": "2184100d-...",
+                "templateRoles": [
+                    {"roleName": "Signer", "name": "Sarah", "email": "sarah@example.com"}
+                ],
+                "status": "sent"
             }
         }
     """
-    # Check workspace usage limit (atomic increment avoids race conditions)
+    # Check workspace usage limit
     max_calls = ctx.limits.get("max_calls", 1000)
-
     if max_calls > 0:
         workspace_record = await get_record("workspace", ctx.workspace_id)
         workspace_data = workspace_record.custom_data if workspace_record else {}
@@ -60,17 +68,19 @@ async def execute_action(body: ExecuteRequest, ctx: AuthContext = Depends(get_au
                 f"Monthly call limit reached ({max_calls}). Upgrade at anytool.dev"
             )
 
-    api = await get_api_for_workspace(ctx.workspace_id, ctx.account_id)
+    from server.engine_v2 import execute_action as v2_execute
 
     start_time = time.monotonic()
     result = None
     error_msg = None
 
     try:
-        result = await api.call(
-            body.action,
-            connection_id=body.user_id,
-            **body.params,
+        result = await v2_execute(
+            action=body.action,
+            user_id=body.user_id,
+            body=body.params,
+            workspace_id=ctx.workspace_id,
+            account_id=ctx.account_id,
         )
     except ValueError as e:
         error_msg = str(e)
@@ -81,14 +91,17 @@ async def execute_action(body: ExecuteRequest, ctx: AuthContext = Depends(get_au
     finally:
         duration_ms = int((time.monotonic() - start_time) * 1000)
 
-        # Atomically increment usage counter (no read-modify-write race)
+        # Atomically increment usage counter
         await atomic_increment("workspace", ctx.workspace_id, "calls_this_month")
 
-        # Write usage log (fire-and-forget, don't block response)
+        # Write usage log
         try:
-            # Determine provider from action name
             action_app = body.action.split("_")[0] if "_" in body.action else ""
             provider = APP_MAP.get(action_app, action_app)
+
+            status_code = result.status_code if result else 0
+            successful = result.successful if result else False
+            log_error = error_msg or (result.error if result else None)
 
             await put_record(
                 object_slug="usage_log",
@@ -100,22 +113,25 @@ async def execute_action(body: ExecuteRequest, ctx: AuthContext = Depends(get_au
                     "user_id": body.user_id,
                     "action": body.action,
                     "provider": provider,
-                    "status_code": result.get("status_code", 0) if result else 0,
-                    "successful": result.get("successful", False) if result else False,
+                    "status_code": status_code,
+                    "successful": successful,
                     "duration_ms": duration_ms,
-                    "error": error_msg or (result.get("error") if result else None),
+                    "error": log_error,
+                    "engine": "v2",
                 },
             )
         except Exception:
-            pass  # Never fail the request over logging
+            pass
 
     return {
-        "successful": result.get("successful", False),
-        "data": result.get("data"),
-        "error": result.get("error"),
-        "extracted_ids": result.get("extracted_ids", {}),
-        "status_code": result.get("status_code", 0),
+        "successful": result.successful,
+        "data": result.data,
+        "error": result.error,
+        "extracted_ids": result.extracted_ids,
+        "status_code": result.status_code,
+        "duration_ms": result.duration_ms,
     }
+
 
 
 # ── App mapping ──────────────────────────────────────────────────────
@@ -134,15 +150,16 @@ async def list_actions(
     app: Optional[str] = None,
     ctx: AuthContext = Depends(get_auth_context),
 ):
-    """List all available actions, optionally filtered by app.
+    """List all available actions from the v2 spec registry.
 
     Example:
-        GET /v1/actions?app=gmail
+        GET /v1/actions?app=slack
     """
-    from anytool import AnyTool
+    from server.engine_v2 import get_v2_engine
 
+    engine = get_v2_engine()
     anytool_app = APP_MAP.get(app.lower(), app.lower()) if app else None
-    actions = AnyTool.list_actions(anytool_app)
+    actions = engine.list_actions(anytool_app)
     return {"actions": actions, "total": len(actions)}
 
 
@@ -159,56 +176,52 @@ _JSON_SCHEMA_TYPES = {
 
 @router.get("/tools")
 async def get_tool_definitions(
-    app: str,
+    app: Optional[str] = None,
+    actions: Optional[str] = None,
+    include_examples: bool = True,
     ctx: AuthContext = Depends(get_auth_context),
 ):
-    """Get OpenAI-compatible tool definitions for an app.
+    """Get OpenAI-compatible tool definitions from v2 spec registry.
 
-    Use these with any LLM that supports function calling.
-    Returns full parameter schemas with types, descriptions, and enums.
+    Uses the real API spec (body_schema) as the tool parameters.
+    Nested objects are preserved — no flattening.
+
+    Args:
+        app: Filter by app slug (e.g. 'slack', 'docusign')
+        actions: Comma-separated action names to include
+        include_examples: Include examples in tool descriptions (recommended)
 
     Example:
-        GET /v1/tools?app=gmail
+        GET /v1/tools?app=docusign
+        GET /v1/tools?actions=gmail_send_email,slack_send_message
     """
-    from anytool import AnyTool as AnyToolClass
+    from server.engine_v2 import get_v2_engine
 
-    anytool_app = APP_MAP.get(app.lower(), app.lower())
-    actions = AnyToolClass.list_actions(anytool_app)
+    engine = get_v2_engine()
+    anytool_app = APP_MAP.get(app.lower(), app.lower()) if app else None
+    action_list = [a.strip() for a in actions.split(",")] if actions else None
 
-    tools = []
-    for action in actions:
-        params = action.get("params", [])
-        properties = {}
-        required = []
-
-        for p in params:
-            # Skip path params — they're filled from other params, not by the LLM
-            prop: Dict[str, Any] = {
-                "type": _JSON_SCHEMA_TYPES.get(p["type"], "string"),
-                "description": p.get("description", ""),
-            }
-            if p.get("enum"):
-                prop["enum"] = p["enum"]
-            if p.get("default") is not None:
-                prop["default"] = p["default"]
-            if prop["type"] == "array":
-                prop["items"] = {"type": "string"}  # sensible default
-
-            properties[p["name"]] = prop
-            if p.get("required"):
-                required.append(p["name"])
-
-        tools.append({
-            "type": "function",
-            "function": {
-                "name": action["name"],
-                "description": action["description"],
-                "parameters": {
-                    "type": "object",
-                    "required": required,
-                    "properties": properties,
-                },
-            },
-        })
-
+    tools = engine.get_openai_tools(
+        app=anytool_app,
+        actions=action_list,
+        include_examples=include_examples,
+    )
     return {"tools": tools, "total": len(tools), "app": app}
+
+
+@router.get("/tools/mcp")
+async def get_mcp_tool_definitions(
+    app: Optional[str] = None,
+    ctx: AuthContext = Depends(get_auth_context),
+):
+    """Get MCP-compatible tool definitions from v2 spec registry.
+
+    Example:
+        GET /v1/tools/mcp?app=slack
+    """
+    from server.engine_v2 import get_v2_engine
+
+    engine = get_v2_engine()
+    anytool_app = APP_MAP.get(app.lower(), app.lower()) if app else None
+    tools = engine.get_mcp_tools(app=anytool_app)
+    return {"tools": tools, "total": len(tools)}

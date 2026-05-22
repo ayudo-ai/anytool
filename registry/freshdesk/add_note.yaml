@@ -1,0 +1,39 @@
+# Auto-migrated from old spec format
+# Review and enhance: add examples, refine body_schema nesting
+
+name: freshdesk_add_note
+app: freshdesk
+description: Add a note to a ticket. By default notes are private (internal). Set private=false to make it visible to the
+  customer.
+method: POST
+path: /api/v2/tickets/{ticket_id}/notes
+base_url: https://{domain}
+auth:
+  type: api_key
+  header: 'Authorization: Basic {base64(api_key:X)}'
+request:
+  content_type: application/json
+  body_schema:
+    type: object
+    properties:
+      body:
+        type: string
+        description: Note body (HTML supported)
+      private:
+        type: boolean
+        description: 'True for internal note, False for public. Default: True'
+      ticket_id:
+        type: integer
+        description: Freshdesk ticket ID
+    required:
+    - body
+    - ticket_id
+response:
+  success_codes:
+  - 200
+  - 201
+  extract:
+    id: note_id
+tags:
+- support
+- helpdesk

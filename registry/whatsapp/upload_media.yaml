@@ -1,0 +1,44 @@
+# Auto-migrated from old spec format
+# Review and enhance: add examples, refine body_schema nesting
+
+name: whatsapp_upload_media
+app: whatsapp
+description: Upload media (image, document, video, audio) to WhatsApp servers. Returns a media ID that can be used in send_image
+  or send_document.
+method: POST
+path: /{phone_number_id}/media
+base_url: https://graph.facebook.com/v21.0
+auth:
+  type: bearer
+  header: 'Authorization: Bearer {access_token}'
+request:
+  content_type: application/json
+  body_schema:
+    type: object
+    properties:
+      messaging_product:
+        type: string
+        description: Must be 'whatsapp'
+      type:
+        type: string
+        description: 'Media type: ''image/jpeg'', ''image/png'', ''application/pdf'', etc.'
+      url:
+        type: string
+        description: Public URL of the media to upload
+      phone_number_id:
+        type: string
+        description: Your WhatsApp Business phone number ID
+    required:
+    - messaging_product
+    - type
+    - url
+    - phone_number_id
+response:
+  success_codes:
+  - 200
+  - 201
+  extract:
+    id: media_id
+tags:
+- messaging
+- mobile

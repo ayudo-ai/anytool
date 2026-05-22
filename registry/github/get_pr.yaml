@@ -1,0 +1,38 @@
+# Auto-migrated from old spec format
+# Review and enhance: add examples, refine body_schema nesting
+
+name: github_get_pr
+app: github
+description: Get a pull request by number. Returns title, state, diff stats, review status, and merge info.
+method: GET
+path: /repos/{owner}/{repo}/pulls/{pull_number}
+base_url: https://api.github.com
+auth:
+  type: oauth2
+  header: 'Authorization: Bearer {access_token}'
+request:
+  content_type: application/json
+  body_schema:
+    type: object
+    properties:
+      owner:
+        type: string
+        description: Repository owner
+      repo:
+        type: string
+        description: Repository name
+      pull_number:
+        type: integer
+        description: Pull request number
+    required:
+    - owner
+    - repo
+    - pull_number
+response:
+  success_codes:
+  - 200
+  extract:
+    number: pr_number
+tags:
+- development
+- git

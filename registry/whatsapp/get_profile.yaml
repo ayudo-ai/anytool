@@ -1,0 +1,31 @@
+# Auto-migrated from old spec format
+# Review and enhance: add examples, refine body_schema nesting
+
+name: whatsapp_get_profile
+app: whatsapp
+description: Get the WhatsApp Business profile — name, about text, address, email, website.
+method: GET
+path: /{phone_number_id}/whatsapp_business_profile
+base_url: https://graph.facebook.com/v21.0
+auth:
+  type: bearer
+  header: 'Authorization: Bearer {access_token}'
+request:
+  content_type: application/json
+  body_schema:
+    type: object
+    properties:
+      fields:
+        type: string
+        description: 'Comma-separated fields: ''about,address,description,email,websites''. Default: all'
+      phone_number_id:
+        type: string
+        description: Your WhatsApp Business phone number ID
+    required:
+    - phone_number_id
+response:
+  success_codes:
+  - 200
+tags:
+- messaging
+- mobile

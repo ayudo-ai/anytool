@@ -1,0 +1,32 @@
+# Auto-migrated from old spec format
+# Review and enhance: add examples, refine body_schema nesting
+
+name: hubspot_list_contacts
+app: hubspot
+description: List contacts with pagination. Returns up to 100 per page.
+method: GET
+path: /crm/v3/objects/contacts
+base_url: https://api.hubapi.com
+auth:
+  type: oauth2
+  header: 'Authorization: Bearer {access_token}'
+request:
+  content_type: application/json
+  body_schema:
+    type: object
+    properties:
+      limit:
+        type: integer
+        description: Max contacts to return (default 10, max 100)
+      after:
+        type: string
+        description: Pagination cursor from previous response
+      properties:
+        type: string
+        description: Comma-separated property names to include
+response:
+  success_codes:
+  - 200
+tags:
+- crm
+- sales

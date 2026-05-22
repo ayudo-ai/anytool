@@ -1,0 +1,36 @@
+# Auto-migrated from old spec format
+# Review and enhance: add examples, refine body_schema nesting
+
+name: docusign_void_envelope
+app: docusign
+description: Void (cancel) a sent envelope. The envelope must not be completed. Requires a reason for voiding.
+method: PUT
+path: /restapi/v2.1/accounts/{account_id}/envelopes/{envelope_id}
+base_url: https://demo.docusign.net
+auth:
+  type: oauth2
+  header: 'Authorization: Bearer {access_token}'
+  inject_from_metadata:
+    account_id: account_id
+request:
+  content_type: application/json
+  body_schema:
+    type: object
+    properties:
+      voided_reason:
+        type: string
+        description: Reason for voiding the envelope
+      envelope_id:
+        type: string
+        description: Envelope ID to void
+    required:
+    - voided_reason
+    - envelope_id
+  note: 'Note: Old spec used transform ''docusign_void''. In v2, the LLM constructs the exact body structure directly.'
+response:
+  success_codes:
+  - 200
+  - 201
+tags:
+- esignature
+- documents

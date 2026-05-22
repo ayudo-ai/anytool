@@ -1,0 +1,55 @@
+# Auto-migrated from old spec format
+# Review and enhance: add examples, refine body_schema nesting
+
+name: github_create_pr
+app: github
+description: Create a new pull request. Specify the head branch (your changes) and base branch (where to merge into, usually
+  'main').
+method: POST
+path: /repos/{owner}/{repo}/pulls
+base_url: https://api.github.com
+auth:
+  type: oauth2
+  header: 'Authorization: Bearer {access_token}'
+request:
+  content_type: application/json
+  body_schema:
+    type: object
+    properties:
+      title:
+        type: string
+        description: PR title
+      head:
+        type: string
+        description: Branch containing changes (e.g. 'feature-branch')
+      base:
+        type: string
+        description: Branch to merge into (e.g. 'main')
+      body:
+        type: string
+        description: PR description (Markdown supported)
+      draft:
+        type: boolean
+        description: 'Create as draft PR. Default: false'
+      owner:
+        type: string
+        description: Repository owner
+      repo:
+        type: string
+        description: Repository name
+    required:
+    - title
+    - head
+    - base
+    - owner
+    - repo
+response:
+  success_codes:
+  - 200
+  - 201
+  extract:
+    number: pr_number
+    id: pr_id
+tags:
+- development
+- git

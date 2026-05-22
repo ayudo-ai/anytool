@@ -1,0 +1,39 @@
+# Auto-migrated from old spec format
+# Review and enhance: add examples, refine body_schema nesting
+
+name: github_get_issue
+app: github
+description: Get a specific issue by number. Returns title, body, state, labels, assignees, and comments count.
+method: GET
+path: /repos/{owner}/{repo}/issues/{issue_number}
+base_url: https://api.github.com
+auth:
+  type: oauth2
+  header: 'Authorization: Bearer {access_token}'
+request:
+  content_type: application/json
+  body_schema:
+    type: object
+    properties:
+      owner:
+        type: string
+        description: Repository owner
+      repo:
+        type: string
+        description: Repository name
+      issue_number:
+        type: integer
+        description: Issue number
+    required:
+    - owner
+    - repo
+    - issue_number
+response:
+  success_codes:
+  - 200
+  extract:
+    number: issue_number
+    id: issue_id
+tags:
+- development
+- git

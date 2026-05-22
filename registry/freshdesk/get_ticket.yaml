@@ -1,0 +1,34 @@
+# Auto-migrated from old spec format
+# Review and enhance: add examples, refine body_schema nesting
+
+name: freshdesk_get_ticket
+app: freshdesk
+description: Get a ticket by ID. Returns subject, description, status, priority, requester, assignee, timestamps, and custom
+  fields.
+method: GET
+path: /api/v2/tickets/{ticket_id}
+base_url: https://{domain}
+auth:
+  type: api_key
+  header: 'Authorization: Basic {base64(api_key:X)}'
+request:
+  content_type: application/json
+  body_schema:
+    type: object
+    properties:
+      include:
+        type: string
+        description: 'Include extra data: ''conversations'', ''requester'', ''stats'''
+      ticket_id:
+        type: integer
+        description: Freshdesk ticket ID
+    required:
+    - ticket_id
+response:
+  success_codes:
+  - 200
+  extract:
+    id: ticket_id
+tags:
+- support
+- helpdesk

@@ -19,3 +19,4 @@ sdk/
 web/dist/
 *.db
 *.sqlite3
+*.md

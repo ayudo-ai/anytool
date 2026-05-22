@@ -1,0 +1,46 @@
+# Auto-migrated from old spec format
+# Review and enhance: add examples, refine body_schema nesting
+
+name: freshdesk_reply_ticket
+app: freshdesk
+description: Send a public reply to a ticket. The reply is visible to the customer. Use freshdesk_add_note for internal-only
+  comments.
+method: POST
+path: /api/v2/tickets/{ticket_id}/reply
+base_url: https://{domain}
+auth:
+  type: api_key
+  header: 'Authorization: Basic {base64(api_key:X)}'
+request:
+  content_type: application/json
+  body_schema:
+    type: object
+    properties:
+      body:
+        type: string
+        description: Reply body (HTML supported)
+      cc_emails:
+        type: array
+        description: CC email addresses
+        items:
+          type: string
+      bcc_emails:
+        type: array
+        description: BCC email addresses
+        items:
+          type: string
+      ticket_id:
+        type: integer
+        description: Freshdesk ticket ID
+    required:
+    - body
+    - ticket_id
+response:
+  success_codes:
+  - 200
+  - 201
+  extract:
+    id: conversation_id
+tags:
+- support
+- helpdesk

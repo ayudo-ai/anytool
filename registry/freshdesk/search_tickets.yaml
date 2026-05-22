@@ -1,0 +1,32 @@
+# Auto-migrated from old spec format
+# Review and enhance: add examples, refine body_schema nesting
+
+name: freshdesk_search_tickets
+app: freshdesk
+description: 'Search tickets using Freshdesk query language. Example queries: "status:2 AND priority:4", "tag:''billing''",
+  "requester_email:''user@example.com''". Returns up to 30 results.'
+method: GET
+path: /api/v2/search/tickets
+base_url: https://{domain}
+auth:
+  type: api_key
+  header: 'Authorization: Basic {base64(api_key:X)}'
+request:
+  content_type: application/json
+  body_schema:
+    type: object
+    properties:
+      query:
+        type: string
+        description: 'Freshdesk search query in quotes. Examples: "status:2 AND priority:4", "tag:''urgent''", "requester_email:''john@example.com''"'
+      page:
+        type: integer
+        description: Page number
+    required:
+    - query
+response:
+  success_codes:
+  - 200
+tags:
+- support
+- helpdesk

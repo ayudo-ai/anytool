@@ -1,0 +1,266 @@
+# ──────────────────────────────────────────────────────────────────────
+# Zendesk — Create Ticket
+# Tier 2: Zendesk wraps everything in {ticket: {}} with nested comment.
+#
+# The body_schema describes the exact nesting Zendesk expects.
+# The LLM constructs {ticket: {subject: "...", comment: {body: "..."}}}
+# directly. No wrapper code needed.
+# ──────────────────────────────────────────────────────────────────────
+
+name: zendesk_create_ticket
+app: zendesk
+version: "2"
+description: |
+  Create a new support ticket in Zendesk.
+  The initial ticket description goes in the comment.body field.
+  Can optionally set requester, assignee, priority, tags, and custom fields.
+
+method: POST
+path: /api/v2/tickets
+base_url: https://{subdomain}.zendesk.com
+
+auth:
+  type: oauth2
+  scopes: [tickets:write]
+  header: "Authorization: Bearer {access_token}"
+  # subdomain is stored in token metadata during OAuth setup
+  inject_from_metadata:
+    subdomain: subdomain
+
+request:
+  content_type: application/json
+  body_schema:
+    type: object
+    required: [ticket]
+    properties:
+      ticket:
+        type: object
+        required: [subject, comment]
+        properties:
+          subject:
+            type: string
+            description: The subject/title of the ticket.
+          comment:
+            type: object
+            required: [body]
+            description: |
+              The initial comment (description) of the ticket.
+              Set html_body for HTML content, or body for plain text.
+            properties:
+              body:
+                type: string
+                description: Plain text body of the comment.
+              html_body:
+                type: string
+                description: |
+                  HTML body of the comment. If both body and html_body
+                  are provided, html_body takes precedence.
+              public:
+                type: boolean
+                description: |
+                  If true, the comment is visible to the requester.
+                  If false, it's an internal note.
+                default: true
+              uploads:
+                type: array
+                description: Upload tokens for file attachments.
+                items:
+                  type: string
+          requester:
+            type: object
+            description: |
+              The person who submitted the ticket.
+              Provide either requester_id OR requester object (with name/email).
+            properties:
+              name:
+                type: string
+                description: Requester's name.
+              email:
+                type: string
+                format: email
+                description: |
+                  Requester's email. If a user with this email exists,
+                  they become the requester. Otherwise, a new user is created.
+              locale_id:
+                type: integer
+                description: Requester's preferred locale.
+          requester_id:
+            type: integer
+            description: |
+              Zendesk user ID of the requester.
+              Use this instead of requester object if you know the user ID.
+          assignee_id:
+            type: integer
+            description: |
+              Zendesk user ID of the agent to assign the ticket to.
+              Must be an agent in the account.
+          group_id:
+            type: integer
+            description: |
+              ID of the agent group to assign the ticket to.
+              If assignee_id is also set, the assignee must belong to this group.
+          type:
+            type: string
+            description: Ticket type.
+            enum: [problem, incident, question, task]
+          priority:
+            type: string
+            description: Ticket priority.
+            enum: [urgent, high, normal, low]
+          status:
+            type: string
+            description: |
+              Ticket status. New tickets default to 'new' if requester is set,
+              or 'open' if not.
+            enum: [new, open, pending, hold, solved, closed]
+          tags:
+            type: array
+            description: Tags to apply to the ticket.
+            items:
+              type: string
+          external_id:
+            type: string
+            description: |
+              An ID from your own system for cross-referencing.
+              Must be unique across tickets.
+          custom_fields:
+            type: array
+            description: |
+              Custom ticket fields. Each needs the field ID and value.
+              Field IDs are found in Zendesk Admin > Ticket Fields.
+            items:
+              type: object
+              required: [id, value]
+              properties:
+                id:
+                  type: integer
+                  description: Custom field ID.
+                value:
+                  type: string
+                  description: Field value.
+          due_at:
+            type: string
+            format: date-time
+            description: |
+              Due date for task-type tickets. ISO 8601 format.
+              Only applicable when type is 'task'.
+          brand_id:
+            type: integer
+            description: Brand to associate with this ticket (multi-brand only).
+          ticket_form_id:
+            type: integer
+            description: Ticket form ID (Enterprise only).
+
+response:
+  success_codes: [201]
+  body_schema:
+    type: object
+    properties:
+      ticket:
+        type: object
+        properties:
+          id:
+            type: integer
+            description: Zendesk ticket ID.
+          url:
+            type: string
+          subject:
+            type: string
+          status:
+            type: string
+          priority:
+            type: string
+          requester_id:
+            type: integer
+          assignee_id:
+            type: integer
+          created_at:
+            type: string
+          updated_at:
+            type: string
+      audit:
+        type: object
+        description: The audit record for the ticket creation event.
+  extract:
+    ticket_id: ticket.id
+
+errors:
+  RecordInvalid: "Invalid ticket data. Check required fields (subject, comment.body)."
+  RequesterNotFound: "The requester_id doesn't match an existing user."
+  InvalidAssignee: "The assignee_id doesn't match an active agent."
+
+rate_limit:
+  requests_per_minute: 700
+  note: "Per-account limit. Varies by plan."
+
+tags: [support, helpdesk, tickets, customer-service]
+
+examples:
+  - name: Simple ticket
+    request:
+      ticket:
+        subject: "Billing issue - double charged"
+        comment:
+          body: "I was charged twice for my subscription this month. Transaction IDs: TXN-001 and TXN-002. Please refund the duplicate charge."
+        requester:
+          name: "Sarah Mitchell"
+          email: "sarah@example.com"
+        priority: "high"
+        tags:
+          - billing
+          - duplicate-charge
+    response:
+      ticket:
+        id: 12345
+        url: "https://example.zendesk.com/api/v2/tickets/12345.json"
+        subject: "Billing issue - double charged"
+        status: "new"
+        priority: "high"
+        requester_id: 67890
+        created_at: "2026-05-22T10:30:00Z"
+
+  - name: Internal ticket with assignment
+    description: Create an internal task assigned to a specific agent group.
+    request:
+      ticket:
+        subject: "Deploy hotfix for payment gateway"
+        comment:
+          body: "Payment gateway is returning 502 errors. Need immediate hotfix."
+          public: false
+        type: "task"
+        priority: "urgent"
+        group_id: 4567
+        tags:
+          - engineering
+          - hotfix
+          - payment
+        due_at: "2026-05-23T18:00:00Z"
+    response:
+      ticket:
+        id: 12346
+        subject: "Deploy hotfix for payment gateway"
+        status: "new"
+        priority: "urgent"
+        type: "task"
+
+  - name: Ticket with custom fields
+    request:
+      ticket:
+        subject: "Feature request - dark mode"
+        comment:
+          body: "Multiple customers have requested dark mode support."
+        requester:
+          email: "product@example.com"
+        type: "question"
+        priority: "normal"
+        custom_fields:
+          - id: 114094651234
+            value: "feature_request"
+          - id: 114094651235
+            value: "ui_ux"
+    response:
+      ticket:
+        id: 12347
+        subject: "Feature request - dark mode"
+        status: "new"
+        type: "question"

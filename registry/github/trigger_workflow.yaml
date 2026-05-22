@@ -1,0 +1,44 @@
+# Auto-migrated from old spec format
+# Review and enhance: add examples, refine body_schema nesting
+
+name: github_trigger_workflow
+app: github
+description: Trigger a workflow dispatch event. The workflow must have 'workflow_dispatch' trigger configured.
+method: POST
+path: /repos/{owner}/{repo}/actions/workflows/{workflow_id}/dispatches
+base_url: https://api.github.com
+auth:
+  type: oauth2
+  header: 'Authorization: Bearer {access_token}'
+request:
+  content_type: application/json
+  body_schema:
+    type: object
+    properties:
+      ref:
+        type: string
+        description: Branch or tag to run workflow on (e.g. 'main')
+      inputs:
+        type: object
+        description: Workflow input parameters as key-value pairs
+      owner:
+        type: string
+        description: Repository owner
+      repo:
+        type: string
+        description: Repository name
+      workflow_id:
+        type: string
+        description: Workflow ID or filename (e.g. 'deploy.yml')
+    required:
+    - ref
+    - owner
+    - repo
+    - workflow_id
+response:
+  success_codes:
+  - 200
+  - 201
+tags:
+- development
+- git

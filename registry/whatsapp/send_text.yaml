@@ -1,0 +1,44 @@
+# Auto-migrated from old spec format
+# Review and enhance: add examples, refine body_schema nesting
+
+name: whatsapp_send_text
+app: whatsapp
+description: Send a free-form text message. Only works within the 24-hour window after the customer's last message. For first
+  contact, use whatsapp_send_template.
+method: POST
+path: /{phone_number_id}/messages
+base_url: https://graph.facebook.com/v21.0
+auth:
+  type: bearer
+  header: 'Authorization: Bearer {access_token}'
+request:
+  content_type: application/json
+  body_schema:
+    type: object
+    properties:
+      to:
+        type: string
+        description: Recipient phone number with country code
+      body:
+        type: string
+        description: Message text (max 4096 characters)
+      preview_url:
+        type: boolean
+        description: 'Show URL preview if message contains a link. Default: false'
+      phone_number_id:
+        type: string
+        description: Your WhatsApp Business phone number ID
+    required:
+    - to
+    - body
+    - phone_number_id
+  note: 'Note: Old spec used transform ''whatsapp_text''. In v2, the LLM constructs the exact body structure directly.'
+response:
+  success_codes:
+  - 200
+  - 201
+  extract:
+    messages[0].id: message_id
+tags:
+- messaging
+- mobile

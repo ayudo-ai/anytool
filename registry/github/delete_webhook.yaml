@@ -1,0 +1,36 @@
+# Auto-migrated from old spec format
+# Review and enhance: add examples, refine body_schema nesting
+
+name: github_delete_webhook
+app: github
+description: Delete a webhook from a GitHub repository.
+method: DELETE
+path: /repos/{owner}/{repo}/hooks/{hook_id}
+base_url: https://api.github.com
+auth:
+  type: oauth2
+  header: 'Authorization: Bearer {access_token}'
+request:
+  content_type: application/json
+  body_schema:
+    type: object
+    properties:
+      owner:
+        type: string
+        description: Repository owner
+      repo:
+        type: string
+        description: Repository name
+      hook_id:
+        type: string
+        description: Webhook ID to delete
+    required:
+    - owner
+    - repo
+    - hook_id
+response:
+  success_codes:
+  - 200
+tags:
+- development
+- git

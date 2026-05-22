@@ -1,0 +1,57 @@
+# Auto-migrated from old spec format
+# Review and enhance: add examples, refine body_schema nesting
+
+name: github_update_issue
+app: github
+description: Update an issue — change title, body, state, labels, or assignees. Set state to 'closed' to close the issue.
+method: PATCH
+path: /repos/{owner}/{repo}/issues/{issue_number}
+base_url: https://api.github.com
+auth:
+  type: oauth2
+  header: 'Authorization: Bearer {access_token}'
+request:
+  content_type: application/json
+  body_schema:
+    type: object
+    properties:
+      title:
+        type: string
+        description: Updated title
+      body:
+        type: string
+        description: Updated body
+      state:
+        type: string
+        description: '''open'' or ''closed'''
+      labels:
+        type: array
+        description: Replace all labels
+        items:
+          type: string
+      assignees:
+        type: array
+        description: Replace all assignees
+        items:
+          type: string
+      owner:
+        type: string
+        description: Repository owner
+      repo:
+        type: string
+        description: Repository name
+      issue_number:
+        type: integer
+        description: Issue number
+    required:
+    - owner
+    - repo
+    - issue_number
+response:
+  success_codes:
+  - 200
+  extract:
+    number: issue_number
+tags:
+- development
+- git

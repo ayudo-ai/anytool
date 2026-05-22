@@ -1,0 +1,31 @@
+# Auto-migrated from old spec format
+# Review and enhance: add examples, refine body_schema nesting
+
+name: docusign_get_recipients
+app: docusign
+description: Get recipient details for an envelope. Returns each signer's name, email, status (sent, delivered, completed,
+  declined), and when they signed.
+method: GET
+path: /restapi/v2.1/accounts/{account_id}/envelopes/{envelope_id}/recipients
+base_url: https://demo.docusign.net
+auth:
+  type: oauth2
+  header: 'Authorization: Bearer {access_token}'
+  inject_from_metadata:
+    account_id: account_id
+request:
+  content_type: application/json
+  body_schema:
+    type: object
+    properties:
+      envelope_id:
+        type: string
+        description: Envelope ID
+    required:
+    - envelope_id
+response:
+  success_codes:
+  - 200
+tags:
+- esignature
+- documents

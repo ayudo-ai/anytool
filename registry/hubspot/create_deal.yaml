@@ -1,0 +1,47 @@
+# Auto-migrated from old spec format
+# Review and enhance: add examples, refine body_schema nesting
+
+name: hubspot_create_deal
+app: hubspot
+description: Create a new deal in HubSpot. dealstage values depend on your pipeline config.
+method: POST
+path: /crm/v3/objects/deals
+base_url: https://api.hubapi.com
+auth:
+  type: oauth2
+  header: 'Authorization: Bearer {access_token}'
+request:
+  content_type: application/json
+  body_schema:
+    type: object
+    properties:
+      dealname:
+        type: string
+        description: Deal name
+      amount:
+        type: string
+        description: Deal amount
+      dealstage:
+        type: string
+        description: Pipeline stage ID (e.g. 'appointmentscheduled', 'qualifiedtobuy')
+      pipeline:
+        type: string
+        description: Pipeline ID (default pipeline if omitted)
+      closedate:
+        type: string
+        description: Expected close date (ISO 8601, e.g. '2024-12-31')
+      hubspot_owner_id:
+        type: string
+        description: Owner (HubSpot user) ID
+    required:
+    - dealname
+  note: 'Note: Old spec used transform ''hubspot_properties''. In v2, the LLM constructs the exact body structure directly.'
+response:
+  success_codes:
+  - 200
+  - 201
+  extract:
+    id: deal_id
+tags:
+- crm
+- sales

@@ -1,0 +1,46 @@
+# Auto-migrated from old spec format
+# Review and enhance: add examples, refine body_schema nesting
+
+name: github_create_webhook
+app: github
+description: Create a webhook on a GitHub repository. Sends events to the specified URL. Used internally by anytool to set
+  up real-time triggers.
+method: POST
+path: /repos/{owner}/{repo}/hooks
+base_url: https://api.github.com
+auth:
+  type: oauth2
+  header: 'Authorization: Bearer {access_token}'
+request:
+  content_type: application/json
+  body_schema:
+    type: object
+    properties:
+      url:
+        type: string
+        description: Webhook URL to receive events
+      events:
+        type: array
+        description: 'Events to subscribe to. Default: [''push'']'
+        items:
+          type: string
+      secret:
+        type: string
+        description: Secret for HMAC signature verification
+      owner:
+        type: string
+        description: Repository owner
+      repo:
+        type: string
+        description: Repository name
+    required:
+    - url
+    - owner
+    - repo
+response:
+  success_codes:
+  - 200
+  - 201
+tags:
+- development
+- git

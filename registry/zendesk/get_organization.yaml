@@ -1,0 +1,32 @@
+# Auto-migrated from old spec format
+# Review and enhance: add examples, refine body_schema nesting
+
+name: zendesk_get_organization
+app: zendesk
+description: Get an organization by ID.
+method: GET
+path: /api/v2/organizations/{organization_id}
+base_url: https://{subdomain}.zendesk.com
+auth:
+  type: oauth2
+  header: 'Authorization: Bearer {access_token}'
+  inject_from_metadata:
+    subdomain: subdomain
+request:
+  content_type: application/json
+  body_schema:
+    type: object
+    properties:
+      organization_id:
+        type: integer
+        description: Zendesk organization ID
+    required:
+    - organization_id
+response:
+  success_codes:
+  - 200
+  extract:
+    id: organization_id
+tags:
+- support
+- helpdesk

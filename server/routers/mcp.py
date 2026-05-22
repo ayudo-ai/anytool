@@ -10,100 +10,44 @@ Requires API key authentication.
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
 from server.auth import get_auth_context, AuthContext
-from server.engine import get_api_for_workspace
 
 router = APIRouter(prefix="/mcp", tags=["mcp"])
 
 
-# ── MCP Protocol Models ──────────────────────────────────────────────
-
 class MCPToolsListRequest(BaseModel):
-    """MCP tools/list request."""
     pass
 
 
-class MCPToolCallRequest(BaseModel):
-    """MCP tools/call request."""
-    name: str
-    arguments: Dict[str, Any] = {}
-    # MCP requires connection_id to know which user's credentials to use
-    _meta: Dict[str, Any] = {}
-
-
 class MCPToolCallWithContext(BaseModel):
-    """Tool call with user context (for anytool)."""
     name: str
     arguments: Dict[str, Any] = {}
-    user_id: str = ""  # Which end-user's connection to use
+    user_id: str = ""
 
-
-# ── Routes ───────────────────────────────────────────────────────────
 
 @router.post("/tools/list")
 async def mcp_list_tools(
     body: MCPToolsListRequest = MCPToolsListRequest(),
     ctx: AuthContext = Depends(get_auth_context),
 ):
-    """List all available tools in MCP format.
+    """List all available tools in MCP format."""
+    from server.engine_v2 import get_v2_engine
 
-    Returns tools with JSON Schema parameters, compatible with
-    Claude Desktop, Cursor, and other MCP clients.
-    """
-    from anytool import AnyTool as AnyToolClass
+    engine = get_v2_engine()
+    tools = engine.get_mcp_tools()
 
-    actions = AnyToolClass.list_actions()
-    tools = []
-
-    _type_map = {
-        "string": "string",
-        "integer": "integer",
-        "number": "number",
-        "boolean": "boolean",
-        "list": "array",
-        "object": "object",
-    }
-
-    for action in actions:
-        properties = {}
-        required = []
-
-        for p in action.get("params", []):
-            prop: Dict[str, Any] = {
-                "type": _type_map.get(p["type"], "string"),
-                "description": p.get("description", ""),
-            }
-            if p.get("enum"):
-                prop["enum"] = p["enum"]
-            if p.get("default") is not None:
-                prop["default"] = p["default"]
-            if prop["type"] == "array":
-                prop["items"] = {"type": "string"}
-            properties[p["name"]] = prop
-            if p.get("required"):
-                required.append(p["name"])
-
-        # Add user_id as a required parameter
-        properties["user_id"] = {
+    # Add user_id as required param to each tool
+    for tool in tools:
+        tool["inputSchema"]["properties"]["user_id"] = {
             "type": "string",
             "description": "The end-user ID whose connected account to use",
         }
-        required.append("user_id")
-
-        tools.append({
-            "name": action["name"],
-            "description": action["description"],
-            "inputSchema": {
-                "type": "object",
-                "properties": properties,
-                "required": required,
-            },
-        })
+        tool["inputSchema"].setdefault("required", []).append("user_id")
 
     return {"tools": tools}
 
@@ -113,32 +57,25 @@ async def mcp_call_tool(
     body: MCPToolCallWithContext,
     ctx: AuthContext = Depends(get_auth_context),
 ):
-    """Execute a tool call via MCP protocol.
-
-    The user_id field specifies which end-user's connection to use.
-
-    Returns MCP-compatible response with content array.
-    """
+    """Execute a tool call via MCP protocol."""
     if not body.user_id:
-        # Try to get user_id from arguments
         body.user_id = body.arguments.pop("user_id", "")
 
     if not body.user_id:
         return {
-            "content": [{
-                "type": "text",
-                "text": "Error: user_id is required. Specify which end-user's connection to use.",
-            }],
+            "content": [{"type": "text", "text": "Error: user_id is required."}],
             "isError": True,
         }
 
-    api = await get_api_for_workspace(ctx.workspace_id, ctx.account_id)
+    from server.engine_v2 import execute_action
 
     try:
-        result = await api.call(
-            body.name,
-            connection_id=body.user_id,
-            **body.arguments,
+        result = await execute_action(
+            action=body.name,
+            user_id=body.user_id,
+            body=body.arguments,
+            workspace_id=ctx.workspace_id,
+            account_id=ctx.account_id,
         )
     except ValueError as e:
         return {
@@ -151,20 +88,16 @@ async def mcp_call_tool(
             "isError": True,
         }
 
-    # Format response
     import json
-    if result.get("successful"):
+    if result.successful:
         return {
             "content": [{
                 "type": "text",
-                "text": json.dumps(result.get("data", {}), indent=2, default=str),
+                "text": json.dumps(result.data, indent=2, default=str),
             }],
         }
     else:
         return {
-            "content": [{
-                "type": "text",
-                "text": f"Error: {result.get('error', 'Unknown error')}",
-            }],
+            "content": [{"type": "text", "text": f"Error: {result.error}"}],
             "isError": True,
         }

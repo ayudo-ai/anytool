@@ -1,0 +1,32 @@
+# Auto-migrated from old spec format
+# Review and enhance: add examples, refine body_schema nesting
+
+name: hubspot_list_owners
+app: hubspot
+description: List all owners (users) in the HubSpot account. Useful for finding owner IDs for assignment.
+method: GET
+path: /crm/v3/owners
+base_url: https://api.hubapi.com
+auth:
+  type: oauth2
+  header: 'Authorization: Bearer {access_token}'
+request:
+  content_type: application/json
+  body_schema:
+    type: object
+    properties:
+      email:
+        type: string
+        description: Filter by owner email
+      limit:
+        type: integer
+        description: Max results (default 100)
+      after:
+        type: string
+        description: Pagination cursor
+response:
+  success_codes:
+  - 200
+tags:
+- crm
+- sales

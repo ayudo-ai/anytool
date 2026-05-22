@@ -1,0 +1,31 @@
+# Auto-migrated from old spec format
+# Review and enhance: add examples, refine body_schema nesting
+
+name: freshdesk_get_conversations
+app: freshdesk
+description: Get all conversations (replies and notes) for a ticket. Returns the full thread history.
+method: GET
+path: /api/v2/tickets/{ticket_id}/conversations
+base_url: https://{domain}
+auth:
+  type: api_key
+  header: 'Authorization: Basic {base64(api_key:X)}'
+request:
+  content_type: application/json
+  body_schema:
+    type: object
+    properties:
+      page:
+        type: integer
+        description: Page number
+      ticket_id:
+        type: integer
+        description: Freshdesk ticket ID
+    required:
+    - ticket_id
+response:
+  success_codes:
+  - 200
+tags:
+- support
+- helpdesk

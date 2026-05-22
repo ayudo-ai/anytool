@@ -1,0 +1,28 @@
+# Auto-migrated from old spec format
+# Review and enhance: add examples, refine body_schema nesting
+
+name: whatsapp_get_media_url
+app: whatsapp
+description: Get the download URL for a media file by its ID. URL is valid for 5 minutes.
+method: GET
+path: /{media_id}
+base_url: https://graph.facebook.com/v21.0
+auth:
+  type: bearer
+  header: 'Authorization: Bearer {access_token}'
+request:
+  content_type: application/json
+  body_schema:
+    type: object
+    properties:
+      media_id:
+        type: string
+        description: Media ID
+    required:
+    - media_id
+response:
+  success_codes:
+  - 200
+tags:
+- messaging
+- mobile

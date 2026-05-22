@@ -1,0 +1,254 @@
+# ──────────────────────────────────────────────────────────────────────
+# DocuSign — Create Envelope from Template
+# Tier 2: Complex nested JSON. The case that broke on Composio.
+#
+# Composio's bug: templateRoles: [{roleName, email, name}] → [{}]
+# Their serialization layer dropped nested object fields.
+#
+# With anytool: the LLM constructs the exact JSON from this spec.
+# The executor sends it AS-IS. No intermediate models. No data loss.
+# ──────────────────────────────────────────────────────────────────────
+
+name: docusign_create_envelope
+app: docusign
+version: "2.1"
+description: |
+  Create and send a DocuSign envelope from a template.
+  Assign signers to template roles with their name and email.
+  Set status='sent' to send immediately, or 'created' to save as draft.
+
+method: POST
+path: /restapi/v2.1/accounts/{account_id}/envelopes
+base_url: https://demo.docusign.net
+
+auth:
+  type: oauth2
+  scopes: [signature]
+  header: "Authorization: Bearer {access_token}"
+  # account_id is stored in token metadata during OAuth (from /oauth/userinfo)
+  # The executor injects it into the path automatically
+  inject_from_metadata:
+    account_id: account_id
+
+request:
+  content_type: application/json
+  body_schema:
+    type: object
+    required: [templateId, templateRoles, status]
+    properties:
+      templateId:
+        type: string
+        description: The ID of the template to create the envelope from.
+      templateRoles:
+        type: array
+        description: |
+          Assign recipients to roles defined in the template.
+          Each entry must match a role name from the template.
+          You can assign multiple roles (e.g., Signer, CC, Witness).
+        items:
+          type: object
+          required: [roleName, name, email]
+          properties:
+            roleName:
+              type: string
+              description: |
+                Must exactly match a role name defined in the template
+                (e.g., 'Signer', 'CC', 'Witness').
+            name:
+              type: string
+              description: Full name of the recipient.
+            email:
+              type: string
+              format: email
+              description: Email address of the recipient.
+            tabs:
+              type: object
+              description: |
+                Pre-fill form fields for this recipient.
+                Keys are tab types (textTabs, checkboxTabs, etc.).
+                Each contains an array of tab objects with tabLabel and value.
+              properties:
+                textTabs:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      tabLabel:
+                        type: string
+                        description: The label of the tab in the template.
+                      value:
+                        type: string
+                        description: Pre-filled value for this tab.
+            clientUserId:
+              type: string
+              description: |
+                If set, enables embedded signing for this recipient.
+                The recipient won't receive an email — you must generate
+                a signing URL via the API instead.
+      status:
+        type: string
+        enum: [sent, created]
+        default: sent
+        description: |
+          'sent' — send the envelope immediately to all recipients.
+          'created' — save as draft (can be sent later).
+      emailSubject:
+        type: string
+        description: |
+          Custom subject line for the email sent to recipients.
+          If omitted, uses the template's default subject.
+        maxLength: 10000
+      emailBlurb:
+        type: string
+        description: |
+          Custom body text for the email sent to recipients.
+          Appears above the "Review Document" button in the email.
+      compositeTemplates:
+        type: array
+        description: |
+          Advanced: combine multiple templates or add documents
+          alongside a template. Most use cases don't need this.
+        items:
+          type: object
+          properties:
+            serverTemplates:
+              type: array
+              items:
+                type: object
+                properties:
+                  sequence:
+                    type: string
+                  templateId:
+                    type: string
+            inlineTemplates:
+              type: array
+              items:
+                type: object
+                properties:
+                  sequence:
+                    type: string
+                  recipients:
+                    type: object
+      customFields:
+        type: object
+        description: |
+          Envelope-level custom fields (metadata).
+          Contains textCustomFields and listCustomFields arrays.
+        properties:
+          textCustomFields:
+            type: array
+            items:
+              type: object
+              properties:
+                name:
+                  type: string
+                value:
+                  type: string
+                required:
+                  type: string
+                  enum: ["true", "false"]
+                show:
+                  type: string
+                  enum: ["true", "false"]
+
+response:
+  success_codes: [201]
+  body_schema:
+    type: object
+    properties:
+      envelopeId:
+        type: string
+        description: The unique ID of the created envelope.
+      uri:
+        type: string
+      statusDateTime:
+        type: string
+      status:
+        type: string
+        description: Current status of the envelope.
+  extract:
+    envelope_id: envelopeId
+
+errors:
+  INVALID_TEMPLATE_ID: "Template not found. Verify the templateId exists in this account."
+  UNMATCHED_ROLE: "A roleName in templateRoles doesn't match any role in the template."
+  INVALID_EMAIL: "Recipient email address is invalid."
+  ACCOUNT_NOT_AUTHORIZED: "Account doesn't have permission. Check OAuth scopes include 'signature'."
+
+rate_limit:
+  requests_per_hour: 1000
+  burst: 100
+  note: "Per-account limit. Sandbox has lower limits."
+
+tags: [esignature, documents, contracts, legal]
+
+examples:
+  - name: Send agreement to one signer
+    description: |
+      Simple case: one signer, send immediately.
+      This is the exact case that Composio broke — templateRoles
+      must arrive at DocuSign with all nested fields intact.
+    request:
+      templateId: "2184100d-b91c-42cc-adb7-d90664d7ee43"
+      templateRoles:
+        - roleName: "Signer"
+          name: "Sarah Mitchell"
+          email: "sarah@example.com"
+      status: "sent"
+      emailSubject: "1099 Partner Onboarding Agreement - Sarah Mitchell"
+    response:
+      envelopeId: "e5678-abcd-1234-efgh-567890"
+      status: "sent"
+      statusDateTime: "2026-05-22T10:30:00.0000000Z"
+
+  - name: Two signers with CC
+    description: Both parties sign, manager gets a copy.
+    request:
+      templateId: "2184100d-b91c-42cc-adb7-d90664d7ee43"
+      templateRoles:
+        - roleName: "Signer 1"
+          name: "Sarah Mitchell"
+          email: "sarah@example.com"
+        - roleName: "Signer 2"
+          name: "James Chen"
+          email: "james@partner.com"
+        - roleName: "CC"
+          name: "Alex Manager"
+          email: "alex@example.com"
+      status: "sent"
+      emailSubject: "Partnership Agreement - Mitchell & Chen"
+      emailBlurb: "Please review and sign the attached partnership agreement."
+    response:
+      envelopeId: "f9012-bcde-3456-ghij-901234"
+      status: "sent"
+
+  - name: Pre-fill form fields
+    description: Populate template tabs with data before sending.
+    request:
+      templateId: "abc123-template-id"
+      templateRoles:
+        - roleName: "Signer"
+          name: "Sarah Mitchell"
+          email: "sarah@example.com"
+          tabs:
+            textTabs:
+              - tabLabel: "CompanyName"
+                value: "Mitchell Consulting LLC"
+              - tabLabel: "TaxID"
+                value: "XX-XXXXXXX"
+      status: "sent"
+    response:
+      envelopeId: "a1234-xxxx-yyyy-zzzz"
+      status: "sent"
+
+  - name: Save as draft
+    request:
+      templateId: "2184100d-b91c-42cc-adb7-d90664d7ee43"
+      templateRoles:
+        - roleName: "Signer"
+          name: "Sarah Mitchell"
+          email: "sarah@example.com"
+      status: "created"
+    response:
+      envelopeId: "d3456-draft-id"
+      status: "created"

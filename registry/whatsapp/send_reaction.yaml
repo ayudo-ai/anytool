@@ -1,0 +1,42 @@
+# Auto-migrated from old spec format
+# Review and enhance: add examples, refine body_schema nesting
+
+name: whatsapp_send_reaction
+app: whatsapp
+description: React to a message with an emoji.
+method: POST
+path: /{phone_number_id}/messages
+base_url: https://graph.facebook.com/v21.0
+auth:
+  type: bearer
+  header: 'Authorization: Bearer {access_token}'
+request:
+  content_type: application/json
+  body_schema:
+    type: object
+    properties:
+      to:
+        type: string
+        description: Recipient phone number
+      message_id:
+        type: string
+        description: ID of the message to react to
+      emoji:
+        type: string
+        description: Emoji to react with (e.g. '👍', '❤️', '✅')
+      phone_number_id:
+        type: string
+        description: Your WhatsApp Business phone number ID
+    required:
+    - to
+    - message_id
+    - emoji
+    - phone_number_id
+  note: 'Note: Old spec used transform ''whatsapp_reaction''. In v2, the LLM constructs the exact body structure directly.'
+response:
+  success_codes:
+  - 200
+  - 201
+tags:
+- messaging
+- mobile

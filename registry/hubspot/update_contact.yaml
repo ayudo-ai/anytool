@@ -1,0 +1,52 @@
+# Auto-migrated from old spec format
+# Review and enhance: add examples, refine body_schema nesting
+
+name: hubspot_update_contact
+app: hubspot
+description: Update a contact's properties. Pass any HubSpot contact property as a parameter.
+method: PATCH
+path: /crm/v3/objects/contacts/{contact_id}
+base_url: https://api.hubapi.com
+auth:
+  type: oauth2
+  header: 'Authorization: Bearer {access_token}'
+request:
+  content_type: application/json
+  body_schema:
+    type: object
+    properties:
+      email:
+        type: string
+        description: Email address
+      firstname:
+        type: string
+        description: First name
+      lastname:
+        type: string
+        description: Last name
+      phone:
+        type: string
+        description: Phone number
+      company:
+        type: string
+        description: Company name
+      jobtitle:
+        type: string
+        description: Job title
+      lifecyclestage:
+        type: string
+        description: Lifecycle stage
+      contact_id:
+        type: string
+        description: HubSpot contact ID
+    required:
+    - contact_id
+  note: 'Note: Old spec used transform ''hubspot_properties''. In v2, the LLM constructs the exact body structure directly.'
+response:
+  success_codes:
+  - 200
+  extract:
+    id: contact_id
+tags:
+- crm
+- sales

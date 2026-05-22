@@ -1,0 +1,32 @@
+# Auto-migrated from old spec format
+# Review and enhance: add examples, refine body_schema nesting
+
+name: github_get_repo
+app: github
+description: Get repository details — description, stars, forks, language, default branch, and visibility.
+method: GET
+path: /repos/{owner}/{repo}
+base_url: https://api.github.com
+auth:
+  type: oauth2
+  header: 'Authorization: Bearer {access_token}'
+request:
+  content_type: application/json
+  body_schema:
+    type: object
+    properties:
+      owner:
+        type: string
+        description: Repository owner
+      repo:
+        type: string
+        description: Repository name
+    required:
+    - owner
+    - repo
+response:
+  success_codes:
+  - 200
+tags:
+- development
+- git

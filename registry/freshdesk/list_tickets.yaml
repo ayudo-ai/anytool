@@ -1,0 +1,45 @@
+# Auto-migrated from old spec format
+# Review and enhance: add examples, refine body_schema nesting
+
+name: freshdesk_list_tickets
+app: freshdesk
+description: List tickets with optional filters. Filter by requester, status, or updated date. Returns up to 30 tickets per
+  page.
+method: GET
+path: /api/v2/tickets
+base_url: https://{domain}
+auth:
+  type: api_key
+  header: 'Authorization: Basic {base64(api_key:X)}'
+request:
+  content_type: application/json
+  body_schema:
+    type: object
+    properties:
+      email:
+        type: string
+        description: Filter by requester email
+      requester_id:
+        type: integer
+        description: Filter by requester ID
+      updated_since:
+        type: string
+        description: Tickets updated after this date (ISO 8601)
+      order_by:
+        type: string
+        description: 'Order by: created_at, due_by, updated_at, status. Default: created_at'
+      order_type:
+        type: string
+        description: '''asc'' or ''desc''. Default: desc'
+      page:
+        type: integer
+        description: Page number (30 tickets per page)
+      include:
+        type: string
+        description: 'Include extra: ''requester'', ''stats'', ''description'''
+response:
+  success_codes:
+  - 200
+tags:
+- support
+- helpdesk

@@ -1,0 +1,47 @@
+# Auto-migrated from old spec format
+# Review and enhance: add examples, refine body_schema nesting
+
+name: github_merge_pr
+app: github
+description: 'Merge a pull request. Choose merge method: ''merge'' (merge commit), ''squash'' (squash and merge), or ''rebase''
+  (rebase and merge).'
+method: PUT
+path: /repos/{owner}/{repo}/pulls/{pull_number}/merge
+base_url: https://api.github.com
+auth:
+  type: oauth2
+  header: 'Authorization: Bearer {access_token}'
+request:
+  content_type: application/json
+  body_schema:
+    type: object
+    properties:
+      commit_title:
+        type: string
+        description: Title for the merge commit
+      commit_message:
+        type: string
+        description: Body for the merge commit
+      merge_method:
+        type: string
+        description: '''merge'', ''squash'', or ''rebase''. Default: ''merge'''
+      owner:
+        type: string
+        description: Repository owner
+      repo:
+        type: string
+        description: Repository name
+      pull_number:
+        type: integer
+        description: Pull request number
+    required:
+    - owner
+    - repo
+    - pull_number
+response:
+  success_codes:
+  - 200
+  - 201
+tags:
+- development
+- git

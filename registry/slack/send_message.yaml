@@ -1,0 +1,150 @@
+# ──────────────────────────────────────────────────────────────────────
+# Slack — Send Message
+# Tier 1: Simple pass-through. Flat JSON body. No transforms needed.
+# ──────────────────────────────────────────────────────────────────────
+
+name: slack_send_message
+app: slack
+version: "1.0"
+description: |
+  Send a message to a Slack channel or DM.
+  Use channel ID (e.g. 'C1234567890'), not channel name.
+  To reply in a thread, provide thread_ts.
+  Supports Slack markdown: *bold*, _italic_, `code`, ```code block```.
+
+method: POST
+path: /chat.postMessage
+base_url: https://slack.com/api
+
+auth:
+  type: oauth2
+  scopes: [chat:write]
+  header: "Authorization: Bearer {access_token}"
+
+request:
+  content_type: application/json
+  body_schema:
+    type: object
+    required: [channel, text]
+    properties:
+      channel:
+        type: string
+        description: |
+          Channel ID to post to (e.g. 'C1234567890').
+          Use conversations.list to find channel IDs.
+          For DMs, use the user's DM channel ID.
+      text:
+        type: string
+        description: |
+          Message text. Supports Slack mrkdwn formatting.
+          This is also used as the notification text and fallback
+          for clients that can't display blocks.
+      thread_ts:
+        type: string
+        description: |
+          Timestamp of the parent message to reply in a thread.
+          Format: '1234567890.123456'.
+          If omitted, sends as a new message in the channel.
+      reply_broadcast:
+        type: boolean
+        description: |
+          If true and thread_ts is set, the reply will also be
+          posted to the channel (marked as "Also sent to #channel").
+        default: false
+      unfurl_links:
+        type: boolean
+        description: Whether to unfurl URLs in the message.
+        default: true
+      unfurl_media:
+        type: boolean
+        description: Whether to unfurl media URLs (images, etc).
+        default: true
+      mrkdwn:
+        type: boolean
+        description: Whether to treat text as Slack markdown.
+        default: true
+      blocks:
+        type: array
+        description: |
+          Block Kit layout blocks for rich message formatting.
+          See: https://api.slack.com/block-kit
+          When provided, 'text' becomes the fallback/notification text.
+        items:
+          type: object
+      metadata:
+        type: object
+        description: |
+          Message metadata. JSON object with 'event_type' (string) and
+          'event_payload' (object) fields.
+
+response:
+  success_codes: [200]
+  success_condition: "data.ok == true"
+  body_schema:
+    type: object
+    properties:
+      ok:
+        type: boolean
+      channel:
+        type: string
+      ts:
+        type: string
+        description: Timestamp of the posted message (use as message ID)
+      message:
+        type: object
+  extract:
+    message_ts: ts
+    channel_id: channel
+
+errors:
+  channel_not_found: "Channel ID is invalid or bot is not a member. Invite bot to channel first."
+  not_in_channel: "Bot is not a member of the channel. Use conversations.join or invite the bot."
+  invalid_auth: "Token is invalid or expired. Reconnect the Slack integration."
+
+rate_limit:
+  tier: 3
+  requests_per_minute: 50
+  note: "Per-workspace limit. Higher tiers available for Enterprise Grid."
+
+tags: [messaging, chat, notifications]
+
+examples:
+  - name: Simple message to a channel
+    request:
+      channel: "C0123456789"
+      text: "Hello from anytool! :wave:"
+    response:
+      ok: true
+      channel: "C0123456789"
+      ts: "1716300000.000100"
+
+  - name: Thread reply
+    request:
+      channel: "C0123456789"
+      text: "Thanks for the update, looking into it now."
+      thread_ts: "1716300000.000100"
+    response:
+      ok: true
+      channel: "C0123456789"
+      ts: "1716300060.000200"
+
+  - name: Rich message with blocks
+    request:
+      channel: "C0123456789"
+      text: "New ticket: Billing issue (fallback text)"
+      blocks:
+        - type: section
+          text:
+            type: mrkdwn
+            text: "*New Ticket:* Billing issue\n*Priority:* High\n*Customer:* sarah@example.com"
+        - type: actions
+          elements:
+            - type: button
+              text:
+                type: plain_text
+                text: "View Ticket"
+              url: "https://app.example.com/tickets/123"
+    response:
+      ok: true
+      channel: "C0123456789"
+      ts: "1716300120.000300"

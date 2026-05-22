@@ -37,7 +37,11 @@ async def lifespan(app: FastAPI):
     logger.info("✅ Database ready")
 
     api = get_api()
-    logger.info(f"✅ AnyTool SDK initialized | actions={len(api.list_actions())}")
+    logger.info(f"✅ AnyTool SDK initialized | apps={list(api._credentials.keys())}")
+
+    from server.engine_v2 import get_v2_engine
+    engine = get_v2_engine()
+    logger.info(f"✅ v2 Engine ready | actions={len(engine.registry)} | apps={engine.list_apps()}")
 
     # Start trigger engine (loads existing triggers from DB, starts polling)
     try:

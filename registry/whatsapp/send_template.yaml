@@ -1,0 +1,50 @@
+# Auto-migrated from old spec format
+# Review and enhance: add examples, refine body_schema nesting
+
+name: whatsapp_send_template
+app: whatsapp
+description: Send a pre-approved template message to a WhatsApp number. Use this for first contact or messages outside the
+  24-hour window. Templates must be approved in Meta Business Suite first.
+method: POST
+path: /{phone_number_id}/messages
+base_url: https://graph.facebook.com/v21.0
+auth:
+  type: bearer
+  header: 'Authorization: Bearer {access_token}'
+request:
+  content_type: application/json
+  body_schema:
+    type: object
+    properties:
+      to:
+        type: string
+        description: Recipient phone number with country code (e.g. '+14155552671')
+      template_name:
+        type: string
+        description: Approved template name (e.g. 'hello_world', 'order_update')
+      language_code:
+        type: string
+        description: 'Template language code (e.g. ''en_US'', ''es''). Default: ''en_US'''
+      components:
+        type: array
+        description: 'Template variable values. Example for header + body params: [{"type": "body", "parameters": [{"type":
+          "text", "text": "John"}]}]'
+        items:
+          type: string
+      phone_number_id:
+        type: string
+        description: Your WhatsApp Business phone number ID
+    required:
+    - to
+    - template_name
+    - phone_number_id
+  note: 'Note: Old spec used transform ''whatsapp_template''. In v2, the LLM constructs the exact body structure directly.'
+response:
+  success_codes:
+  - 200
+  - 201
+  extract:
+    messages[0].id: message_id
+tags:
+- messaging
+- mobile

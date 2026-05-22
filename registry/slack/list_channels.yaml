@@ -1,0 +1,36 @@
+# Auto-migrated from old spec format
+# Review and enhance: add examples, refine body_schema nesting
+
+name: slack_list_channels
+app: slack
+description: List public channels in the workspace. Returns channel IDs, names, and topics.
+method: GET
+path: /conversations.list
+base_url: https://slack.com/api
+auth:
+  type: oauth2
+  header: 'Authorization: Bearer {access_token}'
+request:
+  content_type: application/json
+  body_schema:
+    type: object
+    properties:
+      types:
+        type: string
+        description: 'Channel types: ''public_channel'', ''private_channel'', ''mpim'', ''im''. Comma-separated. Default:
+          public_channel'
+      limit:
+        type: integer
+        description: Max channels to return (default 100, max 1000)
+      cursor:
+        type: string
+        description: Pagination cursor from previous response
+      exclude_archived:
+        type: boolean
+        description: 'Exclude archived channels. Default: false'
+response:
+  success_codes:
+  - 200
+tags:
+- messaging
+- chat

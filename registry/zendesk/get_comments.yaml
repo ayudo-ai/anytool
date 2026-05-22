@@ -1,0 +1,39 @@
+# Auto-migrated from old spec format
+# Review and enhance: add examples, refine body_schema nesting
+
+name: zendesk_get_comments
+app: zendesk
+description: Get all comments on a ticket. Returns the full conversation thread.
+method: GET
+path: /api/v2/tickets/{ticket_id}/comments
+base_url: https://{subdomain}.zendesk.com
+auth:
+  type: oauth2
+  header: 'Authorization: Bearer {access_token}'
+  inject_from_metadata:
+    subdomain: subdomain
+request:
+  content_type: application/json
+  body_schema:
+    type: object
+    properties:
+      sort_order:
+        type: string
+        description: '''asc'' or ''desc''. Default: ''asc'''
+      per_page:
+        type: integer
+        description: Results per page (max 100)
+      page:
+        type: integer
+        description: Page number
+      ticket_id:
+        type: integer
+        description: Zendesk ticket ID
+    required:
+    - ticket_id
+response:
+  success_codes:
+  - 200
+tags:
+- support
+- helpdesk

@@ -1,0 +1,40 @@
+# Auto-migrated from old spec format
+# Review and enhance: add examples, refine body_schema nesting
+
+name: github_list_repos
+app: github
+description: List repositories for a user or organization.
+method: GET
+path: /users/{username}/repos
+base_url: https://api.github.com
+auth:
+  type: oauth2
+  header: 'Authorization: Bearer {access_token}'
+request:
+  content_type: application/json
+  body_schema:
+    type: object
+    properties:
+      type:
+        type: string
+        description: '''all'', ''owner'', ''member''. Default: ''owner'''
+      sort:
+        type: string
+        description: '''created'', ''updated'', ''pushed'', ''full_name''. Default: ''full_name'''
+      per_page:
+        type: integer
+        description: Results per page (max 100)
+      page:
+        type: integer
+        description: Page number
+      username:
+        type: string
+        description: GitHub username or org name
+    required:
+    - username
+response:
+  success_codes:
+  - 200
+tags:
+- development
+- git

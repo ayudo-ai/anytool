@@ -1,0 +1,55 @@
+# Auto-migrated from old spec format
+# Review and enhance: add examples, refine body_schema nesting
+
+name: freshdesk_update_ticket
+app: freshdesk
+description: 'Update a ticket''s status, priority, assignee, or other fields. Status: 2=Open, 3=Pending, 4=Resolved, 5=Closed.
+  Priority: 1=Low, 2=Medium, 3=High, 4=Urgent.'
+method: PUT
+path: /api/v2/tickets/{ticket_id}
+base_url: https://{domain}
+auth:
+  type: api_key
+  header: 'Authorization: Basic {base64(api_key:X)}'
+request:
+  content_type: application/json
+  body_schema:
+    type: object
+    properties:
+      status:
+        type: integer
+        description: 2=Open, 3=Pending, 4=Resolved, 5=Closed
+      priority:
+        type: integer
+        description: 1=Low, 2=Medium, 3=High, 4=Urgent
+      responder_id:
+        type: integer
+        description: Agent ID to assign to
+      group_id:
+        type: integer
+        description: Group ID to assign to
+      type:
+        type: string
+        description: Ticket type
+      subject:
+        type: string
+        description: Updated subject
+      tags:
+        type: array
+        description: Replace all tags
+        items:
+          type: string
+      ticket_id:
+        type: integer
+        description: Freshdesk ticket ID
+    required:
+    - ticket_id
+response:
+  success_codes:
+  - 200
+  - 201
+  extract:
+    id: ticket_id
+tags:
+- support
+- helpdesk

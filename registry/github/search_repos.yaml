@@ -1,0 +1,37 @@
+# Auto-migrated from old spec format
+# Review and enhance: add examples, refine body_schema nesting
+
+name: github_search_repos
+app: github
+description: 'Search GitHub repositories. Query examples: ''machine learning language:python'', ''org:facebook stars:>1000''.'
+method: GET
+path: /search/repositories
+base_url: https://api.github.com
+auth:
+  type: oauth2
+  header: 'Authorization: Bearer {access_token}'
+request:
+  content_type: application/json
+  body_schema:
+    type: object
+    properties:
+      q:
+        type: string
+        description: Search query (e.g. 'fastapi language:python stars:>100')
+      sort:
+        type: string
+        description: '''stars'', ''forks'', ''help-wanted-issues'', ''updated''. Default: best match'
+      order:
+        type: string
+        description: '''asc'' or ''desc''. Default: ''desc'''
+      per_page:
+        type: integer
+        description: Results per page (max 100)
+    required:
+    - q
+response:
+  success_codes:
+  - 200
+tags:
+- development
+- git

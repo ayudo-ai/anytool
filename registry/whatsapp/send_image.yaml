@@ -1,0 +1,43 @@
+# Auto-migrated from old spec format
+# Review and enhance: add examples, refine body_schema nesting
+
+name: whatsapp_send_image
+app: whatsapp
+description: Send an image message. Provide either a URL or a previously uploaded media ID.
+method: POST
+path: /{phone_number_id}/messages
+base_url: https://graph.facebook.com/v21.0
+auth:
+  type: bearer
+  header: 'Authorization: Bearer {access_token}'
+request:
+  content_type: application/json
+  body_schema:
+    type: object
+    properties:
+      to:
+        type: string
+        description: Recipient phone number with country code
+      image_url:
+        type: string
+        description: Public URL of the image (JPEG or PNG)
+      image_id:
+        type: string
+        description: Media ID of a previously uploaded image
+      caption:
+        type: string
+        description: Image caption text
+      phone_number_id:
+        type: string
+        description: Your WhatsApp Business phone number ID
+    required:
+    - to
+    - phone_number_id
+  note: 'Note: Old spec used transform ''whatsapp_media''. In v2, the LLM constructs the exact body structure directly.'
+response:
+  success_codes:
+  - 200
+  - 201
+tags:
+- messaging
+- mobile

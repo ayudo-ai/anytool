@@ -1,0 +1,45 @@
+# Auto-migrated from old spec format
+# Review and enhance: add examples, refine body_schema nesting
+
+name: whatsapp_send_document
+app: whatsapp
+description: Send a document (PDF, XLSX, DOCX, etc.) via WhatsApp.
+method: POST
+path: /{phone_number_id}/messages
+base_url: https://graph.facebook.com/v21.0
+auth:
+  type: bearer
+  header: 'Authorization: Bearer {access_token}'
+request:
+  content_type: application/json
+  body_schema:
+    type: object
+    properties:
+      to:
+        type: string
+        description: Recipient phone number with country code
+      document_url:
+        type: string
+        description: Public URL of the document
+      document_id:
+        type: string
+        description: Media ID of a previously uploaded document
+      filename:
+        type: string
+        description: Display filename (e.g. 'invoice.pdf')
+      caption:
+        type: string
+        description: Document caption text
+      phone_number_id:
+        type: string
+        description: Your WhatsApp Business phone number ID
+    required:
+    - to
+    - phone_number_id
+response:
+  success_codes:
+  - 200
+  - 201
+tags:
+- messaging
+- mobile

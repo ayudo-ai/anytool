@@ -1,0 +1,221 @@
+# ──────────────────────────────────────────────────────────────────────
+# HubSpot — Create Contact
+# Tier 2: HubSpot wraps ALL properties in {properties: {key: value}}.
+#
+# The body_schema describes the exact structure HubSpot expects.
+# The LLM constructs {properties: {email: "...", firstname: "..."}}
+# directly. No wrapper code needed.
+# ──────────────────────────────────────────────────────────────────────
+
+name: hubspot_create_contact
+app: hubspot
+version: "3"
+description: |
+  Create a new contact in HubSpot CRM.
+  All contact fields go inside the 'properties' object.
+  Returns the created contact with its ID.
+
+method: POST
+path: /crm/v3/objects/contacts
+base_url: https://api.hubapi.com
+
+auth:
+  type: oauth2
+  scopes: [crm.objects.contacts.write]
+  header: "Authorization: Bearer {access_token}"
+
+request:
+  content_type: application/json
+  body_schema:
+    type: object
+    required: [properties]
+    properties:
+      properties:
+        type: object
+        description: |
+          Contact properties as key-value pairs.
+          HubSpot requires all fields wrapped in this 'properties' object.
+          You can use any standard or custom HubSpot property name.
+        required: [email]
+        properties:
+          email:
+            type: string
+            format: email
+            description: Contact's email address (primary identifier).
+          firstname:
+            type: string
+            description: First name.
+          lastname:
+            type: string
+            description: Last name.
+          phone:
+            type: string
+            description: Phone number.
+          company:
+            type: string
+            description: Company name.
+          jobtitle:
+            type: string
+            description: Job title.
+          website:
+            type: string
+            description: Personal or company website URL.
+          lifecyclestage:
+            type: string
+            description: |
+              Lifecycle stage of the contact.
+            enum:
+              - subscriber
+              - lead
+              - marketingqualifiedlead
+              - salesqualifiedlead
+              - opportunity
+              - customer
+              - evangelist
+              - other
+          hs_lead_status:
+            type: string
+            description: Lead status (depends on your HubSpot configuration).
+          address:
+            type: string
+            description: Street address.
+          city:
+            type: string
+          state:
+            type: string
+            description: State or region.
+          zip:
+            type: string
+            description: Postal/zip code.
+          country:
+            type: string
+          hubspot_owner_id:
+            type: string
+            description: |
+              HubSpot user ID to assign as the contact owner.
+              Use the List Owners endpoint to find valid IDs.
+        additionalProperties:
+          type: string
+          description: |
+            Any custom property name defined in your HubSpot account.
+            Custom properties must be created in HubSpot first.
+      associations:
+        type: array
+        description: |
+          Associate the new contact with existing objects at creation time.
+          Each association links to a company, deal, or other object.
+        items:
+          type: object
+          required: [to, types]
+          properties:
+            to:
+              type: object
+              required: [id]
+              properties:
+                id:
+                  type: string
+                  description: ID of the object to associate with.
+            types:
+              type: array
+              items:
+                type: object
+                required: [associationCategory, associationTypeId]
+                properties:
+                  associationCategory:
+                    type: string
+                    enum: [HUBSPOT_DEFINED, USER_DEFINED]
+                  associationTypeId:
+                    type: integer
+                    description: |
+                      Association type ID. Common values:
+                      1 = contact_to_company (primary)
+                      279 = contact_to_company
+                      3 = contact_to_deal
+
+response:
+  success_codes: [201]
+  body_schema:
+    type: object
+    properties:
+      id:
+        type: string
+        description: HubSpot contact ID.
+      properties:
+        type: object
+        description: The contact's properties (including system-generated ones).
+      createdAt:
+        type: string
+      updatedAt:
+        type: string
+  extract:
+    contact_id: id
+
+errors:
+  DUPLICATE: "A contact with this email already exists. Use search to find it, then update."
+  PROPERTY_DOESNT_EXIST: "A property name in the request doesn't exist in HubSpot. Check spelling."
+  INVALID_OPTION: "A property value isn't valid for the property's allowed options."
+
+rate_limit:
+  requests_per_second: 10
+  daily_limit: 500000
+  note: "Per app. Burst of 100 requests/10 seconds."
+
+tags: [crm, contacts, sales]
+
+examples:
+  - name: Basic contact creation
+    request:
+      properties:
+        email: "sarah@example.com"
+        firstname: "Sarah"
+        lastname: "Mitchell"
+        phone: "+1-555-0100"
+        company: "Mitchell Consulting"
+        jobtitle: "CEO"
+        lifecyclestage: "lead"
+    response:
+      id: "12345"
+      properties:
+        email: "sarah@example.com"
+        firstname: "Sarah"
+        lastname: "Mitchell"
+        phone: "+1-555-0100"
+        company: "Mitchell Consulting"
+        jobtitle: "CEO"
+        lifecyclestage: "lead"
+        createdate: "2026-05-22T10:00:00.000Z"
+        lastmodifieddate: "2026-05-22T10:00:00.000Z"
+        hs_object_id: "12345"
+      createdAt: "2026-05-22T10:00:00.000Z"
+      updatedAt: "2026-05-22T10:00:00.000Z"
+
+  - name: Contact with company association
+    description: Create contact and link to an existing company in one call.
+    request:
+      properties:
+        email: "james@partner.com"
+        firstname: "James"
+        lastname: "Chen"
+      associations:
+        - to:
+            id: "98765"
+          types:
+            - associationCategory: "HUBSPOT_DEFINED"
+              associationTypeId: 1
+    response:
+      id: "12346"
+      properties:
+        email: "james@partner.com"
+        firstname: "James"
+        lastname: "Chen"
+      createdAt: "2026-05-22T10:05:00.000Z"
+
+  - name: Minimal contact
+    request:
+      properties:
+        email: "minimal@test.com"
+    response:
+      id: "12347"
+      properties:
+        email: "minimal@test.com"
+      createdAt: "2026-05-22T10:10:00.000Z"

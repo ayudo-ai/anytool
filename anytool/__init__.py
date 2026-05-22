@@ -1,47 +1,48 @@
 """
-anytool — Connect your users' apps. Execute actions. Deploy triggers.
+anytool — Spec-first API integration. Zero wrappers. Zero data loss.
 
-Quickstart:
-    from anytool import AnyTool
+    from anytool import Engine, AnyTool, MemoryTokenStore, AppCredentials
 
-    anytool = AnyTool(api_key="at_xxxx")
+    # v2 Engine — spec-first execution
+    engine = Engine(registry_path="registry/")
+    result = await engine.execute("gmail_send_email", body={...}, auth=auth)
 
-    # Execute an action
-    result = await anytool.call("gmail_send_email", "user-123",
-        to="vendor@example.com", subject="Hello", body="Hi there")
-
-    # Use with OpenAI
-    from anytool.tools.openai import OpenAIToolSet
-    toolset = OpenAIToolSet(anytool)
-    tools = await toolset.get_tools("user-123", apps=["google", "github"])
-
-    # Use with LangChain
-    tools = anytool.get_tools("google", "user-123")
+    # Auth management
+    api = AnyTool(token_store=MemoryTokenStore())
+    api.register_app(AppCredentials(app="google", ...))
+    auth_url = await api.get_auth_url("google", connection_id="user-123")
 """
 
 from anytool.client import AnyTool
+from anytool.core.engine import Engine
+from anytool.core.executor import AuthTokens, ExecutionResult
+from anytool.core.loader import SpecRegistry
+from anytool.core.models import ActionSpec
 from anytool.auth.token_store import TokenStore, MemoryTokenStore
 from anytool.auth.models import AppCredentials, UserTokens
-from anytool.auth.nango import NangoClient
 from anytool.triggers.base import TriggerConfig, TriggerEvent
 from anytool.triggers.store import TriggerStore, MemoryTriggerStore
 from anytool.triggers.engine import TriggerEngine
-from anytool.webhook import verify_webhook, sign_webhook
 
-__version__ = "0.2.0"
+__version__ = "2.0.0"
 
 __all__ = [
+    # v2 Engine
+    "Engine",
+    "AuthTokens",
+    "ExecutionResult",
+    "SpecRegistry",
+    "ActionSpec",
+    # Auth
     "AnyTool",
-    "NangoClient",
     "TokenStore",
     "MemoryTokenStore",
     "AppCredentials",
     "UserTokens",
+    # Triggers
     "TriggerConfig",
     "TriggerEvent",
     "TriggerStore",
     "MemoryTriggerStore",
     "TriggerEngine",
-    "verify_webhook",
-    "sign_webhook",
 ]
