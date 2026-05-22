@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "anytool"
-version = "0.1.4"
+version = "0.2.0"
 description = "Agent-native API integration SDK. Curated specs. Direct execution. Zero wrappers."
 readme = "README.md"
 license = "MIT"
@@ -52,6 +52,7 @@ packages = ["anytool"]
 [tool.hatch.build.targets.sdist]
 include = [
     "anytool/",
+    "registry/",
     "README.md",
     "pyproject.toml",
     "LICENSE",
