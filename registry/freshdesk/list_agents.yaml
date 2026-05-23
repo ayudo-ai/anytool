@@ -6,7 +6,7 @@ app: freshdesk
 description: List all agents in the Freshdesk account. Useful for finding agent IDs for ticket assignment.
 method: GET
 path: /api/v2/agents
-base_url: https://{domain}
+base_url: https://{domain}.freshdesk.com
 auth:
   type: api_key
   header: 'Authorization: Basic {base64(api_key:X)}'

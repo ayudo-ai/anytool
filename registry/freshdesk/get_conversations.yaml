@@ -6,7 +6,7 @@ app: freshdesk
 description: Get all conversations (replies and notes) for a ticket. Returns the full thread history.
 method: GET
 path: /api/v2/tickets/{ticket_id}/conversations
-base_url: https://{domain}
+base_url: https://{domain}.freshdesk.com
 auth:
   type: api_key
   header: 'Authorization: Basic {base64(api_key:X)}'

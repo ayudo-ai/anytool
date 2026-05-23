@@ -1,0 +1,76 @@
+# ──────────────────────────────────────────────────────────────────────
+# Gmail — New Message Trigger (alias for new_email)
+# Same as new_email but uses the canonical Composio-compatible name.
+# ──────────────────────────────────────────────────────────────────────
+
+trigger: gmail_new_message
+app: google
+display_name: Gmail New Message
+description: |
+  Fires when a new message arrives in the specified label.
+  Alias for gmail_new_email — same polling logic.
+
+mode: poll
+provider: google
+
+auth:
+  type: oauth2
+  scopes:
+    - https://www.googleapis.com/auth/gmail.modify
+    - https://mail.google.com/
+
+config:
+  type: object
+  properties:
+    label:
+      type: string
+      title: Label / Folder
+      description: Gmail label to watch (e.g. INBOX, UNREAD, STARRED).
+      default: INBOX
+    interval:
+      type: integer
+      title: Poll Interval (seconds)
+      description: How often to check for new emails. Minimum 30 seconds.
+      default: 90
+      minimum: 30
+
+poll:
+  endpoint: https://gmail.googleapis.com/gmail/v1/users/me/messages
+  params:
+    labelIds: "{config.label}"
+    maxResults: 10
+    q: "is:unread"
+  id_field: id
+  detail_endpoint: https://gmail.googleapis.com/gmail/v1/users/me/messages/{id}
+  detail_params:
+    format: full
+
+payload:
+  type: object
+  properties:
+    message_id:
+      type: string
+      description: Gmail message ID
+    thread_id:
+      type: string
+      description: Thread ID for conversation grouping
+    from:
+      type: string
+      description: Sender email address
+    to:
+      type: string
+      description: Recipient email address(es)
+    subject:
+      type: string
+      description: Email subject line
+    body:
+      type: string
+      description: Email body (plain text)
+    date:
+      type: string
+      description: Email date (RFC 2822)
+    has_attachments:
+      type: boolean
+      description: Whether the email has attachments
+
+tags: [email, communication, google]

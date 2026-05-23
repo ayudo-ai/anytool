@@ -87,21 +87,23 @@ async def poll_gmail_new_message(
     trigger: TriggerConfig,
 ) -> List[TriggerEvent]:
     """Poll Gmail for new messages."""
-    query_parts = ["newer_than:3m"]
-
     filters = trigger.filters or {}
+
+    # Always filter to inbox by default — never pick up SENT emails
+    label = filters.get("label", "INBOX").upper()
+    query_parts = ["newer_than:3m", f"in:{label.lower()}"]
+
     if filters.get("from_contains"):
         query_parts.append(f"from:{filters['from_contains']}")
     if filters.get("subject_contains"):
         query_parts.append(f"subject:{filters['subject_contains']}")
     if filters.get("to_contains"):
         query_parts.append(f"to:{filters['to_contains']}")
-    if filters.get("label"):
-        query_parts.append(f"label:{filters['label']}")
     if filters.get("has_attachment"):
         query_parts.append("has:attachment")
 
     query = " ".join(query_parts)
+    logger.debug(f"[trigger.gmail] Polling | query='{query}' | trigger={trigger.id}")
 
     search_result = await api.call(
         "gmail_search",
@@ -111,10 +113,11 @@ async def poll_gmail_new_message(
     )
 
     if not search_result.get("successful"):
-        logger.warning(f"[trigger.gmail] Search failed | trigger={trigger.id}")
+        logger.warning(f"[trigger.gmail] Search failed | trigger={trigger.id} | error={search_result.get('error', 'unknown')}")
         return []
 
     messages = search_result.get("data", {}).get("messages", [])
+    logger.debug(f"[trigger.gmail] Search returned {len(messages)} messages | last_seen={trigger.last_seen_id}")
     if not messages:
         return []
 
@@ -205,7 +208,7 @@ async def poll_slack_new_message(
       contains: Text must contain this string
     """
     filters = trigger.filters or {}
-    channel_id = filters.get("channel_id", "")
+    channel_id = filters.get("channel_id") or filters.get("channel", "")
     if not channel_id:
         logger.warning(f"[trigger.slack] No channel_id | trigger={trigger.id}")
         return []
@@ -657,6 +660,7 @@ async def poll_zendesk_new_ticket(
 
 POLLERS = {
     "gmail_new_message": poll_gmail_new_message,
+    "gmail_new_email": poll_gmail_new_message,
     "slack_new_message": poll_slack_new_message,
     "github_new_issue": poll_github_new_issue,
     "github_new_pr": poll_github_new_pr,

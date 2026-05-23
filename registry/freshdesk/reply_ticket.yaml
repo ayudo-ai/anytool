@@ -7,7 +7,7 @@ description: Send a public reply to a ticket. The reply is visible to the custom
   comments.
 method: POST
 path: /api/v2/tickets/{ticket_id}/reply
-base_url: https://{domain}
+base_url: https://{domain}.freshdesk.com
 auth:
   type: api_key
   header: 'Authorization: Basic {base64(api_key:X)}'

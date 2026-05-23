@@ -98,13 +98,14 @@ class AnyTool:
         if self._platform:
             raise ValueError("In platform mode, the platform handles callbacks automatically")
 
+        resolved_state = None
         if not app:
-            oauth_state = await self._store.get_oauth_state(state)
-            if not oauth_state:
+            resolved_state = await self._store.get_oauth_state(state)
+            if not resolved_state:
                 raise ValueError("Invalid or expired OAuth state")
-            app = oauth_state.app
+            app = resolved_state.app
         creds = self._get_credentials(app)
-        return await self._oauth.handle_callback(creds, code, state)
+        return await self._oauth.handle_callback(creds, code, state, oauth_state=resolved_state)
 
     # ── Connection Management ────────────────────────────────────────
 
@@ -134,6 +135,63 @@ class AnyTool:
             await self._platform.delete(f"/connections?provider={provider}&user_id={connection_id}")
         else:
             await self._store.delete_tokens(provider, connection_id)
+
+    # ── Action Execution ────────────────────────────────────────────
+
+    async def call(
+        self,
+        action: str,
+        connection_id: str,
+        **params,
+    ) -> dict:
+        """Execute an action for a user. Used by pollers and triggers.
+
+        Args:
+            action: Action name (e.g. 'gmail_search', 'slack_list_channels')
+            connection_id: User/connection ID for auth resolution
+            **params: Action parameters
+
+        Returns:
+            Dict with 'successful', 'data', 'error' keys.
+        """
+        if self._platform:
+            result = await self._platform.post("/execute", json={
+                "action": action,
+                "user_id": connection_id,
+                "params": params,
+            })
+            return result
+
+        # Standalone mode — use v2 engine directly
+        from anytool.core.engine import Engine
+        from anytool.core.auth_bridge import AuthBridge
+
+        # Resolve auth tokens
+        app_name = action.split("_")[0] if "_" in action else action
+        # Map common prefixes to provider names
+        app_map = {"gmail": "google", "drive": "google", "sheets": "google",
+                   "calendar": "google", "docs": "google"}
+        provider = app_map.get(app_name, app_name)
+
+        try:
+            bridge = AuthBridge(
+                oauth_manager=self._oauth,
+                credentials=self._credentials,
+            )
+            auth = await bridge.get_auth(provider, connection_id)
+
+            # Get or create engine
+            if not hasattr(self, '_engine'):
+                self._engine = Engine()
+            result = await self._engine.execute(action, params, auth)
+            return {
+                "successful": result.successful,
+                "data": result.data,
+                "error": result.error,
+            }
+        except Exception as e:
+            logger.error(f"[anytool] call({action}) failed: {e}")
+            return {"successful": False, "data": {}, "error": str(e)}
 
     # ── Internal ─────────────────────────────────────────────────────
 

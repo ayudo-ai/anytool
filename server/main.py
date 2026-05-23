@@ -112,10 +112,19 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "https://anytool.ayudo.ai",
+        "https://api-anytool.ayudo.ai",
+        "http://localhost:5173",      # Vite dev
+        "http://localhost:3000",
+        "http://localhost:8100",
+        "*",                          # fallback for SDK users
+    ],
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
     allow_headers=["*"],
+    expose_headers=["*"],
+    max_age=86400,  # Cache preflight for 24h
 )
 
 # ── Routes ───────────────────────────────────────────────────────────

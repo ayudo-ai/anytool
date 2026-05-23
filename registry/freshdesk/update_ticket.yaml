@@ -7,7 +7,7 @@ description: 'Update a ticket''s status, priority, assignee, or other fields. St
   Priority: 1=Low, 2=Medium, 3=High, 4=Urgent.'
 method: PUT
 path: /api/v2/tickets/{ticket_id}
-base_url: https://{domain}
+base_url: https://{domain}.freshdesk.com
 auth:
   type: api_key
   header: 'Authorization: Basic {base64(api_key:X)}'

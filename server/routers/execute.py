@@ -17,6 +17,7 @@ from pydantic import BaseModel
 from server.auth import get_auth_context, AuthContext
 import time
 
+from loguru import logger
 from server.database import get_record, update_record_fields, atomic_increment, put_record, new_id
 from server.engine import get_api_for_workspace
 
@@ -73,6 +74,8 @@ async def execute_action_v2(body: ExecuteRequest, ctx: AuthContext = Depends(get
     start_time = time.monotonic()
     result = None
     error_msg = None
+
+    logger.info(f"[execute] action={body.action} params={body.params}")
 
     try:
         result = await v2_execute(
@@ -143,6 +146,87 @@ APP_MAP = {
     "hubspot": "hubspot", "github": "github", "zendesk": "zendesk",
     "whatsapp": "whatsapp",
 }
+
+
+@router.get("/apps")
+async def list_apps(
+    ctx: AuthContext = Depends(get_auth_context),
+):
+    """List all available apps with icons and sub-app breakdowns.
+
+    Returns apps from the spec registry with CDN icon paths.
+    Google is split into sub-apps (Gmail, Drive, Sheets, etc.).
+    """
+    from server.engine_v2 import get_v2_engine
+    from anytool.apps.registry import APPS, SUB_APP_ICONS, get_icon_path
+    from server.config import config
+
+    engine = get_v2_engine()
+    all_actions = engine.list_actions()
+
+    # Group actions by app
+    app_actions: Dict[str, list] = {}
+    for action in all_actions:
+        app_name = action.get("app", "")
+        app_actions.setdefault(app_name, []).append(action)
+
+    # Google sub-apps
+    GOOGLE_SUB_APPS = {
+        "gmail": {"name": "Gmail", "prefix": "gmail_", "description": "Send, read, and manage emails"},
+        "google_drive": {"name": "Google Drive", "prefix": "drive_", "description": "Manage files and folders"},
+        "google_sheets": {"name": "Google Sheets", "prefix": "sheets_", "description": "Read and write spreadsheets"},
+        "google_calendar": {"name": "Google Calendar", "prefix": "calendar_", "description": "Manage events and calendars"},
+        "google_docs": {"name": "Google Docs", "prefix": "docs_", "description": "Create and edit documents"},
+    }
+
+    apps = []
+    for app_name, actions in app_actions.items():
+        if app_name == "google":
+            # Split into sub-apps
+            for sub_slug, sub_info in GOOGLE_SUB_APPS.items():
+                sub_actions = [a for a in actions if a["name"].startswith(sub_info["prefix"])]
+                if sub_actions:
+                    apps.append({
+                        "slug": sub_slug.upper().replace("_", ""),
+                        "name": sub_info["name"],
+                        "provider": "google",
+                        "description": f"{sub_info['description']} \u2014 {len(sub_actions)} actions",
+                        "icon_path": get_icon_path("google", sub_slug),
+                        "action_count": len(sub_actions),
+                        "auth_type": "oauth2",
+                        "auth_fields": [],
+                        "action_prefix": sub_info["prefix"],
+                    })
+        else:
+            app_config = APPS.get(app_name)
+            auth_type = app_config.auth_type if app_config else "oauth2"
+            auth_fields = []
+            if app_config and app_config.auth_fields:
+                auth_fields = [
+                    {
+                        "name": f.name,
+                        "label": f.label,
+                        "placeholder": f.placeholder,
+                        "type": f.type,
+                        "required": f.required,
+                        "help_text": f.help_text,
+                        "suffix": f.suffix,
+                    }
+                    for f in app_config.auth_fields
+                ]
+            apps.append({
+                "slug": app_name.upper(),
+                "name": app_config.name if app_config else app_name.title(),
+                "provider": app_name,
+                "description": f"{len(actions)} actions available",
+                "icon_path": get_icon_path(app_name),
+                "action_count": len(actions),
+                "auth_type": auth_type,
+                "auth_fields": auth_fields,
+                "action_prefix": f"{app_name}_",
+            })
+
+    return {"apps": apps, "total": len(apps)}
 
 
 @router.get("/actions")

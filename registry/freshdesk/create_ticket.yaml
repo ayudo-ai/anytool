@@ -7,7 +7,7 @@ description: 'Create a new support ticket. Requires either email or requester_id
   5=Closed. Set priority: 1=Low, 2=Medium, 3=High, 4=Urgent.'
 method: POST
 path: /api/v2/tickets
-base_url: https://{domain}
+base_url: https://{domain}.freshdesk.com
 auth:
   type: api_key
   header: 'Authorization: Basic {base64(api_key:X)}'
@@ -24,16 +24,18 @@ request:
         description: Ticket description (HTML supported)
       email:
         type: string
-        description: Requester's email address
+        description: Requester's email address (required unless requester_id is set)
       requester_id:
         type: integer
         description: Requester's Freshdesk user ID (alternative to email)
       status:
         type: integer
-        description: '2=Open, 3=Pending, 4=Resolved, 5=Closed. Default: 2'
+        description: 'Ticket status. 2=Open, 3=Pending, 4=Resolved, 5=Closed'
+        default: 2
       priority:
         type: integer
-        description: '1=Low, 2=Medium, 3=High, 4=Urgent. Default: 1'
+        description: 'Ticket priority. 1=Low, 2=Medium, 3=High, 4=Urgent'
+        default: 1
       type:
         type: string
         description: Ticket type (e.g. 'Question', 'Incident', 'Problem')
@@ -56,6 +58,7 @@ request:
     required:
     - subject
     - description
+    - email
 response:
   success_codes:
   - 200

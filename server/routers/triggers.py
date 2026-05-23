@@ -19,6 +19,8 @@ from urllib.parse import urlparse
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
+from loguru import logger
+
 from server.auth import get_auth_context, AuthContext
 from server.database import (
     put_record, get_record, list_records, delete_record, update_record_fields, new_id,
@@ -26,33 +28,36 @@ from server.database import (
 from server.trigger_engine import get_trigger_engine
 from server.engine import get_api_for_workspace
 from server.config import config as server_config
+from anytool.triggers.loader import TriggerSpecLoader
 
 router = APIRouter(prefix="/triggers", tags=["triggers"])
 
 
-# ── Supported triggers ───────────────────────────────────────────────
+# ── Spec-based trigger registry ──────────────────────────────────────
 
-TRIGGER_MAP = {
-    # Gmail (polling)
-    "gmail_new_message": {"trigger_type": "gmail_new_message", "provider": "google", "mode": "poll"},
-    "gmail_new_email": {"trigger_type": "gmail_new_message", "provider": "google", "mode": "poll"},
-    # Slack (polling)
-    "slack_new_message": {"trigger_type": "slack_new_message", "provider": "slack", "mode": "poll"},
-    # GitHub (webhook — real-time!)
-    "github_new_issue": {"trigger_type": "github_new_issue", "provider": "github", "mode": "webhook", "events": ["issues"]},
-    "github_new_pr": {"trigger_type": "github_new_pr", "provider": "github", "mode": "webhook", "events": ["pull_request"]},
-    "github_new_pull_request": {"trigger_type": "github_new_pr", "provider": "github", "mode": "webhook", "events": ["pull_request"]},
-    "github_push": {"trigger_type": "github_push", "provider": "github", "mode": "webhook", "events": ["push"]},
-    "github_star": {"trigger_type": "github_star", "provider": "github", "mode": "webhook", "events": ["star"]},
-    "github_issue_comment": {"trigger_type": "github_issue_comment", "provider": "github", "mode": "webhook", "events": ["issue_comment"]},
-    # HubSpot (polling)
-    "hubspot_new_contact": {"trigger_type": "hubspot_new_contact", "provider": "hubspot", "mode": "poll"},
-    "hubspot_new_deal": {"trigger_type": "hubspot_new_deal", "provider": "hubspot", "mode": "poll"},
-    # Freshdesk (polling)
-    "freshdesk_new_ticket": {"trigger_type": "freshdesk_new_ticket", "provider": "freshdesk", "mode": "poll"},
-    # Zendesk (polling)
-    "zendesk_new_ticket": {"trigger_type": "zendesk_new_ticket", "provider": "zendesk", "mode": "poll"},
-}
+_trigger_loader: Optional[TriggerSpecLoader] = None
+
+
+def _get_trigger_loader() -> TriggerSpecLoader:
+    """Get the trigger spec loader (lazy singleton)."""
+    global _trigger_loader
+    if _trigger_loader is None:
+        _trigger_loader = TriggerSpecLoader("registry/")
+    return _trigger_loader
+
+
+def _get_trigger_info(trigger_type: str) -> Optional[Dict[str, Any]]:
+    """Look up trigger info from YAML specs. Returns dict compatible with old TRIGGER_MAP format."""
+    loader = _get_trigger_loader()
+    spec = loader.get_trigger(trigger_type)
+    if not spec:
+        return None
+    return {
+        "trigger_type": spec.trigger,
+        "provider": spec.provider,
+        "mode": spec.mode,
+        "events": spec.events,
+    }
 
 
 def _validate_webhook_url(url: str) -> None:
@@ -193,13 +198,15 @@ async def deploy_trigger(body: DeployTriggerRequest, ctx: AuthContext = Depends(
     # Validate webhook URL (SSRF protection)
     _validate_webhook_url(body.webhook_url)
 
-    # Validate trigger type
-    trigger_info = TRIGGER_MAP.get(body.trigger_type.lower())
+    # Validate trigger type (from YAML specs)
+    trigger_info = _get_trigger_info(body.trigger_type.lower())
     if not trigger_info:
+        loader = _get_trigger_loader()
+        available = [s.trigger for s in loader.list_triggers()]
         raise HTTPException(
             400,
             f"Unknown trigger type: {body.trigger_type}. "
-            f"Available: {list(TRIGGER_MAP.keys())}"
+            f"Available: {available}"
         )
 
     trigger_id = new_id()
@@ -328,15 +335,13 @@ async def remove_trigger(trigger_id: str, ctx: AuthContext = Depends(get_auth_co
 
 
 @router.get("/types")
-async def list_trigger_types(ctx: AuthContext = Depends(get_auth_context)):
-    """List available trigger types."""
-    return {
-        "trigger_types": [
-            {
-                "type": k,
-                "provider": v["provider"],
-                "description": f"Polls for new events via {v['provider']}",
-            }
-            for k, v in TRIGGER_MAP.items()
-        ]
-    }
+async def list_trigger_types(
+    app: Optional[str] = None,
+    ctx: AuthContext = Depends(get_auth_context),
+):
+    """List available trigger types from YAML specs, optionally filtered by app/provider."""
+    loader = _get_trigger_loader()
+    specs = loader.list_triggers(provider=app) if app else loader.list_triggers()
+
+    trigger_types = [spec.to_api_dict() for spec in specs]
+    return {"trigger_types": trigger_types}

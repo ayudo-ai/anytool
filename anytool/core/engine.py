@@ -86,9 +86,23 @@ class Engine:
 
     def list_actions(self, app: Optional[str] = None) -> List[Dict[str, Any]]:
         """List available actions with metadata."""
+        from anytool.apps.registry import get_icon_path
         specs = self.registry.list_by_app(app) if app else self.registry.all()
-        return [
-            {
+        results = []
+        for s in specs:
+            # Extract params from body_schema for dashboard UI
+            params = []
+            schema = s.llm_schema or {}
+            props = schema.get("properties", {})
+            required = set(schema.get("required", []))
+            for field_name, field_def in props.items():
+                params.append({
+                    "name": field_name,
+                    "type": field_def.get("type", "string"),
+                    "description": field_def.get("description", ""),
+                    "required": field_name in required,
+                })
+            results.append({
                 "name": s.name,
                 "app": s.app,
                 "description": s.description,
@@ -96,9 +110,10 @@ class Engine:
                 "tier": s.tier,
                 "tags": list(s.tags),
                 "required_fields": s.required_fields,
-            }
-            for s in specs
-        ]
+                "params": params,
+                "icon_path": get_icon_path(s.app),
+            })
+        return results
 
     def list_apps(self) -> List[str]:
         """List all available app slugs."""

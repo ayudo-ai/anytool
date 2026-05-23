@@ -6,7 +6,7 @@ app: freshdesk
 description: Delete (trash) a ticket. Can be restored from trash within 30 days.
 method: DELETE
 path: /api/v2/tickets/{ticket_id}
-base_url: https://{domain}
+base_url: https://{domain}.freshdesk.com
 auth:
   type: api_key
   header: 'Authorization: Basic {base64(api_key:X)}'

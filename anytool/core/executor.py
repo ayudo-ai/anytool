@@ -77,11 +77,13 @@ class AuthTokens:
         access_token: str = "",
         token_type: str = "Bearer",
         api_key: str = "",
+        domain: str = "",
         metadata: Optional[Dict[str, str]] = None,
     ):
         self.access_token = access_token
         self.token_type = token_type
         self.api_key = api_key
+        self.domain = domain
         self.metadata = metadata or {}
 
     @property
@@ -153,8 +155,13 @@ class Executor:
             # 3. Separate query params from body
             query_params, final_body = self._split_query_params(spec, remaining_body)
 
+            # 3b. Coerce types based on schema (dashboard sends strings)
+            final_body = self._coerce_types(spec, final_body)
+
             # 4. Build headers
             headers = self._build_headers(spec, auth)
+
+            logger.debug(f"[executor] {spec.method} {url} | auth_domain={auth.domain} | body_keys={list(final_body.keys()) if final_body else 'none'}")
 
             # 5. Execute with retries
             result = await self._execute_with_retries(
@@ -225,11 +232,20 @@ class Executor:
                     f"in body or metadata for {spec.name}"
                 )
 
-        # Resolve dynamic base_url (e.g., {subdomain}.zendesk.com)
+        # Resolve dynamic base_url (e.g., {domain}.freshdesk.com)
         base_url = spec.base_url
         for placeholder in _PATH_PARAM_RE.findall(base_url):
-            value = auth.metadata.get(placeholder, "")
+            # Check auth.domain first (API key providers), then metadata
+            if placeholder in ("domain", "subdomain") and auth.domain:
+                value = auth.domain
+            else:
+                value = auth.metadata.get(placeholder, "")
             if value:
+                # Prevent double-suffix: if base_url has "{domain}.freshdesk.com"
+                # and value is already "ayudo.freshdesk.com", strip the suffix
+                suffix_after = base_url.split(f"{{{placeholder}}}", 1)[-1].split("/")[0]
+                if suffix_after and value.endswith(suffix_after):
+                    value = value[: -len(suffix_after)]
                 base_url = base_url.replace(f"{{{placeholder}}}", value)
 
         url = f"{base_url.rstrip('/')}{path}"
@@ -261,6 +277,56 @@ class Executor:
         # Query params would need to be explicitly separated in the spec
         # For now, send everything as body (covers 99% of cases)
         return {}, body
+
+    def _coerce_types(self, spec: ActionSpec, body: Dict[str, Any]) -> Dict[str, Any]:
+        """Coerce body values to match the schema types and apply defaults.
+
+        The dashboard and some LLMs send everything as strings.
+        Freshdesk/Zendesk need integers for status/priority, booleans, etc.
+        Also fills in schema defaults for missing required fields.
+        """
+        if body is None:
+            body = {}
+        schema = spec.request.body_schema or {}
+        props = schema.get("properties", {})
+        if not props:
+            return body
+
+        coerced = {}
+
+        # 1. Apply defaults for missing fields
+        for field_name, field_schema in props.items():
+            if field_name not in body and "default" in field_schema:
+                coerced[field_name] = field_schema["default"]
+
+        # 2. Coerce provided values
+        for key, value in body.items():
+            field_schema = props.get(key, {})
+            field_type = field_schema.get("type", "")
+            try:
+                if field_type == "integer" and isinstance(value, str) and value.strip():
+                    coerced[key] = int(value)
+                elif field_type == "number" and isinstance(value, str) and value.strip():
+                    coerced[key] = float(value)
+                elif field_type == "boolean" and isinstance(value, str):
+                    coerced[key] = value.lower() in ("true", "1", "yes")
+                elif field_type == "array" and isinstance(value, str):
+                    import json
+                    try:
+                        coerced[key] = json.loads(value)
+                    except json.JSONDecodeError:
+                        coerced[key] = [v.strip() for v in value.split(",") if v.strip()]
+                elif field_type == "object" and isinstance(value, str):
+                    import json
+                    try:
+                        coerced[key] = json.loads(value)
+                    except json.JSONDecodeError:
+                        coerced[key] = value
+                else:
+                    coerced[key] = value
+            except (ValueError, TypeError):
+                coerced[key] = value
+        return coerced
 
     def _build_headers(self, spec: ActionSpec, auth: AuthTokens) -> Dict[str, str]:
         """Build request headers."""

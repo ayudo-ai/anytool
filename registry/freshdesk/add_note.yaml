@@ -7,7 +7,7 @@ description: Add a note to a ticket. By default notes are private (internal). Se
   customer.
 method: POST
 path: /api/v2/tickets/{ticket_id}/notes
-base_url: https://{domain}
+base_url: https://{domain}.freshdesk.com
 auth:
   type: api_key
   header: 'Authorization: Basic {base64(api_key:X)}'

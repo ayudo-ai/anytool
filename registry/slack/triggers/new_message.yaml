@@ -1,0 +1,72 @@
+# ──────────────────────────────────────────────────────────────────────
+# Slack — New Message Trigger
+# Polls Slack conversations.history for new messages.
+# ──────────────────────────────────────────────────────────────────────
+
+trigger: slack_new_message
+app: slack
+display_name: Slack New Message
+description: |
+  Fires when a new message is posted in the specified channel.
+  Polls the Slack conversations.history API.
+
+mode: poll
+provider: slack
+
+auth:
+  type: oauth2
+  scopes:
+    - channels:read
+    - channels:history
+
+config:
+  type: object
+  properties:
+    channel:
+      type: string
+      title: Channel ID
+      description: |
+        Slack channel ID to watch (e.g. C01ABCDEF).
+        Find it in Slack: right-click channel → View channel details → scroll to bottom.
+    interval:
+      type: integer
+      title: Poll Interval (seconds)
+      description: How often to check for new messages.
+      default: 60
+      minimum: 15
+    ignore_bots:
+      type: boolean
+      title: Ignore Bot Messages
+      description: Skip messages posted by bots and integrations.
+      default: true
+
+poll:
+  endpoint: https://slack.com/api/conversations.history
+  params:
+    channel: "{config.channel}"
+    limit: 10
+  id_field: ts
+
+payload:
+  type: object
+  properties:
+    message_id:
+      type: string
+      description: Message timestamp (unique ID in Slack)
+    channel:
+      type: string
+      description: Channel ID where the message was posted
+    user:
+      type: string
+      description: Slack user ID of the sender
+    text:
+      type: string
+      description: Message text content
+    thread_ts:
+      type: string
+      description: Thread timestamp (if this is a threaded reply)
+    timestamp:
+      type: string
+      description: Message timestamp
+
+tags: [messaging, communication, slack]

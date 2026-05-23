@@ -1,0 +1,85 @@
+# ──────────────────────────────────────────────────────────────────────
+# Gmail — Get Message
+# Fetches a single email by ID with full headers and body.
+# Used by trigger poller to get message details.
+# ──────────────────────────────────────────────────────────────────────
+
+name: gmail_get_message
+app: google
+version: "1"
+description: |
+  Get a single Gmail message by ID. Returns full headers, body, and metadata.
+  Use format=full for complete message content.
+
+method: GET
+path: /gmail/v1/users/me/messages/{message_id}
+base_url: https://gmail.googleapis.com
+
+auth:
+  type: oauth2
+  scopes:
+    - https://www.googleapis.com/auth/gmail.modify
+  header: "Authorization: Bearer {access_token}"
+
+request:
+  content_type: application/json
+  path_params:
+    message_id:
+      type: string
+      description: The Gmail message ID
+      required: true
+  query_params:
+    format:
+      type: string
+      description: "Format to return: full, metadata, minimal, raw"
+      default: full
+
+response:
+  success_codes: [200]
+  body_schema:
+    type: object
+    properties:
+      id:
+        type: string
+      threadId:
+        type: string
+      labelIds:
+        type: array
+        items:
+          type: string
+      snippet:
+        type: string
+      payload:
+        type: object
+        properties:
+          headers:
+            type: array
+            items:
+              type: object
+              properties:
+                name:
+                  type: string
+                value:
+                  type: string
+          mimeType:
+            type: string
+          body:
+            type: object
+            properties:
+              data:
+                type: string
+                description: Base64url-encoded body content
+              size:
+                type: integer
+          parts:
+            type: array
+            description: MIME parts for multipart messages
+      internalDate:
+        type: string
+        description: Message timestamp in milliseconds since epoch
+
+  extract:
+    message_id: id
+    thread_id: threadId
+
+tags: [email, google, gmail]

@@ -1,0 +1,54 @@
+# ──────────────────────────────────────────────────────────────────────
+# Gmail — Search/List Messages
+# Used by the gmail trigger poller to find new messages.
+# ──────────────────────────────────────────────────────────────────────
+
+name: gmail_search
+app: google
+version: "1"
+description: |
+  Search Gmail messages using Gmail's search syntax.
+  Returns a list of message IDs matching the query.
+
+method: GET
+path: /gmail/v1/users/me/messages
+base_url: https://gmail.googleapis.com
+
+auth:
+  type: oauth2
+  scopes:
+    - https://www.googleapis.com/auth/gmail.modify
+  header: "Authorization: Bearer {access_token}"
+
+request:
+  content_type: application/json
+  query_params:
+    q:
+      type: string
+      description: Gmail search query (e.g. "newer_than:3m from:user@example.com")
+    maxResults:
+      type: integer
+      description: Maximum number of messages to return (default 20)
+      default: 20
+    labelIds:
+      type: string
+      description: Label ID to filter by (e.g. INBOX, UNREAD)
+
+response:
+  success_codes: [200]
+  body_schema:
+    type: object
+    properties:
+      messages:
+        type: array
+        items:
+          type: object
+          properties:
+            id:
+              type: string
+            threadId:
+              type: string
+      resultSizeEstimate:
+        type: integer
+
+tags: [email, google, gmail]

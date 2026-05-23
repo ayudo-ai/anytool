@@ -1,0 +1,66 @@
+# ──────────────────────────────────────────────────────────────────────
+# GitHub — New Pull Request Trigger
+# Webhook-based: registers a GitHub webhook for pull_request events.
+# ──────────────────────────────────────────────────────────────────────
+
+trigger: github_new_pr
+app: github
+display_name: GitHub New Pull Request
+description: |
+  Fires when a new pull request is opened in the specified repository.
+  Uses GitHub webhooks for real-time delivery.
+
+mode: webhook
+provider: github
+events: [pull_request]
+
+auth:
+  type: oauth2
+  scopes:
+    - repo
+
+config:
+  type: object
+  required: [owner, repo]
+  properties:
+    owner:
+      type: string
+      title: Repository Owner
+      description: GitHub organization or username (e.g. ayudo-ai).
+    repo:
+      type: string
+      title: Repository Name
+      description: Repository name (e.g. anytool).
+
+payload:
+  type: object
+  properties:
+    action:
+      type: string
+      description: "Event action (opened, closed, synchronize, etc.)"
+    pr_number:
+      type: integer
+      description: Pull request number
+    title:
+      type: string
+      description: PR title
+    body:
+      type: string
+      description: PR description (markdown)
+    user:
+      type: string
+      description: GitHub username who opened the PR
+    base_branch:
+      type: string
+      description: Target branch (e.g. main)
+    head_branch:
+      type: string
+      description: Source branch
+    url:
+      type: string
+      description: URL to the PR on GitHub
+    draft:
+      type: boolean
+      description: Whether this is a draft PR
+
+tags: [code, github, pull-request]

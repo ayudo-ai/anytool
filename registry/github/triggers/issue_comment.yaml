@@ -1,0 +1,54 @@
+# ──────────────────────────────────────────────────────────────────────
+# GitHub — Issue Comment Trigger
+# Webhook-based: fires when a comment is added to an issue or PR.
+# ──────────────────────────────────────────────────────────────────────
+
+trigger: github_issue_comment
+app: github
+display_name: GitHub Issue Comment
+description: |
+  Fires when a comment is added to an issue or pull request.
+  Uses GitHub webhooks for real-time delivery.
+
+mode: webhook
+provider: github
+events: [issue_comment]
+
+auth:
+  type: oauth2
+  scopes:
+    - repo
+
+config:
+  type: object
+  required: [owner, repo]
+  properties:
+    owner:
+      type: string
+      title: Repository Owner
+      description: GitHub organization or username.
+    repo:
+      type: string
+      title: Repository Name
+      description: Repository name.
+
+payload:
+  type: object
+  properties:
+    action:
+      type: string
+      description: "Event action (created, edited, deleted)"
+    issue_number:
+      type: integer
+      description: Issue or PR number
+    comment_body:
+      type: string
+      description: Comment text (markdown)
+    commenter:
+      type: string
+      description: GitHub username who commented
+    issue_title:
+      type: string
+      description: Title of the issue or PR
+
+tags: [code, github, comments]

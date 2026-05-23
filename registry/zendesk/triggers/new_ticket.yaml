@@ -1,0 +1,72 @@
+# ──────────────────────────────────────────────────────────────────────
+# Zendesk — New Ticket Trigger
+# Polls Zendesk for recently created tickets.
+# ──────────────────────────────────────────────────────────────────────
+
+trigger: zendesk_new_ticket
+app: zendesk
+display_name: Zendesk New Ticket
+description: |
+  Fires when a new support ticket is created in Zendesk.
+  Polls the Zendesk tickets API at the configured interval.
+
+mode: poll
+provider: zendesk
+
+auth:
+  type: oauth2
+  scopes:
+    - read
+
+config:
+  type: object
+  properties:
+    interval:
+      type: integer
+      title: Poll Interval (seconds)
+      description: How often to check for new tickets.
+      default: 90
+      minimum: 30
+    priority:
+      type: string
+      title: Minimum Priority
+      description: |
+        Only trigger for tickets with this priority or higher.
+        Values: low, normal, high, urgent. Leave empty for all.
+
+poll:
+  endpoint: https://{domain}.zendesk.com/api/v2/tickets/recent
+  params:
+    per_page: 10
+    sort_by: created_at
+    sort_order: desc
+  id_field: id
+
+payload:
+  type: object
+  properties:
+    ticket_id:
+      type: integer
+      description: Zendesk ticket ID
+    subject:
+      type: string
+      description: Ticket subject
+    description:
+      type: string
+      description: Ticket description
+    requester_id:
+      type: integer
+      description: Zendesk user ID of the requester
+    priority:
+      type: string
+      description: "Priority (low, normal, high, urgent)"
+    status:
+      type: string
+      description: "Status (new, open, pending, hold, solved, closed)"
+    tags:
+      type: array
+      items:
+        type: string
+      description: Tags on the ticket
+
+tags: [support, zendesk, tickets]

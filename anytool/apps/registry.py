@@ -17,11 +17,29 @@ from typing import Any, Callable, Dict, Optional
 
 
 @dataclass
+class AuthField:
+    """A field the user must fill to connect (for API key providers)."""
+    name: str          # field key: "domain", "api_key"
+    label: str         # display: "Subdomain", "API Key"
+    placeholder: str   # hint: "yourcompany"
+    type: str = "text"  # "text" | "password"
+    required: bool = True
+    help_text: str = ""  # extra hint shown below the field
+    suffix: str = ""    # appended to display: ".freshdesk.com"
+
+
+@dataclass
 class AppConfig:
     """Configuration for an OAuth provider."""
 
     name: str  # Human name: "Google", "Slack"
     slug: str  # Machine name: "google", "slack"
+
+    # Auth type: "oauth2" (default) or "api_key"
+    auth_type: str = "oauth2"
+
+    # Fields the user must fill to connect (for api_key auth)
+    auth_fields: list = field(default_factory=list)  # List[AuthField]
 
     # OAuth endpoints
     authorize_url: str = ""
@@ -41,6 +59,9 @@ class AppConfig:
 
     # API base URL (for constructing API calls)
     api_base_url: str = ""
+
+    # Icon URL for UI display
+    icon_url: str = ""
 
     # Functions to extract metadata from token/userinfo responses
     _extract_metadata: Optional[Callable[[dict], dict]] = None
@@ -102,6 +123,7 @@ APPS: Dict[str, AppConfig] = {
         token_url="https://oauth2.googleapis.com/token",
         userinfo_url="https://www.googleapis.com/oauth2/v2/userinfo",
         api_base_url="https://www.googleapis.com",
+        icon_url="app_icons/app_OQYhq7.png",  # Gmail icon (primary Google icon)
         extra_auth_params={
             "access_type": "offline",  # Gets refresh_token
             "prompt": "consent",  # Forces consent screen → ensures refresh_token
@@ -111,16 +133,34 @@ APPS: Dict[str, AppConfig] = {
     "freshdesk": AppConfig(
         name="Freshdesk",
         slug="freshdesk",
-        api_base_url="https://{domain}",  # domain filled at runtime, paths already include /api/v2
-        # No OAuth — uses API key auth
+        auth_type="api_key",
+        auth_fields=[
+            AuthField(
+                name="domain",
+                label="Subdomain",
+                placeholder="yourcompany",
+                suffix=".freshdesk.com",
+                help_text="Just the subdomain — not the full URL",
+            ),
+            AuthField(
+                name="api_key",
+                label="API Key",
+                placeholder="Your Freshdesk API key",
+                type="password",
+                help_text="Profile Settings → Your API Key",
+            ),
+        ],
+        api_base_url="https://{domain}.freshdesk.com",
+        icon_url="app_icons/app_1Nohev.png",
     ),
     "docusign": AppConfig(
         name="DocuSign",
         slug="docusign",
-        authorize_url="https://account-d.docusign.com/oauth/auth",  # demo; prod is account.docusign.com
+        authorize_url="https://account-d.docusign.com/oauth/auth",
         token_url="https://account-d.docusign.com/oauth/token",
         userinfo_url="https://account-d.docusign.com/oauth/userinfo",
-        api_base_url="https://demo.docusign.net",  # Nango needs base without /restapi/v2.1
+        api_base_url="https://demo.docusign.net",
+        icon_url="app_icons/app_mE7hLb.png",
         _extract_metadata=_docusign_metadata,
         _extract_userinfo=_docusign_userinfo,
     ),
@@ -137,22 +177,56 @@ APPS: Dict[str, AppConfig] = {
             "channels:read", "channels:history", "chat:write",
             "users:read", "users:read.email", "reactions:write",
         ],
-        token_path="authed_user.access_token",  # prefer user token
+        token_path="authed_user.access_token",
+        icon_url="app_icons/app_OkrhR1.png",
     ),
     "whatsapp": AppConfig(
         name="WhatsApp Business",
         slug="whatsapp",
+        auth_type="api_key",
+        auth_fields=[
+            AuthField(
+                name="api_key",
+                label="Access Token",
+                placeholder="Your WhatsApp Business API access token",
+                type="password",
+                help_text="Meta Business Suite → WhatsApp → API Setup",
+            ),
+            AuthField(
+                name="domain",
+                label="Phone Number ID",
+                placeholder="1234567890",
+                help_text="The phone number ID from your WhatsApp Business account",
+            ),
+        ],
         api_base_url="https://graph.facebook.com/v21.0",
-        # Auth is Bearer token (System User Token from Meta Business Suite)
-        # or OAuth2 via Facebook Login for Business
+        icon_url="app_icons/app_mWnhY4.png",
     ),
     "zendesk": AppConfig(
         name="Zendesk",
         slug="zendesk",
+        auth_type="api_key",
+        auth_fields=[
+            AuthField(
+                name="domain",
+                label="Subdomain",
+                placeholder="yourcompany",
+                suffix=".zendesk.com",
+                help_text="Just the subdomain — not the full URL",
+            ),
+            AuthField(
+                name="api_key",
+                label="API Key",
+                placeholder="Your Zendesk API key",
+                type="password",
+                help_text="Admin → Channels → API → Add API Token",
+            ),
+        ],
         authorize_url="https://{subdomain}.zendesk.com/oauth/authorizations/new",
         token_url="https://{subdomain}.zendesk.com/oauth/tokens",
-        api_base_url="https://{subdomain}.zendesk.com",  # subdomain from connection config
+        api_base_url="https://{subdomain}.zendesk.com",
         scope_separator=" ",
+        icon_url="app_icons/app_1pbhGX.png",
     ),
     "github": AppConfig(
         name="GitHub",
@@ -162,6 +236,7 @@ APPS: Dict[str, AppConfig] = {
         userinfo_url="https://api.github.com/user",
         api_base_url="https://api.github.com",
         scope_separator=" ",
+        icon_url="app_icons/app_OrZhaO.png",
     ),
     "hubspot": AppConfig(
         name="HubSpot",
@@ -170,6 +245,7 @@ APPS: Dict[str, AppConfig] = {
         token_url="https://api.hubapi.com/oauth/v1/token",
         api_base_url="https://api.hubapi.com",
         scope_separator=" ",
+        icon_url="app_icons/app_OkrhlP.svg",
     ),
     "microsoft": AppConfig(
         name="Microsoft",
@@ -181,6 +257,32 @@ APPS: Dict[str, AppConfig] = {
         scope_separator=" ",
     ),
 }
+
+
+# Sub-app icons (Google services have separate icons)
+SUB_APP_ICONS: Dict[str, str] = {
+    "gmail": "app_icons/app_OQYhq7.png",
+    "google_drive": "app_icons/app_1lxhk1.png",
+    "google_sheets": "app_icons/app_168hvn.png",
+    "google_calendar": "app_icons/app_13Gh2V.png",
+    "google_docs": "app_icons/app_1pbh98.png",
+}
+
+
+def get_icon_path(app: str, sub_app: str = "") -> str:
+    """Get the icon path for an app or sub-app.
+
+    Args:
+        app: Provider name (e.g. 'google', 'slack')
+        sub_app: Optional sub-app (e.g. 'gmail', 'google_drive')
+
+    Returns:
+        Icon path relative to CDN root (e.g. 'app_icons/app_OQYhq7.png')
+    """
+    if sub_app and sub_app in SUB_APP_ICONS:
+        return SUB_APP_ICONS[sub_app]
+    config = APPS.get(app)
+    return config.icon_url if config else ""
 
 
 def get_app_config(app: str) -> AppConfig:

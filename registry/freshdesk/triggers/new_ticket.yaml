@@ -1,0 +1,74 @@
+# ──────────────────────────────────────────────────────────────────────
+# Freshdesk — New Ticket Trigger
+# Polls Freshdesk for recently created tickets.
+# ──────────────────────────────────────────────────────────────────────
+
+trigger: freshdesk_new_ticket
+app: freshdesk
+display_name: Freshdesk New Ticket
+description: |
+  Fires when a new support ticket is created in Freshdesk.
+  Polls the Freshdesk tickets API at the configured interval.
+
+mode: poll
+provider: freshdesk
+
+auth:
+  type: api_key
+
+config:
+  type: object
+  properties:
+    interval:
+      type: integer
+      title: Poll Interval (seconds)
+      description: How often to check for new tickets.
+      default: 90
+      minimum: 30
+    priority:
+      type: integer
+      title: Minimum Priority
+      description: |
+        Only trigger for tickets with this priority or higher.
+        1=Low, 2=Medium, 3=High, 4=Urgent. Leave empty for all.
+    status:
+      type: integer
+      title: Status Filter
+      description: |
+        Only trigger for tickets with this status.
+        2=Open, 3=Pending, 4=Resolved, 5=Closed. Leave empty for all.
+
+poll:
+  endpoint: https://{domain}/api/v2/tickets
+  params:
+    order_by: created_at
+    order_type: desc
+    per_page: 10
+  id_field: id
+
+payload:
+  type: object
+  properties:
+    ticket_id:
+      type: integer
+      description: Freshdesk ticket ID
+    subject:
+      type: string
+      description: Ticket subject
+    description:
+      type: string
+      description: Ticket description (HTML)
+    requester_email:
+      type: string
+      description: Email of the person who created the ticket
+    priority:
+      type: integer
+      description: "Priority (1=Low, 2=Medium, 3=High, 4=Urgent)"
+    status:
+      type: integer
+      description: "Status (2=Open, 3=Pending, 4=Resolved, 5=Closed)"
+    source:
+      type: integer
+      description: "Source (1=Email, 2=Portal, 3=Phone, 7=Chat)"
+
+tags: [support, freshdesk, tickets]

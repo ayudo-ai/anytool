@@ -66,6 +66,7 @@ class AuthBridge:
             access_token=tokens.access_token,
             token_type=tokens.token_type,
             api_key=tokens.api_key,
+            domain=tokens.domain,
             metadata={
                 # Pass through all provider metadata
                 # (DocuSign account_id, Slack team_id, user email, etc.)

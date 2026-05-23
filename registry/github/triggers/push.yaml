@@ -1,0 +1,54 @@
+# ──────────────────────────────────────────────────────────────────────
+# GitHub — Push Trigger
+# Webhook-based: fires on git push events.
+# ──────────────────────────────────────────────────────────────────────
+
+trigger: github_push
+app: github
+display_name: GitHub Push
+description: |
+  Fires when code is pushed to the specified repository.
+  Uses GitHub webhooks for real-time delivery.
+
+mode: webhook
+provider: github
+events: [push]
+
+auth:
+  type: oauth2
+  scopes:
+    - repo
+
+config:
+  type: object
+  required: [owner, repo]
+  properties:
+    owner:
+      type: string
+      title: Repository Owner
+      description: GitHub organization or username.
+    repo:
+      type: string
+      title: Repository Name
+      description: Repository name.
+
+payload:
+  type: object
+  properties:
+    ref:
+      type: string
+      description: "Git ref (e.g. refs/heads/main)"
+    branch:
+      type: string
+      description: Branch name
+    pusher:
+      type: string
+      description: GitHub username who pushed
+    commits_count:
+      type: integer
+      description: Number of commits in the push
+    head_commit_message:
+      type: string
+      description: Message of the head commit
+
+tags: [code, github, push]

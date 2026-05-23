@@ -101,7 +101,7 @@ export function ActionsPage() {
   )
 
   const executeMut = useMutation({
-    mutationFn: () => executeAction(tryAction!.name, tryUserId, tryParams),
+    mutationFn: (params: Record<string, string>) => executeAction(tryAction!.name, tryUserId, params),
     onSuccess: (result) => setTryResult(result),
     onError: (err) => setTryResult({ error: (err as Error).message, successful: false }),
   })
@@ -330,8 +330,7 @@ export function ActionsPage() {
                 Object.entries(tryParams).forEach(([k, v]) => {
                   if (v.trim()) cleanParams[k] = v
                 })
-                setTryParams(cleanParams)
-                executeMut.mutate()
+                executeMut.mutate(cleanParams)
               }}
               disabled={executeMut.isPending || !tryUserId}
               className="w-full sm:w-auto"

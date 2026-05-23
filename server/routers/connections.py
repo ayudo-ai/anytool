@@ -147,9 +147,15 @@ async def connect_api_key(body: ApiKeyConnectRequest, ctx: AuthContext = Depends
     if not body.api_key:
         raise HTTPException(400, "api_key is required")
 
-    # Clean domain — strip protocol and trailing slashes
+    # Clean domain — strip protocol, trailing slashes, and the provider suffix
+    # User enters "yourcompany" or "yourcompany.freshdesk.com" — normalize to just subdomain
     domain = body.domain.strip()
     domain = domain.replace("https://", "").replace("http://", "").rstrip("/")
+    # Strip known suffixes so we store just the subdomain
+    for suffix in [".freshdesk.com", ".zendesk.com"]:
+        if domain.endswith(suffix):
+            domain = domain[: -len(suffix)]
+            break
 
     # Store as UserTokens with api_key field
     from anytool.auth.models import UserTokens
@@ -161,7 +167,7 @@ async def connect_api_key(body: ApiKeyConnectRequest, ctx: AuthContext = Depends
         user_id=body.user_id,
         access_token="",
         api_key=body.api_key,
-        domain=body.domain,
+        domain=domain,
         token_type="api_key",
         scopes=[],
     )
@@ -180,7 +186,7 @@ async def connect_api_key(body: ApiKeyConnectRequest, ctx: AuthContext = Depends
             "status": "active",
             "connected_at": now().isoformat(),
             "auth_type": "api_key",
-            "domain": body.domain,
+            "domain": domain,
         },
     )
 
@@ -208,8 +214,11 @@ async def oauth_callback(
     """
     # First, peek at the state to get workspace context
     from server.token_store import PostgresTokenStore
+    from loguru import logger
     store = PostgresTokenStore()
+    logger.info(f"[oauth_callback] Looking up state: {state[:20]}...")
     oauth_state = await store.get_oauth_state(state)
+    logger.info(f"[oauth_callback] State found: {oauth_state is not None} | account_id={getattr(oauth_state, 'account_id', 'N/A')} | workspace_id={getattr(oauth_state, 'workspace_id', 'N/A')}")
 
     if oauth_state and oauth_state.account_id and oauth_state.workspace_id:
         # Use workspace-specific API (with workspace's auth config credentials)
@@ -278,6 +287,7 @@ async def oauth_callback(
         """)
 
     except ValueError as e:
+        logger.error(f"[oauth_callback] ValueError: {e}")
         return HTMLResponse(content=f"""
         <!DOCTYPE html>
         <html>

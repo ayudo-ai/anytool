@@ -1,0 +1,67 @@
+# ──────────────────────────────────────────────────────────────────────
+# HubSpot — New Contact Trigger
+# Polls HubSpot CRM for recently created contacts.
+# ──────────────────────────────────────────────────────────────────────
+
+trigger: hubspot_new_contact
+app: hubspot
+display_name: HubSpot New Contact
+description: |
+  Fires when a new contact is created in HubSpot CRM.
+  Polls the HubSpot contacts API at the configured interval.
+
+mode: poll
+provider: hubspot
+
+auth:
+  type: oauth2
+  scopes:
+    - crm.objects.contacts.read
+
+config:
+  type: object
+  properties:
+    interval:
+      type: integer
+      title: Poll Interval (seconds)
+      description: How often to check for new contacts.
+      default: 120
+      minimum: 60
+    properties:
+      type: string
+      title: Contact Properties
+      description: |
+        Comma-separated list of contact properties to include.
+        Default: firstname, lastname, email, company.
+      default: "firstname,lastname,email,company"
+
+poll:
+  endpoint: https://api.hubapi.com/crm/v3/objects/contacts
+  params:
+    limit: 10
+    sorts: "-createdate"
+  id_field: id
+
+payload:
+  type: object
+  properties:
+    contact_id:
+      type: string
+      description: HubSpot contact ID
+    email:
+      type: string
+      description: Contact email address
+    firstname:
+      type: string
+      description: First name
+    lastname:
+      type: string
+      description: Last name
+    company:
+      type: string
+      description: Company name
+    created_at:
+      type: string
+      description: Creation timestamp
+
+tags: [crm, hubspot, contacts]

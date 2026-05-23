@@ -1,0 +1,64 @@
+# ──────────────────────────────────────────────────────────────────────
+# HubSpot — New Deal Trigger
+# Polls HubSpot CRM for recently created deals.
+# ──────────────────────────────────────────────────────────────────────
+
+trigger: hubspot_new_deal
+app: hubspot
+display_name: HubSpot New Deal
+description: |
+  Fires when a new deal is created in HubSpot CRM.
+  Polls the HubSpot deals API at the configured interval.
+
+mode: poll
+provider: hubspot
+
+auth:
+  type: oauth2
+  scopes:
+    - crm.objects.deals.read
+
+config:
+  type: object
+  properties:
+    interval:
+      type: integer
+      title: Poll Interval (seconds)
+      description: How often to check for new deals.
+      default: 120
+      minimum: 60
+    pipeline:
+      type: string
+      title: Pipeline
+      description: Only trigger for deals in this pipeline (optional).
+
+poll:
+  endpoint: https://api.hubapi.com/crm/v3/objects/deals
+  params:
+    limit: 10
+    sorts: "-createdate"
+  id_field: id
+
+payload:
+  type: object
+  properties:
+    deal_id:
+      type: string
+      description: HubSpot deal ID
+    dealname:
+      type: string
+      description: Deal name
+    amount:
+      type: string
+      description: Deal amount
+    dealstage:
+      type: string
+      description: Current deal stage
+    pipeline:
+      type: string
+      description: Pipeline ID
+    created_at:
+      type: string
+      description: Creation timestamp
+
+tags: [crm, hubspot, deals]

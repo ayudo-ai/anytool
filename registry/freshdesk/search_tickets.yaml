@@ -7,7 +7,7 @@ description: 'Search tickets using Freshdesk query language. Example queries: "s
   "requester_email:''user@example.com''". Returns up to 30 results.'
 method: GET
 path: /api/v2/search/tickets
-base_url: https://{domain}
+base_url: https://{domain}.freshdesk.com
 auth:
   type: api_key
   header: 'Authorization: Basic {base64(api_key:X)}'

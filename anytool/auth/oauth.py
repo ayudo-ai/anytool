@@ -80,15 +80,18 @@ class OAuthManager:
         credentials: AppCredentials,
         code: str,
         state: str,
+        oauth_state: Optional[OAuthState] = None,
     ) -> UserTokens:
         """Exchange authorization code for tokens after OAuth callback.
 
         Call this when the user is redirected back to your callback URL.
+        If oauth_state is provided, skips the state lookup (already consumed).
         """
         # Verify state
-        oauth_state = await self._store.get_oauth_state(state)
-        if not oauth_state:
-            raise ValueError("Invalid or expired OAuth state. Possible CSRF attack.")
+        if oauth_state is None:
+            oauth_state = await self._store.get_oauth_state(state)
+            if not oauth_state:
+                raise ValueError("Invalid or expired OAuth state. Possible CSRF attack.")
 
         if oauth_state.app != credentials.app:
             raise ValueError(f"State app mismatch: expected {credentials.app}, got {oauth_state.app}")
@@ -118,8 +121,12 @@ class OAuthManager:
         token_resp = resp.json()
 
         # Calculate expiry
-        expires_in = token_resp.get("expires_in", 3600)
-        expires_at = datetime.now(timezone.utc) + timedelta(seconds=expires_in)
+        expires_in = token_resp.get("expires_in")
+        expires_at = (
+            datetime.now(timezone.utc) + timedelta(seconds=expires_in)
+            if expires_in
+            else None  # No expiry = long-lived token (e.g. Slack)
+        )
 
         # Extract access token using token_path (supports nested paths like "authed_user.access_token")
         access_token = token_resp.get("access_token", "")
