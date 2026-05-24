@@ -526,7 +526,13 @@ request:
               for use as a target revision for several minutes after it's read, but for frequently edited documents this window
               might be shorter.
         description: Provides control over how write requests are executed.
+      documentId:
+        type: string
+        description: The ID of the document to update.
+        required: true
     description: Request message for BatchUpdateDocument.
+    required:
+    - documentId
 response:
   success_codes:
   - 200

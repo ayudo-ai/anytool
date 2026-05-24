@@ -34,6 +34,16 @@ request:
       description: 'Deprecated: If an item isn''t in a shared drive and its last parent is deleted but the item itself isn''t,
         the item will be placed under its owner''s root.'
       default: 'false'
+  content_type: application/json
+  body_schema:
+    type: object
+    properties:
+      fileId:
+        type: string
+        description: The ID of the file.
+        required: true
+    required:
+    - fileId
 response:
   success_codes:
   - 200

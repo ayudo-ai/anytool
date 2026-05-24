@@ -386,11 +386,28 @@ def build_google_spec(action_key: str, action_info: Dict) -> Optional[Dict]:
         },
     }
 
+    # Merge path params into body_schema so the executor can resolve them.
+    # The executor reads path placeholders from the request body.
+    if path_params or body_schema or query_params:
+        if not body_schema:
+            body_schema = {"type": "object", "properties": {}}
+        if "properties" not in body_schema:
+            body_schema["properties"] = {}
+
+        # Add path params to body_schema (these are consumed by executor for URL building)
+        for pname, pinfo in path_params.items():
+            body_schema["properties"][pname] = pinfo
+            # Add to required if the param is required and has no default
+            if pinfo.get("required") and "default" not in pinfo:
+                body_schema.setdefault("required", [])
+                if pname not in body_schema["required"]:
+                    body_schema["required"].append(pname)
+
     # Request section
     request_section: Dict[str, Any] = {}
     if query_params:
         request_section["query_params"] = query_params
-    if body_schema:
+    if body_schema and body_schema.get("properties"):
         request_section["content_type"] = "application/json"
         request_section["body_schema"] = body_schema
     if request_section:
@@ -512,6 +529,19 @@ def validate_spec(spec: Dict, strict: bool = True) -> List[str]:
         if not spec.get("request", {}).get("body_schema") and not spec.get("encoder"):
             # Allow some actions without body (like trash)
             pass
+
+    # Path params must be resolvable (in body_schema or inject_from_metadata)
+    path = spec.get("path", "")
+    import re as _re2
+    path_placeholders = set(_re2.findall(r'\{(\w+)\}', path))
+    inject_keys = set(spec.get("auth", {}).get("inject_from_metadata", {}).keys())
+    body_props = set(spec.get("request", {}).get("body_schema", {}).get("properties", {}).keys())
+    for placeholder in path_placeholders:
+        if placeholder not in inject_keys and placeholder not in body_props:
+            errors.append(
+                f"Path param '{{{placeholder}}}' not in body_schema.properties or auth.inject_from_metadata. "
+                f"Executor won't be able to resolve it."
+            )
 
     # Name should match app prefix
     name = spec.get("name", "")

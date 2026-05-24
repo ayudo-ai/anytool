@@ -21,8 +21,20 @@ request:
   content_type: application/json
   body_schema:
     type: object
-    properties: {}
+    properties:
+      spreadsheetId:
+        type: string
+        description: The ID of the spreadsheet to update.
+        required: true
+      range:
+        type: string
+        description: The [A1 notation or R1C1 notation](https://developers.google.com/workspace/sheets/api/guides/concepts#cell)
+          of the values to clear.
+        required: true
     description: The request for clearing a range of values in a spreadsheet.
+    required:
+    - spreadsheetId
+    - range
 response:
   success_codes:
   - 200

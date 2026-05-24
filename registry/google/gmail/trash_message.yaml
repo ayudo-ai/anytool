@@ -16,6 +16,22 @@ auth:
   scopes:
   - https://www.googleapis.com/auth/gmail.modify
   header: 'Authorization: Bearer {access_token}'
+request:
+  content_type: application/json
+  body_schema:
+    type: object
+    properties:
+      userId:
+        type: string
+        description: The user's email address. The special value `me` can be used to indicate the authenticated user.
+        default: me
+        required: true
+      id:
+        type: string
+        description: The ID of the message to Trash.
+        required: true
+    required:
+    - id
 response:
   success_codes:
   - 200

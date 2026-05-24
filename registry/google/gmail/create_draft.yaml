@@ -111,6 +111,11 @@ request:
               a limit of 20 Classification Label values per request. If the Classification Label values exceeds the maximum
               allowed number, the request fails.
         description: An email message.
+      userId:
+        type: string
+        description: The user's email address. The special value `me` can be used to indicate the authenticated user.
+        default: me
+        required: true
     description: A draft email in the user's mailbox.
 response:
   success_codes:

@@ -35,6 +35,16 @@ request:
     excludeTablesInBandedRanges:
       type: boolean
       description: True if tables should be excluded in the banded ranges. False if not set.
+  content_type: application/json
+  body_schema:
+    type: object
+    properties:
+      spreadsheetId:
+        type: string
+        description: The spreadsheet to request.
+        required: true
+    required:
+    - spreadsheetId
 response:
   success_codes:
   - 200

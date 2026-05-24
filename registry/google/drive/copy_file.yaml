@@ -407,8 +407,14 @@ request:
                   Key); see https://developers.google.com/workspace/cse/reference
             description: Representation of the CSE DecryptionMetadata.
         description: Details about the client-side encryption applied to the file.
+      fileId:
+        type: string
+        description: The ID of the file.
+        required: true
     description: The metadata for a file. Some resource methods (such as `files.update`) require a `fileId`. Use the `files.list`
       method to retrieve the ID for a file.
+    required:
+    - fileId
 response:
   success_codes:
   - 200

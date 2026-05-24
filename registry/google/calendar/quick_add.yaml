@@ -36,6 +36,17 @@ request:
       type: string
       description: The text describing the event to be created.
       required: true
+  content_type: application/json
+  body_schema:
+    type: object
+    properties:
+      calendarId:
+        type: string
+        description: Calendar identifier. To retrieve calendar IDs call the calendarList.list method. If you want to access
+          the primary calendar of the currently logged in user, use the "primary" keyword.
+        required: true
+    required:
+    - calendarId
 response:
   success_codes:
   - 200
@@ -175,6 +186,6 @@ tags:
 examples:
 - name: Basic calendar quick add
   request:
-    calendarId: primary
+    calendarId: <calendarId>
   response:
     status: success

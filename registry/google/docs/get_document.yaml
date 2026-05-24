@@ -34,6 +34,16 @@ request:
         in Document. - When `False`: The content of the document''s first tab populates the content fields in Document excluding
         Document.tabs. If a document has only one tab, then that tab is used to populate the document content. Document.tabs
         will be empty.'
+  content_type: application/json
+  body_schema:
+    type: object
+    properties:
+      documentId:
+        type: string
+        description: The ID of the document to retrieve.
+        required: true
+    required:
+    - documentId
 response:
   success_codes:
   - 200

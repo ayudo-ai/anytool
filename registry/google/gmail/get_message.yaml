@@ -23,11 +23,13 @@ auth:
 
 request:
   content_type: application/json
-  path_params:
-    message_id:
-      type: string
-      description: The Gmail message ID
-      required: true
+  body_schema:
+    type: object
+    required: [message_id]
+    properties:
+      message_id:
+        type: string
+        description: The Gmail message ID to retrieve.
   query_params:
     format:
       type: string

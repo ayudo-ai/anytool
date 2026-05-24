@@ -41,6 +41,16 @@ request:
     includeLabels:
       type: string
       description: A comma-separated list of IDs of labels to include in the `labelInfo` part of the response.
+  content_type: application/json
+  body_schema:
+    type: object
+    properties:
+      fileId:
+        type: string
+        description: The ID of the file.
+        required: true
+    required:
+    - fileId
 response:
   success_codes:
   - 200

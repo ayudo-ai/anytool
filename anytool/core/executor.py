@@ -149,14 +149,15 @@ class Executor:
                 request_body = encode(spec.encoder, body)
                 logger.debug(f"[executor] Encoded with {spec.encoder}")
 
-            # 2. Build the URL
+            # 1b. Apply schema defaults + coerce types BEFORE URL building
+            # so path params with defaults (e.g. calendarId='primary') are available
+            request_body = self._coerce_types(spec, request_body)
+
+            # 2. Build the URL (consumes path params from body)
             url, remaining_body = self._build_url(spec, request_body, auth)
 
             # 3. Separate query params from body
             query_params, final_body = self._split_query_params(spec, remaining_body)
-
-            # 3b. Coerce types based on schema (dashboard sends strings)
-            final_body = self._coerce_types(spec, final_body)
 
             # 4. Build headers
             headers = self._build_headers(spec, auth)

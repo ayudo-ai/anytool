@@ -116,6 +116,17 @@ request:
       description: Lower bound for an event's last modification time (as a RFC3339 timestamp) to filter by. When specified,
         entries deleted since this time will always be included regardless of showDeleted. Optional. The default is not to
         filter by last modification time.
+  content_type: application/json
+  body_schema:
+    type: object
+    properties:
+      calendarId:
+        type: string
+        description: Calendar identifier. To retrieve calendar IDs call the calendarList.list method. If you want to access
+          the primary calendar of the currently logged in user, use the "primary" keyword.
+        required: true
+    required:
+    - calendarId
 response:
   success_codes:
   - 200
@@ -543,6 +554,6 @@ tags:
 examples:
 - name: Basic calendar list events
   request:
-    calendarId: primary
+    calendarId: <calendarId>
   response:
     status: success

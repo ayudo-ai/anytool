@@ -32,6 +32,22 @@ request:
       - all
       - externalOnly
       - none
+  content_type: application/json
+  body_schema:
+    type: object
+    properties:
+      calendarId:
+        type: string
+        description: Calendar identifier. To retrieve calendar IDs call the calendarList.list method. If you want to access
+          the primary calendar of the currently logged in user, use the "primary" keyword.
+        required: true
+      eventId:
+        type: string
+        description: Event identifier.
+        required: true
+    required:
+    - calendarId
+    - eventId
 response:
   success_codes:
   - 200
@@ -42,7 +58,7 @@ tags:
 examples:
 - name: Basic calendar delete event
   request:
-    calendarId: primary
+    calendarId: <calendarId>
     eventId: <eventId>
   response:
     status: success

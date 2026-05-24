@@ -160,12 +160,18 @@ request:
         type: boolean
         description: When `true`, only organizers, owners, and users with permissions added directly on the item can access
           it.
+      fileId:
+        type: string
+        description: The ID of the file or shared drive.
+        required: true
     description: A permission for a file. A permission grants a user, group, domain, or the world access to a file or a folder
       hierarchy. For more information, see [Share files, folders, and drives](https://developers.google.com/workspace/drive/api/guides/manage-sharing).
       By default, permission requests only return a subset of fields. Permission `kind`, `ID`, `type`, and `role` are always
       returned. To retrieve specific fields, see [Return specific fields](https://developers.google.com/workspace/drive/api/guides/fields-parameter).
       Some resource methods (such as `permissions.update`) require a `permissionId`. Use the `permissions.list` method to
       retrieve the ID for a file, folder, or shared drive.
+    required:
+    - fileId
 response:
   success_codes:
   - 200

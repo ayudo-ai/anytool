@@ -60,10 +60,9 @@ request:
     properties:
       range:
         type: string
-        description: The range the values cover, in [A1 notation](https://developers.google.com/workspace/sheets/api/guides/concepts#cell).
-          For output, this range indicates the entire requested range, even though the values will exclude trailing rows and
-          columns. When appending values, this field represents the range to search for a table, after which values will be
-          appended.
+        description: The [A1 notation](https://developers.google.com/workspace/sheets/api/guides/concepts#cell) of a range
+          to search for a logical table of data. Values are appended after the last row of the table.
+        required: true
       majorDimension:
         type: string
         enum:
@@ -85,7 +84,14 @@ request:
           cell. For output, empty trailing rows and columns will not be included. For input, supported value types are: bool,
           string, and double. Null values will be skipped. To set a cell to an empty value, set the string value to an empty
           string.'
+      spreadsheetId:
+        type: string
+        description: The ID of the spreadsheet to update.
+        required: true
     description: Data within a range of the spreadsheet.
+    required:
+    - spreadsheetId
+    - range
 response:
   success_codes:
   - 200

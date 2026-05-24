@@ -41,6 +41,22 @@ request:
       enum:
       - SERIAL_NUMBER
       - FORMATTED_STRING
+  content_type: application/json
+  body_schema:
+    type: object
+    properties:
+      spreadsheetId:
+        type: string
+        description: The ID of the spreadsheet to retrieve data from.
+        required: true
+      range:
+        type: string
+        description: The [A1 notation or R1C1 notation](https://developers.google.com/workspace/sheets/api/guides/concepts#cell)
+          of the range to retrieve values from.
+        required: true
+    required:
+    - spreadsheetId
+    - range
 response:
   success_codes:
   - 200
