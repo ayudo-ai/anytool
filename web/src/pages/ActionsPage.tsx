@@ -29,6 +29,7 @@ import {
 import { cn } from '@/lib/utils'
 
 const CDN_BASE = 'https://assets.ayudo.ai'
+const LOGO_FALLBACK = 'https://logo.clearbit.com'  // Fallback: clearbit logo API
 
 const METHOD_COLORS: Record<string, string> = {
   GET: 'bg-emerald-50 text-emerald-700 border-emerald-200',
@@ -149,10 +150,23 @@ export function ActionsPage() {
     a.slug.toLowerCase().includes(search.toLowerCase())
   )
 
-  const iconUrl = (path: string) => {
-    if (!path) return ''
-    if (path.startsWith('http')) return path
-    return `${CDN_BASE}/${path}`
+  // Map app slug to company domain for Clearbit fallback
+  const LOGO_DOMAINS: Record<string, string> = {
+    airtable: 'airtable.com', asana: 'asana.com', calendly: 'calendly.com',
+    clickup: 'clickup.com', intercom: 'intercom.com', jira: 'atlassian.com',
+    linear: 'linear.app', monday: 'monday.com', notion: 'notion.so',
+    salesforce: 'salesforce.com', shopify: 'shopify.com', stripe: 'stripe.com',
+    trello: 'trello.com', twilio: 'twilio.com',
+  }
+
+  const iconUrl = (path: string, appSlug?: string) => {
+    if (path && path.startsWith('http')) return path
+    if (path) return `${CDN_BASE}/${path}`
+    // Fallback to Clearbit logo
+    const slug = appSlug?.toLowerCase() || ''
+    const domain = LOGO_DOMAINS[slug]
+    if (domain) return `${LOGO_FALLBACK}/${domain}`
+    return ''
   }
 
   // ══════════════════════════════════════════════════════════════════
@@ -171,7 +185,7 @@ export function ActionsPage() {
             <ArrowLeft className="size-5" />
           </Button>
           <img
-            src={iconUrl(selectedApp.icon_path)}
+            src={iconUrl(selectedApp.icon_path, selectedApp.slug)}
             alt={selectedApp.name}
             className="size-10 rounded-lg object-contain"
             onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
@@ -320,7 +334,7 @@ export function ActionsPage() {
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between">
                   <img
-                    src={iconUrl(app.icon_path)}
+                    src={iconUrl(app.icon_path, app.slug)}
                     alt={app.name}
                     className="size-12 rounded-lg object-contain"
                     onError={(e) => {
