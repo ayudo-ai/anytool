@@ -22,7 +22,7 @@ description: ' Creates a file. For more information, see [Create and manage file
   the file''s MIME type.'
 method: POST
 path: /files
-base_url: https://www.googleapis.com
+base_url: https://www.googleapis.com/drive/v3
 auth:
   type: oauth2
   scopes:

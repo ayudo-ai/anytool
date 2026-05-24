@@ -319,7 +319,8 @@ def build_google_spec(action_key: str, action_info: Dict) -> Optional[Dict]:
     flat_path = method_doc.get("flatPath") or method_doc.get("path", "")
 
     # Build full path
-    base_url = GOOGLE_BASE_URLS.get(service, "https://www.googleapis.com")
+    # Use baseUrl from Discovery doc (includes service path prefix)
+    base_url = doc.get("baseUrl", "").rstrip("/") or GOOGLE_BASE_URLS.get(service, "https://www.googleapis.com")
 
     # For Sheets/Docs, the path may already include the service prefix
     if not flat_path.startswith("/"):
@@ -448,6 +449,114 @@ def _build_example(spec: Dict, path_params: Dict, query_params: Dict, body_schem
     return example
 
 
+# ── Spec Validation ──────────────────────────────────────────────────
+
+def validate_spec(spec: Dict, strict: bool = True) -> List[str]:
+    """Validate a spec dict. Returns list of errors (empty = valid)."""
+    errors = []
+
+    # Required fields
+    for field in ["name", "app", "method", "path", "base_url"]:
+        if not spec.get(field):
+            errors.append(f"Missing required field: {field}")
+
+    # base_url must be a valid URL
+    base_url = spec.get("base_url", "")
+    if base_url and not base_url.startswith("https://"):
+        errors.append(f"base_url must start with https:// — got: {base_url}")
+
+    # Full URL must not have unresolved placeholders in base_url
+    # Exception: {domain}, {subdomain} are resolved at runtime for API-key providers
+    _ALLOWED_BASE_URL_VARS = {"domain", "subdomain"}
+    import re as _re
+    base_url_vars = set(_re.findall(r'\{(\w+)\}', base_url))
+    unexpected_vars = base_url_vars - _ALLOWED_BASE_URL_VARS
+    if unexpected_vars:
+        errors.append(f"base_url contains unresolved placeholder: {base_url} (unexpected: {unexpected_vars})")
+
+    # path must start with /
+    path = spec.get("path", "")
+    if path and not path.startswith("/"):
+        errors.append(f"path must start with / — got: {path}")
+
+    # Smoke test: construct full URL and check it looks right
+    full_url = f"{base_url.rstrip('/')}{path}"
+    if "%7B" in full_url or "%7b" in full_url:
+        errors.append(f"URL has encoded braces (should be literal): {full_url}")
+
+    # Verify the URL would hit the right API (not a generic googleapis.com 404)
+    if "googleapis.com" in base_url and base_url.rstrip("/") == "https://www.googleapis.com":
+        # This is almost always wrong — needs service path like /calendar/v3
+        errors.append(
+            f"base_url is bare googleapis.com without service path. "
+            f"Should include version path like /calendar/v3. Got: {base_url}"
+        )
+
+    # Method must be valid
+    method = spec.get("method", "")
+    if method not in ("GET", "POST", "PUT", "PATCH", "DELETE"):
+        errors.append(f"Invalid method: {method}")
+
+    # Auth section
+    auth = spec.get("auth", {})
+    if not auth.get("type"):
+        errors.append("Missing auth.type")
+    if not auth.get("header"):
+        errors.append("Missing auth.header")
+
+    # GET requests shouldn't have body_schema (warning only — some specs use it for query params)
+    # Not treated as an error since hand-written specs use this convention
+
+    # POST/PUT/PATCH should have body_schema (unless it's a simple action)
+    if strict and method in ("POST", "PUT", "PATCH"):
+        if not spec.get("request", {}).get("body_schema") and not spec.get("encoder"):
+            # Allow some actions without body (like trash)
+            pass
+
+    # Name should match app prefix
+    name = spec.get("name", "")
+    app = spec.get("app", "")
+    if name and app and not any(name.startswith(p) for p in [f"{app}_", "gmail_", "calendar_", "drive_", "sheets_", "docs_"]):
+        errors.append(f"Action name '{name}' doesn't match expected prefix for app '{app}'")
+
+    return errors
+
+
+def validate_yaml_file(filepath: str) -> List[str]:
+    """Validate a YAML spec file. Returns list of errors."""
+    try:
+        with open(filepath) as f:
+            spec = yaml.safe_load(f)
+        if not spec or not isinstance(spec, dict):
+            return [f"Invalid YAML or empty file: {filepath}"]
+        return validate_spec(spec)
+    except Exception as e:
+        return [f"Failed to parse {filepath}: {e}"]
+
+
+def validate_all_specs(registry_dir: Path) -> int:
+    """Validate all YAML specs in the registry. Returns error count."""
+    total_errors = 0
+    total_specs = 0
+    for yaml_file in sorted(registry_dir.rglob("*.yaml")):
+        if "/triggers/" in str(yaml_file):
+            continue
+        total_specs += 1
+        errors = validate_yaml_file(str(yaml_file))
+        if errors:
+            total_errors += len(errors)
+            rel_path = yaml_file.relative_to(registry_dir)
+            print(f"  ✗ {rel_path}")
+            for e in errors:
+                print(f"    → {e}")
+
+    if total_errors == 0:
+        print(f"  ✓ All {total_specs} specs valid")
+    else:
+        print(f"\n  ✗ {total_errors} errors in {total_specs} specs")
+    return total_errors
+
+
 def google_spec_to_yaml(action_key: str) -> Optional[str]:
     """Generate YAML spec for a Google API action."""
     if action_key not in GOOGLE_ACTION_MAP:
@@ -459,6 +568,14 @@ def google_spec_to_yaml(action_key: str) -> Optional[str]:
     print(f"  Building spec for: {action_key}")
     spec = build_google_spec(action_key, action_info)
     if not spec:
+        return None
+
+    # Validate before writing
+    errors = validate_spec(spec)
+    if errors:
+        print(f"  ✗ VALIDATION FAILED for {action_key}:")
+        for e in errors:
+            print(f"    → {e}")
         return None
 
     # Add header comment
@@ -742,6 +859,10 @@ def main():
     parser = argparse.ArgumentParser(description="Anytool Spec Builder — generate YAML specs from API docs")
     subparsers = parser.add_subparsers(dest="source", required=True)
 
+    # Validate
+    validate_parser = subparsers.add_parser("validate", help="Validate all specs in registry")
+    validate_parser.add_argument("--dir", default="registry", help="Registry directory (default: registry)")
+
     # Google Discovery
     google_parser = subparsers.add_parser("google", help="Generate from Google Discovery docs")
     google_parser.add_argument("service", help="Google service (calendar, drive, sheets, docs, gmail)")
@@ -763,7 +884,12 @@ def main():
 
     args = parser.parse_args()
 
-    if args.source == "google":
+    if args.source == "validate":
+        print(f"\nValidating all specs in {args.dir}/...\n")
+        error_count = validate_all_specs(Path(args.dir))
+        sys.exit(1 if error_count > 0 else 0)
+
+    elif args.source == "google":
         service = args.service.lower()
 
         if args.list:

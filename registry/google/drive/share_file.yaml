@@ -11,7 +11,7 @@ description: Creates a permission for a file or shared drive. For more informati
   **Warning:** Concurrent permissions operations on the same file aren't supported; only the last update is applied.
 method: POST
 path: /files/{fileId}/permissions
-base_url: https://www.googleapis.com
+base_url: https://www.googleapis.com/drive/v3
 auth:
   type: oauth2
   scopes:

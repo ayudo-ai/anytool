@@ -11,7 +11,7 @@ description: Creates a copy of a file and applies any requested updates with pat
   and manage files](https://developers.google.com/workspace/drive/api/guides/create-file).
 method: POST
 path: /files/{fileId}/copy
-base_url: https://www.googleapis.com
+base_url: https://www.googleapis.com/drive/v3
 auth:
   type: oauth2
   scopes:

@@ -10,7 +10,7 @@ version: '1'
 description: Returns the calendars on the user's calendar list.
 method: GET
 path: /users/me/calendarList
-base_url: https://www.googleapis.com
+base_url: https://www.googleapis.com/calendar/v3
 auth:
   type: oauth2
   scopes:

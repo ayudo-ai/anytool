@@ -13,7 +13,7 @@ description: Permanently deletes a file owned by the user without moving it to t
   the user are also deleted.
 method: DELETE
 path: /files/{fileId}
-base_url: https://www.googleapis.com
+base_url: https://www.googleapis.com/drive/v3
 auth:
   type: oauth2
   scopes:

@@ -11,7 +11,7 @@ description: Returns an event based on its Google Calendar ID. To retrieve an ev
   method using the iCalUID parameter.
 method: GET
 path: /calendars/{calendarId}/events/{eventId}
-base_url: https://www.googleapis.com
+base_url: https://www.googleapis.com/calendar/v3
 auth:
   type: oauth2
   scopes:

@@ -10,7 +10,7 @@ version: '1'
 description: Creates an event.
 method: POST
 path: /calendars/{calendarId}/events
-base_url: https://www.googleapis.com
+base_url: https://www.googleapis.com/calendar/v3
 auth:
   type: oauth2
   scopes:

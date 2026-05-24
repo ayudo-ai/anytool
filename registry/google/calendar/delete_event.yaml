@@ -10,7 +10,7 @@ version: '1'
 description: Deletes an event.
 method: DELETE
 path: /calendars/{calendarId}/events/{eventId}
-base_url: https://www.googleapis.com
+base_url: https://www.googleapis.com/calendar/v3
 auth:
   type: oauth2
   scopes:

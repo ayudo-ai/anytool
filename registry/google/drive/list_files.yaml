@@ -13,7 +13,7 @@ description: ' Lists the user''s files. For more information, see [Search for fi
   query parameter to remove trashed files from the results.'
 method: GET
 path: /files
-base_url: https://www.googleapis.com
+base_url: https://www.googleapis.com/drive/v3
 auth:
   type: oauth2
   scopes:

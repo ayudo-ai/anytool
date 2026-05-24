@@ -13,7 +13,7 @@ description: ' Gets a file''s metadata or content by ID. For more information, s
   instead. For more information, see [Download and export files](https://developers.google.com/workspace/drive/api/guides/manage-downloads).'
 method: GET
 path: /files/{fileId}
-base_url: https://www.googleapis.com
+base_url: https://www.googleapis.com/drive/v3
 auth:
   type: oauth2
   scopes:
