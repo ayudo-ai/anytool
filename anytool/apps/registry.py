@@ -259,28 +259,64 @@ APPS: Dict[str, AppConfig] = {
 }
 
 
-# Sub-app icons (Google services have separate icons)
-SUB_APP_ICONS: Dict[str, str] = {
-    "gmail": "app_icons/app_OQYhq7.png",
-    "google_drive": "app_icons/app_1lxhk1.png",
-    "google_sheets": "app_icons/app_168hvn.png",
-    "google_calendar": "app_icons/app_13Gh2V.png",
-    "google_docs": "app_icons/app_1pbh98.png",
+@dataclass
+class SubAppConfig:
+    """A sub-app within a parent provider (e.g. Gmail within Google).
+    Detected from action name prefixes: gmail_*, calendar_*, drive_*, etc.
+    """
+    slug: str              # "gmail", "google_drive"
+    name: str              # "Gmail", "Google Drive"
+    parent: str            # "google"
+    action_prefix: str     # "gmail_", "calendar_"
+    description: str = ""  # "Send, read, and manage emails"
+    icon_url: str = ""     # "app_icons/app_OQYhq7.png"
+
+
+# Sub-apps registry — defines how parent apps split into sub-apps.
+# To add a new sub-app, just add an entry here. Everything downstream is automatic.
+SUB_APPS: Dict[str, SubAppConfig] = {
+    "gmail": SubAppConfig(
+        slug="gmail", name="Gmail", parent="google",
+        action_prefix="gmail_",
+        description="Send, read, and manage emails",
+        icon_url="app_icons/app_OQYhq7.png",
+    ),
+    "google_drive": SubAppConfig(
+        slug="google_drive", name="Google Drive", parent="google",
+        action_prefix="drive_",
+        description="Manage files and folders",
+        icon_url="app_icons/app_1lxhk1.png",
+    ),
+    "google_sheets": SubAppConfig(
+        slug="google_sheets", name="Google Sheets", parent="google",
+        action_prefix="sheets_",
+        description="Read and write spreadsheets",
+        icon_url="app_icons/app_168hvn.png",
+    ),
+    "google_calendar": SubAppConfig(
+        slug="google_calendar", name="Google Calendar", parent="google",
+        action_prefix="calendar_",
+        description="Manage events and calendars",
+        icon_url="app_icons/app_13Gh2V.png",
+    ),
+    "google_docs": SubAppConfig(
+        slug="google_docs", name="Google Docs", parent="google",
+        action_prefix="docs_",
+        description="Create and edit documents",
+        icon_url="app_icons/app_1pbh98.png",
+    ),
 }
 
 
+def get_sub_apps_for(parent: str) -> Dict[str, SubAppConfig]:
+    """Get all sub-apps for a parent provider."""
+    return {k: v for k, v in SUB_APPS.items() if v.parent == parent}
+
+
 def get_icon_path(app: str, sub_app: str = "") -> str:
-    """Get the icon path for an app or sub-app.
-
-    Args:
-        app: Provider name (e.g. 'google', 'slack')
-        sub_app: Optional sub-app (e.g. 'gmail', 'google_drive')
-
-    Returns:
-        Icon path relative to CDN root (e.g. 'app_icons/app_OQYhq7.png')
-    """
-    if sub_app and sub_app in SUB_APP_ICONS:
-        return SUB_APP_ICONS[sub_app]
+    """Get the icon path for an app or sub-app."""
+    if sub_app and sub_app in SUB_APPS:
+        return SUB_APPS[sub_app].icon_url
     config = APPS.get(app)
     return config.icon_url if config else ""
 

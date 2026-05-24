@@ -10,7 +10,7 @@ DELETE /v1/connections         → disconnect a user's app
 
 from __future__ import annotations
 
-from typing import Optional
+from typing import Dict, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import HTMLResponse
@@ -25,26 +25,33 @@ router = APIRouter(prefix="/connections", tags=["connections"])
 
 # ── Provider mapping ─────────────────────────────────────────────────
 
-PROVIDER_MAP = {
-    "gmail": "google",
-    "google_drive": "google",
-    "google_sheets": "google",
-    "google_calendar": "google",
-    "google_docs": "google",
-    "google": "google",
-    # No-underscore variants (from slug format GOOGLECALENDAR → googlecalendar)
-    "googledrive": "google",
-    "googlesheets": "google",
-    "googlecalendar": "google",
-    "googledocs": "google",
-    "slack": "slack",
-    "docusign": "docusign",
-    "freshdesk": "freshdesk",
-    "hubspot": "hubspot",
-    "github": "github",
-    "zendesk": "zendesk",
-    "whatsapp": "whatsapp",
-}
+def _build_provider_map() -> Dict[str, str]:
+    """Build provider map from registry. Fully generic — no hardcoded apps.
+    Maps all sub-app slugs and their no-underscore variants to the parent provider.
+    """
+    from anytool.apps.registry import APPS, SUB_APPS
+    pmap: Dict[str, str] = {}
+    # All registered apps map to themselves
+    for slug in APPS:
+        pmap[slug] = slug
+    # Sub-apps map to their parent provider (with and without underscores)
+    for sub_slug, sub_config in SUB_APPS.items():
+        pmap[sub_slug] = sub_config.parent
+        # Also add no-underscore variant (google_calendar → googlecalendar)
+        no_underscore = sub_slug.replace("_", "")
+        if no_underscore != sub_slug:
+            pmap[no_underscore] = sub_config.parent
+    return pmap
+
+
+_provider_map_cache: Optional[Dict[str, str]] = None
+
+
+def _get_provider_map() -> Dict[str, str]:
+    global _provider_map_cache
+    if _provider_map_cache is None:
+        _provider_map_cache = _build_provider_map()
+    return _provider_map_cache
 
 
 # ── Models ───────────────────────────────────────────────────────────
@@ -85,12 +92,12 @@ async def connect_app(body: ConnectRequest, ctx: AuthContext = Depends(get_auth_
         {"provider": "gmail", "user_id": "customer-123"}
         → {"auth_url": "https://accounts.google.com/o/oauth2/..."}
     """
-    provider = PROVIDER_MAP.get(body.provider.lower())
+    provider = _get_provider_map().get(body.provider.lower())
     if not provider:
         raise HTTPException(
             400,
             f"Unknown provider: {body.provider}. "
-            f"Available: {list(PROVIDER_MAP.keys())}"
+            f"Available: {list(_get_provider_map().keys())}"
         )
 
     api = await get_api_for_workspace(ctx.workspace_id, ctx.account_id)
@@ -140,7 +147,7 @@ async def connect_api_key(body: ApiKeyConnectRequest, ctx: AuthContext = Depends
         {"provider": "freshdesk", "user_id": "customer-123",
          "api_key": "your-freshdesk-key", "domain": "yourcompany.freshdesk.com"}
     """
-    provider = PROVIDER_MAP.get(body.provider.lower(), body.provider.lower())
+    provider = _get_provider_map().get(body.provider.lower(), body.provider.lower())
     if provider not in API_KEY_PROVIDERS:
         raise HTTPException(
             400,
@@ -349,7 +356,7 @@ async def check_connection(
     ctx: AuthContext = Depends(get_auth_context),
 ):
     """Check if a specific user has connected a provider."""
-    app = PROVIDER_MAP.get(provider.lower(), provider)
+    app = _get_provider_map().get(provider.lower(), provider)
     api = await get_api_for_workspace(ctx.workspace_id, ctx.account_id)
     connected = await api.is_connected(app, user_id)
     return {"connected": connected, "provider": provider, "user_id": user_id}
@@ -366,7 +373,7 @@ async def check_connection_health(
     Makes a lightweight API call to verify the token works.
     Returns health status + token expiry info.
     """
-    app = PROVIDER_MAP.get(provider.lower(), provider)
+    app = _get_provider_map().get(provider.lower(), provider)
     api = await get_api_for_workspace(ctx.workspace_id, ctx.account_id)
 
     # Check if tokens exist
@@ -418,7 +425,7 @@ async def check_connection_health(
 @router.delete("")
 async def disconnect_app(body: DisconnectRequest, ctx: AuthContext = Depends(get_auth_context)):
     """Disconnect an app for a user. Removes tokens + connection record."""
-    provider = PROVIDER_MAP.get(body.provider.lower(), body.provider)
+    provider = _get_provider_map().get(body.provider.lower(), body.provider)
     api = await get_api_for_workspace(ctx.workspace_id, ctx.account_id)
     try:
         await api.disconnect(provider, body.user_id)

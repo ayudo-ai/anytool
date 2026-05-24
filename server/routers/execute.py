@@ -5,6 +5,7 @@ POST /v1/execute    → execute an action (v2 spec-first engine)
 GET  /v1/actions    → list available actions
 GET  /v1/tools      → get OpenAI-compatible tool definitions
 GET  /v1/tools/mcp  → get MCP-compatible tool definitions
+GET  /v1/apps       → list available apps (generic, from registry + specs)
 """
 
 from __future__ import annotations
@@ -28,6 +29,26 @@ class ExecuteRequest(BaseModel):
     action: str              # gmail_send_email, slack_send_message, etc.
     user_id: str             # end-user whose connection to use
     params: Dict[str, Any] = {}
+
+
+# ── Generic app resolver ─────────────────────────────────────────────
+# Derives provider from action name + registry. No hardcoded mapping.
+
+def _resolve_provider(action_or_app: str) -> str:
+    """Resolve an action prefix or app slug to the OAuth provider.
+
+    Uses SUB_APPS registry to map sub-app prefixes (gmail_, calendar_)
+    back to their parent provider (google). Falls through to identity
+    for providers without sub-apps (slack → slack).
+    """
+    from anytool.apps.registry import SUB_APPS
+    key = action_or_app.lower().rstrip("_")
+    # Check if it's a sub-app action prefix (e.g. "gmail" from "gmail_send_email")
+    for sub_slug, sub_config in SUB_APPS.items():
+        prefix = sub_config.action_prefix.rstrip("_")
+        if key == prefix or key == sub_slug or key == sub_slug.replace("_", ""):
+            return sub_config.parent
+    return key
 
 
 # ── v2 Execute (spec-first, pass-through) ────────────────────────────
@@ -99,8 +120,8 @@ async def execute_action_v2(body: ExecuteRequest, ctx: AuthContext = Depends(get
 
         # Write usage log
         try:
-            action_app = body.action.split("_")[0] if "_" in body.action else ""
-            provider = APP_MAP.get(action_app, action_app)
+            action_prefix = body.action.split("_")[0] if "_" in body.action else ""
+            provider = _resolve_provider(action_prefix)
 
             status_code = result.status_code if result else 0
             successful = result.successful if result else False
@@ -136,17 +157,7 @@ async def execute_action_v2(body: ExecuteRequest, ctx: AuthContext = Depends(get
     }
 
 
-
-# ── App mapping ──────────────────────────────────────────────────────
-
-APP_MAP = {
-    "gmail": "google", "google_drive": "google", "google_sheets": "google",
-    "google_calendar": "google", "google_docs": "google", "google": "google",
-    "slack": "slack", "docusign": "docusign", "freshdesk": "freshdesk",
-    "hubspot": "hubspot", "github": "github", "zendesk": "zendesk",
-    "whatsapp": "whatsapp",
-}
-
+# ── List Apps (generic) ──────────────────────────────────────────────
 
 @router.get("/apps")
 async def list_apps(
@@ -154,12 +165,12 @@ async def list_apps(
 ):
     """List all available apps with icons and sub-app breakdowns.
 
-    Returns apps from the spec registry with CDN icon paths.
-    Google is split into sub-apps (Gmail, Drive, Sheets, etc.).
+    Fully generic — reads everything from the registry + specs.
+    Apps with sub-apps (defined in SUB_APPS registry) are split automatically.
+    Add a new app = add specs + optional SubAppConfig. Zero code changes here.
     """
     from server.engine_v2 import get_v2_engine
-    from anytool.apps.registry import APPS, SUB_APP_ICONS, get_icon_path
-    from server.config import config
+    from anytool.apps.registry import APPS, get_sub_apps_for, get_icon_path
 
     engine = get_v2_engine()
     all_actions = engine.list_actions()
@@ -170,34 +181,29 @@ async def list_apps(
         app_name = action.get("app", "")
         app_actions.setdefault(app_name, []).append(action)
 
-    # Google sub-apps
-    GOOGLE_SUB_APPS = {
-        "gmail": {"name": "Gmail", "prefix": "gmail_", "description": "Send, read, and manage emails"},
-        "google_drive": {"name": "Google Drive", "prefix": "drive_", "description": "Manage files and folders"},
-        "google_sheets": {"name": "Google Sheets", "prefix": "sheets_", "description": "Read and write spreadsheets"},
-        "google_calendar": {"name": "Google Calendar", "prefix": "calendar_", "description": "Manage events and calendars"},
-        "google_docs": {"name": "Google Docs", "prefix": "docs_", "description": "Create and edit documents"},
-    }
-
     apps = []
     for app_name, actions in app_actions.items():
-        if app_name == "google":
-            # Split into sub-apps
-            for sub_slug, sub_info in GOOGLE_SUB_APPS.items():
-                sub_actions = [a for a in actions if a["name"].startswith(sub_info["prefix"])]
+        sub_apps = get_sub_apps_for(app_name)
+
+        if sub_apps:
+            # Split into sub-apps based on action prefix
+            for sub_slug, sub_config in sub_apps.items():
+                sub_actions = [a for a in actions if a["name"].startswith(sub_config.action_prefix)]
                 if sub_actions:
+                    parent_config = APPS.get(app_name)
                     apps.append({
                         "slug": sub_slug.upper().replace("_", ""),
-                        "name": sub_info["name"],
-                        "provider": "google",
-                        "description": f"{sub_info['description']} \u2014 {len(sub_actions)} actions",
-                        "icon_path": get_icon_path("google", sub_slug),
+                        "name": sub_config.name,
+                        "provider": app_name,
+                        "description": f"{sub_config.description} — {len(sub_actions)} actions" if sub_config.description else f"{len(sub_actions)} actions",
+                        "icon_path": sub_config.icon_url or get_icon_path(app_name),
                         "action_count": len(sub_actions),
-                        "auth_type": "oauth2",
+                        "auth_type": parent_config.auth_type if parent_config else "oauth2",
                         "auth_fields": [],
-                        "action_prefix": sub_info["prefix"],
+                        "action_prefix": sub_config.action_prefix,
                     })
         else:
+            # No sub-apps — emit as a single app
             app_config = APPS.get(app_name)
             auth_type = app_config.auth_type if app_config else "oauth2"
             auth_fields = []
@@ -229,6 +235,8 @@ async def list_apps(
     return {"apps": apps, "total": len(apps)}
 
 
+# ── List Actions ─────────────────────────────────────────────────────
+
 @router.get("/actions")
 async def list_actions(
     app: Optional[str] = None,
@@ -242,21 +250,12 @@ async def list_actions(
     from server.engine_v2 import get_v2_engine
 
     engine = get_v2_engine()
-    anytool_app = APP_MAP.get(app.lower(), app.lower()) if app else None
+    anytool_app = _resolve_provider(app) if app else None
     actions = engine.list_actions(anytool_app)
     return {"actions": actions, "total": len(actions)}
 
 
-# Map anytool param types → JSON Schema types
-_JSON_SCHEMA_TYPES = {
-    "string": "string",
-    "integer": "integer",
-    "number": "number",
-    "boolean": "boolean",
-    "list": "array",
-    "object": "object",
-}
-
+# ── Tool Definitions ─────────────────────────────────────────────────
 
 @router.get("/tools")
 async def get_tool_definitions(
@@ -282,7 +281,7 @@ async def get_tool_definitions(
     from server.engine_v2 import get_v2_engine
 
     engine = get_v2_engine()
-    anytool_app = APP_MAP.get(app.lower(), app.lower()) if app else None
+    anytool_app = _resolve_provider(app) if app else None
     action_list = [a.strip() for a in actions.split(",")] if actions else None
 
     tools = engine.get_openai_tools(
@@ -306,6 +305,6 @@ async def get_mcp_tool_definitions(
     from server.engine_v2 import get_v2_engine
 
     engine = get_v2_engine()
-    anytool_app = APP_MAP.get(app.lower(), app.lower()) if app else None
+    anytool_app = _resolve_provider(app) if app else None
     tools = engine.get_mcp_tools(app=anytool_app)
     return {"tools": tools, "total": len(tools)}
