@@ -1,0 +1,26 @@
+name: clickup_delete_task
+app: clickup
+version: "1"
+description: "Delete a task"
+method: DELETE
+path: /task/{task_id}
+base_url: https://api.clickup.com/api/v2
+auth:
+  type: bearer
+  header: "Authorization: Bearer {access_token}"
+request:
+  content_type: application/json
+  body_schema:
+    type: object
+    properties:
+      task_id:
+        type: string
+        description: The task_id.
+response:
+  success_codes: [200]
+tags: [clickup]
+examples:
+  - name: "Basic delete task"
+    request: {}
+    response:
+      status: success

@@ -1,0 +1,254 @@
+# ──────────────────────────────────────────────────────────────────────
+# Asana — Asana Createproject
+# Auto-generated from OpenAPI spec. Review before use.
+# ──────────────────────────────────────────────────────────────────────
+
+name: asana_create_project
+app: asana
+version: '1'
+description: '<b>Required scope: </b><code>projects:write</code>
+
+
+  Create a new project in a workspace or team.
+
+
+  Every project is required to be created in a specific workspace or
+
+  organization, and this cannot be changed once set. Note that you can use
+
+  the `workspace` parameter regardless of whether or not it is an
+
+  organization.
+
+
+  If the workspace for your project is an organization, you must also
+
+  supply a `team` to share the project with.
+
+
+  Returns the full record of the newly created project.
+
+
+  **Deprecation notice:** The `team` parameter and the `private_to_team`
+
+  value for `privacy_setting` are deprecated. When either is included in
+
+  the request, the `Asana-Change` response header will indicate an affected
+
+  deprecation. Clients should switch to using `POST /memberships` with
+
+  `{ parent: project, member: team }` to share a project with a team after
+
+  creation.'
+method: POST
+path: /projects
+base_url: https://app.asana.com/api/1.0
+auth:
+  type: oauth2
+  header: 'Authorization: Bearer {access_token}'
+request:
+  query_params:
+    opt_fields:
+      type: array
+      items:
+        type: string
+        enum:
+        - archived
+        - color
+        - completed
+        - completed_at
+        - completed_by
+        - completed_by.name
+        - created_at
+        - created_from_template
+        - created_from_template.name
+        - current_status
+        - current_status.author
+        - current_status.author.name
+        - current_status.color
+        - current_status.created_at
+        - current_status.created_by
+        - current_status.created_by.name
+        - current_status.html_text
+        - current_status.modified_at
+        - current_status.text
+        - current_status.title
+        - current_status_update
+        - current_status_update.resource_subtype
+        - current_status_update.title
+        - custom_field_settings
+        - custom_field_settings.custom_field
+        - custom_field_settings.custom_field.asana_created_field
+        - custom_field_settings.custom_field.created_by
+        - custom_field_settings.custom_field.created_by.name
+        - custom_field_settings.custom_field.currency_code
+        - custom_field_settings.custom_field.custom_label
+        - custom_field_settings.custom_field.custom_label_position
+        - custom_field_settings.custom_field.date_value
+        - custom_field_settings.custom_field.date_value.date
+        - custom_field_settings.custom_field.date_value.date_time
+        - custom_field_settings.custom_field.default_access_level
+        - custom_field_settings.custom_field.description
+        - custom_field_settings.custom_field.display_value
+        - custom_field_settings.custom_field.enabled
+        - custom_field_settings.custom_field.enum_options
+        - custom_field_settings.custom_field.enum_options.color
+        - custom_field_settings.custom_field.enum_options.enabled
+        - custom_field_settings.custom_field.enum_options.name
+        - custom_field_settings.custom_field.enum_value
+        - custom_field_settings.custom_field.enum_value.color
+        - custom_field_settings.custom_field.enum_value.enabled
+        - custom_field_settings.custom_field.enum_value.name
+        - custom_field_settings.custom_field.format
+        - custom_field_settings.custom_field.has_notifications_enabled
+        - custom_field_settings.custom_field.html_text_value
+        - custom_field_settings.custom_field.id_prefix
+        - custom_field_settings.custom_field.input_restrictions
+        - custom_field_settings.custom_field.is_formula_field
+        - custom_field_settings.custom_field.is_global_to_workspace
+        - custom_field_settings.custom_field.is_value_read_only
+        - custom_field_settings.custom_field.multi_enum_values
+        - custom_field_settings.custom_field.multi_enum_values.color
+        - custom_field_settings.custom_field.multi_enum_values.enabled
+        - custom_field_settings.custom_field.multi_enum_values.name
+        - custom_field_settings.custom_field.name
+        - custom_field_settings.custom_field.number_value
+        - custom_field_settings.custom_field.people_value
+        - custom_field_settings.custom_field.people_value.name
+        - custom_field_settings.custom_field.precision
+        - custom_field_settings.custom_field.privacy_setting
+        - custom_field_settings.custom_field.reference_value
+        - custom_field_settings.custom_field.reference_value.name
+        - custom_field_settings.custom_field.representation_type
+        - custom_field_settings.custom_field.resource_subtype
+        - custom_field_settings.custom_field.text_value
+        - custom_field_settings.custom_field.type
+        - custom_field_settings.is_important
+        - custom_field_settings.parent
+        - custom_field_settings.parent.name
+        - custom_field_settings.project
+        - custom_field_settings.project.name
+        - custom_fields
+        - custom_fields.date_value
+        - custom_fields.date_value.date
+        - custom_fields.date_value.date_time
+        - custom_fields.display_value
+        - custom_fields.enabled
+        - custom_fields.enum_options
+        - custom_fields.enum_options.color
+        - custom_fields.enum_options.enabled
+        - custom_fields.enum_options.name
+        - custom_fields.enum_value
+        - custom_fields.enum_value.color
+        - custom_fields.enum_value.enabled
+        - custom_fields.enum_value.name
+        - custom_fields.id_prefix
+        - custom_fields.input_restrictions
+        - custom_fields.is_formula_field
+        - custom_fields.multi_enum_values
+        - custom_fields.multi_enum_values.color
+        - custom_fields.multi_enum_values.enabled
+        - custom_fields.multi_enum_values.name
+        - custom_fields.name
+        - custom_fields.number_value
+        - custom_fields.representation_type
+        - custom_fields.text_value
+        - custom_fields.type
+        - default_access_level
+        - default_view
+        - due_date
+        - due_on
+        - followers
+        - followers.name
+        - html_notes
+        - icon
+        - members
+        - members.name
+        - minimum_access_level_for_customization
+        - minimum_access_level_for_sharing
+        - modified_at
+        - name
+        - notes
+        - owner
+        - permalink_url
+        - privacy_setting
+        - project_brief
+        - public
+        - start_on
+        - team
+        - team.name
+        - workspace
+        - workspace.name
+      description: This endpoint returns a resource which excludes some properties by default. To include those optional properties,
+        set this query parameter to a comma-separated list of the properties you wish to include.
+  content_type: application/json
+  body_schema:
+    type: object
+    properties:
+      data:
+        type: object
+        properties:
+          archived:
+            type: object
+          color:
+            type: object
+          icon:
+            type: object
+          created_at:
+            type: object
+          current_status:
+            type: object
+          current_status_update:
+            type: object
+          custom_field_settings:
+            type: object
+          default_view:
+            type: object
+          due_date:
+            type: object
+          due_on:
+            type: object
+          html_notes:
+            type: object
+          members:
+            type: object
+          modified_at:
+            type: object
+          notes:
+            type: object
+          public:
+            type: object
+          privacy_setting:
+            type: object
+          start_on:
+            type: object
+          default_access_level:
+            type: object
+          minimum_access_level_for_customization:
+            type: object
+          minimum_access_level_for_sharing:
+            type: object
+          custom_fields:
+            type: object
+            description: An object where each key is the GID of a custom field and its corresponding value is either an enum
+              GID, string, number, or object (depending on the custom field type). See the [custom fields guide](/docs/custom-fields-guide)
+              for details on creating and updating custom field values.
+          followers:
+            type: string
+            description: '*Create-only*. Comma separated string of users. Followers are a subset of members who have opted
+              in to receive "tasks added" notifications for a project.'
+          owner:
+            type: string
+            description: The current owner of the project, may be null.
+          team:
+            type: string
+            description: '*Deprecated:* The team to share this project with is deprecated. Use `POST /memberships` with `{
+              parent: project, member: team }` to share a project with a team after creation.'
+          workspace:
+            type: string
+            description: The `gid` of a workspace.
+response:
+  success_codes:
+  - 200
+tags:
+- Projects

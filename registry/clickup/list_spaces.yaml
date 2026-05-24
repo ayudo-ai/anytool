@@ -1,0 +1,26 @@
+name: clickup_list_spaces
+app: clickup
+version: "1"
+description: "List spaces in a workspace"
+method: GET
+path: /team/{team_id}/space
+base_url: https://api.clickup.com/api/v2
+auth:
+  type: bearer
+  header: "Authorization: Bearer {access_token}"
+request:
+  content_type: application/json
+  body_schema:
+    type: object
+    properties:
+      team_id:
+        type: string
+        description: The team_id.
+response:
+  success_codes: [200]
+tags: [clickup]
+examples:
+  - name: "Basic list spaces"
+    request: {}
+    response:
+      status: success

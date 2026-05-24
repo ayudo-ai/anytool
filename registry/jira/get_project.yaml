@@ -1,0 +1,612 @@
+# ──────────────────────────────────────────────────────────────────────
+# Jira — Jira Getproject
+# Auto-generated from OpenAPI spec. Review before use.
+# ──────────────────────────────────────────────────────────────────────
+name: jira_get_project
+app: jira
+version: '1'
+description: 'Returns the [project details](https://confluence.atlassian.com/x/ahLpNw) for a project.
+
+
+  This operation can be accessed anonymously.
+
+
+  **[Permissions](#permissions) required:** *Browse projects* [project permission](https://confluence.atlassian.com/x/yodKLg)
+  for the project.'
+method: GET
+path: /rest/api/3/project/{projectIdOrKey}
+base_url: https://{domain}.atlassian.net
+auth:
+  type: oauth2
+  header: 'Authorization: Bearer {access_token}'
+request:
+  query_params:
+    expand:
+      type: string
+      description: "Use [expand](#expansion) to include additional information in the response. This parameter accepts a comma-separated\
+        \ list. Note that the project description, issue types, and project lead are included in all responses by default.\
+        \ Expand options include:\n\n *  `description` The project description.\n *  `issueTypes` The issue types associated\
+        \ with the project.\n *  `lead` The project lead.\n *  `projectKeys` All project keys associated with the project.\n\
+        \ *  `issueTypeHierarchy` The project issue type hierarchy."
+    properties:
+      type: array
+      items:
+        type: string
+        default: ''
+      description: A list of project properties to return for the project. This parameter accepts a comma-separated list.
+  body_schema:
+    type: object
+    properties:
+      projectIdOrKey:
+        type: string
+        description: The projectIdOrKey.
+  content_type: application/json
+response:
+  success_codes:
+  - 200
+  body_schema:
+    type: object
+    description: Details about a project.
+    properties:
+      archived:
+        type: boolean
+        description: Whether the project is archived.
+      archivedBy:
+        type: object
+        properties:
+          accountId:
+            type: string
+            description: The account ID of the user, which uniquely identifies the user across all Atlassian products. For
+              example, *5b10ac8d82e05b22cc7d4ef5*. Required in requests.
+          accountType:
+            type: string
+            description: "The user account type. Can take the following values:\n\n *  `atlassian` regular Atlassian user\
+              \ account\n *  `app` system account used for Connect applications and OAuth to represent external systems\n\
+              \ *  `customer` Jira Service Desk account representing an external service desk"
+            enum: &id001
+            - atlassian
+            - app
+            - customer
+            - unknown
+          active:
+            type: boolean
+            description: Whether the user is active.
+          appType:
+            type: string
+            description: "The app type of the user account when accountType is 'app'. Can take the following values:\n\n *\
+              \  `service` Service Account\n *  `agent` Rovo Agent Account\n *  `unknown` Unknown app type"
+          applicationRoles:
+            type: object
+            properties: {}
+          avatarUrls:
+            type: object
+            properties: {}
+          displayName:
+            type: string
+            description: The display name of the user. Depending on the user’s privacy setting, this may return an alternative
+              value.
+          emailAddress:
+            type: string
+            description: The email address of the user. Depending on the user’s privacy setting, this may be returned as null.
+          expand:
+            type: string
+            description: Expand options that include additional user details in the response.
+          groups:
+            type: object
+            properties: {}
+          guest:
+            type: boolean
+            description: Whether the user is a guest.
+          key:
+            type: string
+            description: This property is no longer available and will be removed from the documentation soon. See the [deprecation
+              notice](https://developer.atlassian.com/cloud/jira/platform/deprecation-notice-user-privacy-api-migration-guide/)
+              for details.
+          locale:
+            type: string
+            description: The locale of the user. Depending on the user’s privacy setting, this may be returned as null.
+          name:
+            type: string
+            description: This property is no longer available and will be removed from the documentation soon. See the [deprecation
+              notice](https://developer.atlassian.com/cloud/jira/platform/deprecation-notice-user-privacy-api-migration-guide/)
+              for details.
+          self:
+            type: string
+            description: The URL of the user.
+          timeZone:
+            type: string
+            description: The time zone specified in the user's profile. If the user's time zone is not visible to the current
+              user (due to user's profile setting), or if a time zone has not been set, the instance's default time zone will
+              be returned.
+      archivedDate:
+        type: string
+        description: The date when the project was archived.
+      assigneeType:
+        type: string
+        description: The default assignee when creating issues for this project.
+        enum:
+        - PROJECT_LEAD
+        - UNASSIGNED
+      avatarUrls:
+        type: object
+        properties:
+          16x16:
+            type: string
+            description: The URL of the item's 16x16 pixel avatar.
+          24x24:
+            type: string
+            description: The URL of the item's 24x24 pixel avatar.
+          32x32:
+            type: string
+            description: The URL of the item's 32x32 pixel avatar.
+          48x48:
+            type: string
+            description: The URL of the item's 48x48 pixel avatar.
+      components:
+        type: array
+        description: List of the components contained in the project.
+        items:
+          type: object
+          description: Details about a project component.
+          properties:
+            ari:
+              type: string
+              description: Compass component's ID. Can't be updated. Not required for creating a Project Component.
+            assignee:
+              type: object
+              properties: {}
+            assigneeType:
+              type: string
+              description: "The nominal user type used to determine the assignee for issues created with this component. See\
+                \ `realAssigneeType` for details on how the type of the user, and hence the user, assigned to issues is determined.\
+                \ Can take the following values:\n\n *  `PROJECT_LEAD` the assignee to any issues created with this component\
+                \ is nominally the lead for the project the component is in.\n *  `COMPONENT_LEAD` the assignee to any issues\
+                \ created with this component is nominally the lead for the component.\n *  `UNASSIGNED` an assignee is not\
+                \ set for issues created with this component.\n *  `PROJECT_DEFAULT` the assignee to any issues created with\
+                \ this component is nominally the default assignee for the project that the component is in.\n\nDefault value:\
+                \ `PROJECT_DEFAULT`.  \nOptional when creating or updating a component."
+              enum:
+              - PROJECT_DEFAULT
+              - COMPONENT_LEAD
+              - PROJECT_LEAD
+              - UNASSIGNED
+            description:
+              type: string
+              description: The description for the component. Optional when creating or updating a component.
+            id:
+              type: string
+              description: The unique identifier for the component.
+            isAssigneeTypeValid:
+              type: boolean
+              description: Whether a user is associated with `assigneeType`. For example, if the `assigneeType` is set to
+                `COMPONENT_LEAD` but the component lead is not set, then `false` is returned.
+            lead:
+              type: object
+              properties: {}
+            leadAccountId:
+              type: string
+              description: The accountId of the component's lead user. The accountId uniquely identifies the user across all
+                Atlassian products. For example, *5b10ac8d82e05b22cc7d4ef5*.
+            leadUserName:
+              type: string
+              description: This property is no longer available and will be removed from the documentation soon. See the [deprecation
+                notice](https://developer.atlassian.com/cloud/jira/platform/deprecation-notice-user-privacy-api-migration-guide/)
+                for details.
+            metadata:
+              type: object
+              description: Compass component's metadata. Can't be updated. Not required for creating a Project Component.
+            name:
+              type: string
+              description: The unique name for the component in the project. Required when creating a component. Optional
+                when updating a component. The maximum length is 255 characters.
+            project:
+              type: string
+              description: The key of the project the component is assigned to. Required when creating a component. Can't
+                be updated.
+            projectId:
+              type: integer
+              description: The ID of the project the component is assigned to.
+            realAssignee:
+              type: object
+              properties: {}
+            realAssigneeType:
+              type: string
+              description: "The type of the assignee that is assigned to issues created with this component, when an assignee\
+                \ cannot be set from the `assigneeType`. For example, `assigneeType` is set to `COMPONENT_LEAD` but no component\
+                \ lead is set. This property is set to one of the following values:\n\n *  `PROJECT_LEAD` when `assigneeType`\
+                \ is `PROJECT_LEAD` and the project lead has permission to be assigned issues in the project that the component\
+                \ is in.\n *  `COMPONENT_LEAD` when `assignee`Type is `COMPONENT_LEAD` and the component lead has permission\
+                \ to be assigned issues in the project that the component is in.\n *  `UNASSIGNED` when `assigneeType` is\
+                \ `UNASSIGNED` and Jira is configured to allow unassigned issues.\n *  `PROJECT_DEFAULT` when none of the\
+                \ preceding cases are true."
+              enum:
+              - PROJECT_DEFAULT
+              - COMPONENT_LEAD
+              - PROJECT_LEAD
+              - UNASSIGNED
+            self:
+              type: string
+              description: The URL of the component.
+      deleted:
+        type: boolean
+        description: Whether the project is marked as deleted.
+      deletedBy:
+        type: object
+        properties:
+          accountId:
+            type: string
+            description: The account ID of the user, which uniquely identifies the user across all Atlassian products. For
+              example, *5b10ac8d82e05b22cc7d4ef5*. Required in requests.
+          accountType:
+            type: string
+            description: "The user account type. Can take the following values:\n\n *  `atlassian` regular Atlassian user\
+              \ account\n *  `app` system account used for Connect applications and OAuth to represent external systems\n\
+              \ *  `customer` Jira Service Desk account representing an external service desk"
+            enum: *id001
+          active:
+            type: boolean
+            description: Whether the user is active.
+          appType:
+            type: string
+            description: "The app type of the user account when accountType is 'app'. Can take the following values:\n\n *\
+              \  `service` Service Account\n *  `agent` Rovo Agent Account\n *  `unknown` Unknown app type"
+          applicationRoles:
+            type: object
+            properties: {}
+          avatarUrls:
+            type: object
+            properties: {}
+          displayName:
+            type: string
+            description: The display name of the user. Depending on the user’s privacy setting, this may return an alternative
+              value.
+          emailAddress:
+            type: string
+            description: The email address of the user. Depending on the user’s privacy setting, this may be returned as null.
+          expand:
+            type: string
+            description: Expand options that include additional user details in the response.
+          groups:
+            type: object
+            properties: {}
+          guest:
+            type: boolean
+            description: Whether the user is a guest.
+          key:
+            type: string
+            description: This property is no longer available and will be removed from the documentation soon. See the [deprecation
+              notice](https://developer.atlassian.com/cloud/jira/platform/deprecation-notice-user-privacy-api-migration-guide/)
+              for details.
+          locale:
+            type: string
+            description: The locale of the user. Depending on the user’s privacy setting, this may be returned as null.
+          name:
+            type: string
+            description: This property is no longer available and will be removed from the documentation soon. See the [deprecation
+              notice](https://developer.atlassian.com/cloud/jira/platform/deprecation-notice-user-privacy-api-migration-guide/)
+              for details.
+          self:
+            type: string
+            description: The URL of the user.
+          timeZone:
+            type: string
+            description: The time zone specified in the user's profile. If the user's time zone is not visible to the current
+              user (due to user's profile setting), or if a time zone has not been set, the instance's default time zone will
+              be returned.
+      deletedDate:
+        type: string
+        description: The date when the project was marked as deleted.
+      description:
+        type: string
+        description: A brief description of the project.
+      email:
+        type: string
+        description: An email address associated with the project.
+      expand:
+        type: string
+        description: Expand options that include additional project details in the response.
+      favourite:
+        type: boolean
+        description: Whether the project is selected as a favorite.
+      id:
+        type: string
+        description: The ID of the project.
+      insight:
+        type: object
+        properties:
+          lastIssueUpdateTime:
+            type: string
+            description: The last issue update time.
+          totalIssueCount:
+            type: integer
+            description: Total issue count.
+      isPrivate:
+        type: boolean
+        description: Whether the project is private from the user's perspective. This means the user can't see the project
+          or any associated issues.
+      issueTypeHierarchy:
+        type: object
+        properties:
+          baseLevelId:
+            type: integer
+            description: 'The ID of the base level. This property is deprecated, see [Change notice: Removing hierarchy level
+              IDs from next-gen APIs](https://developer.atlassian.com/cloud/jira/platform/change-notice-removing-hierarchy-level-ids-from-next-gen-apis/).'
+          levels:
+            type: array
+            description: Details about the hierarchy level.
+            items:
+              type: object
+      issueTypes:
+        type: array
+        description: List of the issue types available in the project.
+        items:
+          type: object
+          description: Details about an issue type.
+          properties:
+            avatarId:
+              type: integer
+              description: The ID of the issue type's avatar.
+            description:
+              type: string
+              description: The description of the issue type.
+            entityId:
+              type: string
+              description: Unique ID for next-gen projects.
+            hierarchyLevel:
+              type: integer
+              description: Hierarchy level of the issue type.
+            iconUrl:
+              type: string
+              description: The URL of the issue type's avatar.
+            id:
+              type: string
+              description: The ID of the issue type.
+            name:
+              type: string
+              description: The name of the issue type.
+            scope:
+              type: object
+              properties: {}
+            self:
+              type: string
+              description: The URL of these issue type details.
+            subtask:
+              type: boolean
+              description: Whether this issue type is used to create subtasks.
+      key:
+        type: string
+        description: The key of the project.
+      landingPageInfo:
+        type: object
+        properties:
+          attributes:
+            type: object
+          boardId:
+            type: integer
+          boardName:
+            type: string
+          projectKey:
+            type: string
+          projectType:
+            type: string
+          queueCategory:
+            type: string
+          queueId:
+            type: integer
+          queueName:
+            type: string
+          simpleBoard:
+            type: boolean
+          simplified:
+            type: boolean
+          url:
+            type: string
+      lead:
+        type: object
+        properties:
+          accountId:
+            type: string
+            description: The account ID of the user, which uniquely identifies the user across all Atlassian products. For
+              example, *5b10ac8d82e05b22cc7d4ef5*. Required in requests.
+          accountType:
+            type: string
+            description: "The user account type. Can take the following values:\n\n *  `atlassian` regular Atlassian user\
+              \ account\n *  `app` system account used for Connect applications and OAuth to represent external systems\n\
+              \ *  `customer` Jira Service Desk account representing an external service desk"
+            enum: *id001
+          active:
+            type: boolean
+            description: Whether the user is active.
+          appType:
+            type: string
+            description: "The app type of the user account when accountType is 'app'. Can take the following values:\n\n *\
+              \  `service` Service Account\n *  `agent` Rovo Agent Account\n *  `unknown` Unknown app type"
+          applicationRoles:
+            type: object
+            properties: {}
+          avatarUrls:
+            type: object
+            properties: {}
+          displayName:
+            type: string
+            description: The display name of the user. Depending on the user’s privacy setting, this may return an alternative
+              value.
+          emailAddress:
+            type: string
+            description: The email address of the user. Depending on the user’s privacy setting, this may be returned as null.
+          expand:
+            type: string
+            description: Expand options that include additional user details in the response.
+          groups:
+            type: object
+            properties: {}
+          guest:
+            type: boolean
+            description: Whether the user is a guest.
+          key:
+            type: string
+            description: This property is no longer available and will be removed from the documentation soon. See the [deprecation
+              notice](https://developer.atlassian.com/cloud/jira/platform/deprecation-notice-user-privacy-api-migration-guide/)
+              for details.
+          locale:
+            type: string
+            description: The locale of the user. Depending on the user’s privacy setting, this may be returned as null.
+          name:
+            type: string
+            description: This property is no longer available and will be removed from the documentation soon. See the [deprecation
+              notice](https://developer.atlassian.com/cloud/jira/platform/deprecation-notice-user-privacy-api-migration-guide/)
+              for details.
+          self:
+            type: string
+            description: The URL of the user.
+          timeZone:
+            type: string
+            description: The time zone specified in the user's profile. If the user's time zone is not visible to the current
+              user (due to user's profile setting), or if a time zone has not been set, the instance's default time zone will
+              be returned.
+      name:
+        type: string
+        description: The name of the project.
+      permissions:
+        type: object
+        properties:
+          canEdit:
+            type: boolean
+            description: Whether the logged user can edit the project.
+      projectCategory:
+        type: object
+        properties:
+          description:
+            type: string
+            description: The description of the project category.
+          id:
+            type: string
+            description: The ID of the project category.
+          name:
+            type: string
+            description: The name of the project category. Required on create, optional on update.
+          self:
+            type: string
+            description: The URL of the project category.
+      projectTypeKey:
+        type: string
+        description: The [project type](https://confluence.atlassian.com/x/GwiiLQ#Jiraapplicationsoverview-Productfeaturesandprojecttypes)
+          of the project.
+        enum:
+        - software
+        - service_desk
+        - business
+      properties:
+        type: object
+        description: Map of project properties
+      retentionTillDate:
+        type: string
+        description: The date when the project is deleted permanently.
+      roles:
+        type: object
+        description: The name and self URL for each role defined in the project. For more information, see [Create project
+          role](#api-rest-api-3-role-post).
+      self:
+        type: string
+        description: The URL of the project details.
+      simplified:
+        type: boolean
+        description: Whether the project is simplified.
+      style:
+        type: string
+        description: The type of the project.
+        enum:
+        - classic
+        - next-gen
+      url:
+        type: string
+        description: A link to information about this project, such as project documentation.
+      uuid:
+        type: string
+        description: Unique ID for next-gen projects.
+      versions:
+        type: array
+        description: The versions defined in the project. For more information, see [Create version](#api-rest-api-3-version-post).
+        items:
+          type: object
+          description: Details about a project version.
+          properties:
+            approvers:
+              type: array
+              description: If the expand option `approvers` is used, returns a list containing the approvers for this version.
+              items:
+                type: object
+            archived:
+              type: boolean
+              description: Indicates that the version is archived. Optional when creating or updating a version.
+            description:
+              type: string
+              description: The description of the version. Optional when creating or updating a version. The maximum size
+                is 16,384 bytes.
+            driver:
+              type: string
+              description: The Atlassian account ID of the version driver. Optional when creating or updating a version. If
+                the expand option `driver` is used, returns the Atlassian account ID of the driver.
+            expand:
+              type: string
+              description: "Use [expand](em>#expansion) to include additional information about version in the response. This\
+                \ parameter accepts a comma-separated list. Expand options include:\n\n *  `operations` Returns the list of\
+                \ operations available for this version.\n *  `issuesstatus` Returns the count of issues in this version for\
+                \ each of the status categories *to do*, *in progress*, *done*, and *unmapped*. The *unmapped* property contains\
+                \ a count of issues with a status other than *to do*, *in progress*, and *done*.\n *  `driver` Returns the\
+                \ Atlassian account ID of the version driver.\n *  `approvers` Returns a list containing approvers for this\
+                \ version.\n\nOptional for create and update."
+            id:
+              type: string
+              description: The ID of the version.
+            issuesStatusForFixVersion:
+              type: object
+              properties: {}
+            moveUnfixedIssuesTo:
+              type: string
+              description: The URL of the self link to the version to which all unfixed issues are moved when a version is
+                released. Not applicable when creating a version. Optional when updating a version.
+            name:
+              type: string
+              description: The unique name of the version. Required when creating a version. Optional when updating a version.
+                The maximum length is 255 characters.
+            operations:
+              type: array
+              description: If the expand option `operations` is used, returns the list of operations available for this version.
+              items:
+                type: object
+            overdue:
+              type: boolean
+              description: Indicates that the version is overdue.
+            project:
+              type: string
+              description: Deprecated. Use `projectId`.
+            projectId:
+              type: integer
+              description: The ID of the project to which this version is attached. Required when creating a version. Not
+                applicable when updating a version.
+            releaseDate:
+              type: string
+              description: The release date of the version. Expressed in ISO 8601 format (yyyy-mm-dd). Optional when creating
+                or updating a version.
+            released:
+              type: boolean
+              description: Indicates that the version is released. If the version is released a request to release again is
+                ignored. Not applicable when creating a version. Optional when updating a version.
+            self:
+              type: string
+              description: The URL of the version.
+            startDate:
+              type: string
+              description: The start date of the version. Expressed in ISO 8601 format (yyyy-mm-dd). Optional when creating
+                or updating a version.
+            userReleaseDate:
+              type: string
+              description: The date on which work on this version is expected to finish, expressed in the instance's *Day/Month/Year
+                Format* date format.
+            userStartDate:
+              type: string
+              description: The date on which work on this version is expected to start, expressed in the instance's *Day/Month/Year
+                Format* date format.
+tags:
+- Projects

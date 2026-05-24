@@ -271,6 +271,23 @@ export function getDashboardWebhookLogs(params?: {
 
 // ── Actions ─────────────────────────────────────────────────────────
 
+export function listApps() {
+  return request<{
+    apps: {
+      slug: string;
+      name: string;
+      provider: string;
+      description: string;
+      icon_path: string;
+      action_count: number;
+      auth_type: string;
+      auth_fields: unknown[];
+      action_prefix: string;
+    }[];
+    total: number;
+  }>('/apps');
+}
+
 export function listActions(app?: string) {
   const qs = app ? `?app=${app}` : '';
   return request<{

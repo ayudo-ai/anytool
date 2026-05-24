@@ -1,0 +1,25 @@
+name: monday_create_update
+app: monday
+version: '1'
+description: Add an update (comment) to an item
+method: POST
+path: /
+base_url: https://api.monday.com/v2
+auth:
+  type: bearer
+  header: 'Authorization: Bearer {access_token}'
+request:
+  content_type: application/json
+  body_schema:
+    type: object
+    properties: {}
+response:
+  success_codes:
+  - 200
+tags:
+- monday
+examples:
+- name: Basic create update
+  request: {}
+  response:
+    status: success

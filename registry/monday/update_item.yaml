@@ -1,0 +1,25 @@
+name: monday_update_item
+app: monday
+version: '1'
+description: Update an item on a board
+method: POST
+path: /
+base_url: https://api.monday.com/v2
+auth:
+  type: bearer
+  header: 'Authorization: Bearer {access_token}'
+request:
+  content_type: application/json
+  body_schema:
+    type: object
+    properties: {}
+response:
+  success_codes:
+  - 200
+tags:
+- monday
+examples:
+- name: Basic update item
+  request: {}
+  response:
+    status: success

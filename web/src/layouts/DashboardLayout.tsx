@@ -47,7 +47,7 @@ const NAV_SECTIONS = [
   {
     label: 'Build',
     items: [
-      { to: '/dashboard/actions', icon: Wrench, label: 'Actions' },
+      { to: '/dashboard/actions', icon: Wrench, label: 'Apps' },
       { to: '/dashboard/triggers', icon: Zap, label: 'Triggers' },
       { to: '/dashboard/webhook-logs', icon: Webhook, label: 'Webhook Logs' },
       { to: '/dashboard/api-docs', icon: FileText, label: 'API Reference' },

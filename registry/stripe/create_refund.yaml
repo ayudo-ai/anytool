@@ -1,0 +1,377 @@
+# ──────────────────────────────────────────────────────────────────────
+# Stripe — Stripe Postrefunds
+# Auto-generated from OpenAPI spec. Review before use.
+# ──────────────────────────────────────────────────────────────────────
+
+name: stripe_create_refund
+app: stripe
+version: '1'
+description: '<p>When you create a new refund, you must specify a Charge or a PaymentIntent object on which to create it.</p>
+
+
+  <p>Creating a new refund will refund a charge that has previously been created but not yet refunded.
+
+  Funds will be refunded to the credit or debit card that was originally charged.</p>
+
+
+  <p>You can optionally refund only part of a charge.
+
+  You can do so multiple times, until the entire charge has been refunded.</p>
+
+
+  <p>Once entirely refunded, a charge can’t be refunded again.
+
+  This method will raise an error when called on an already-refunded charge,
+
+  or when trying to refund more money than is left on a charge.</p>'
+method: POST
+path: /v1/refunds
+base_url: https://api.stripe.com/
+auth:
+  type: oauth2
+  header: 'Authorization: Bearer {access_token}'
+response:
+  success_codes:
+  - 200
+  body_schema:
+    type: object
+    description: 'Refund objects allow you to refund a previously created charge that isn''t
+
+      refunded yet. Funds are refunded to the credit or debit card that''s
+
+      initially charged.
+
+
+      Related guide: [Refunds](https://docs.stripe.com/refunds)'
+    properties:
+      amount:
+        type: integer
+        description: Amount, in cents (or local equivalent).
+      balance_transaction:
+        type: string
+      charge:
+        type: string
+      created:
+        type: integer
+        description: Time at which the object was created. Measured in seconds since the Unix epoch.
+      currency:
+        type: string
+        description: Three-letter [ISO currency code](https://www.iso.org/iso-4217-currency-codes.html), in lowercase. Must
+          be a [supported currency](https://stripe.com/docs/currencies).
+      description:
+        type: string
+        description: An arbitrary string attached to the object. You can use this for displaying to users (available on non-card
+          refunds only).
+      destination_details:
+        type: object
+        description: ''
+        properties:
+          affirm:
+            type: object
+            description: ''
+            properties: {}
+          afterpay_clearpay:
+            type: object
+            description: ''
+            properties: {}
+          alipay:
+            type: object
+            description: ''
+            properties: {}
+          alma:
+            type: object
+            description: ''
+            properties: {}
+          amazon_pay:
+            type: object
+            description: ''
+            properties: {}
+          au_bank_transfer:
+            type: object
+            description: ''
+            properties: {}
+          blik:
+            type: object
+            description: ''
+            properties:
+              network_decline_code:
+                type: object
+              reference:
+                type: object
+              reference_status:
+                type: object
+          br_bank_transfer:
+            type: object
+            description: ''
+            properties:
+              reference:
+                type: object
+              reference_status:
+                type: object
+          card:
+            type: object
+            description: ''
+            properties:
+              reference:
+                type: object
+              reference_status:
+                type: object
+              reference_type:
+                type: object
+              type:
+                type: object
+            required:
+            - type
+          cashapp:
+            type: object
+            description: ''
+            properties: {}
+          crypto:
+            type: object
+            description: ''
+            properties:
+              reference:
+                type: object
+          customer_cash_balance:
+            type: object
+            description: ''
+            properties: {}
+          eps:
+            type: object
+            description: ''
+            properties: {}
+          eu_bank_transfer:
+            type: object
+            description: ''
+            properties:
+              reference:
+                type: object
+              reference_status:
+                type: object
+          gb_bank_transfer:
+            type: object
+            description: ''
+            properties:
+              reference:
+                type: object
+              reference_status:
+                type: object
+          giropay:
+            type: object
+            description: ''
+            properties: {}
+          grabpay:
+            type: object
+            description: ''
+            properties: {}
+          jp_bank_transfer:
+            type: object
+            description: ''
+            properties:
+              reference:
+                type: object
+              reference_status:
+                type: object
+          klarna:
+            type: object
+            description: ''
+            properties: {}
+          mb_way:
+            type: object
+            description: ''
+            properties:
+              reference:
+                type: object
+              reference_status:
+                type: object
+          multibanco:
+            type: object
+            description: ''
+            properties:
+              reference:
+                type: object
+              reference_status:
+                type: object
+          mx_bank_transfer:
+            type: object
+            description: ''
+            properties:
+              reference:
+                type: object
+              reference_status:
+                type: object
+          nz_bank_transfer:
+            type: object
+            description: ''
+            properties: {}
+          p24:
+            type: object
+            description: ''
+            properties:
+              reference:
+                type: object
+              reference_status:
+                type: object
+          paynow:
+            type: object
+            description: ''
+            properties: {}
+          paypal:
+            type: object
+            description: ''
+            properties:
+              network_decline_code:
+                type: object
+          pix:
+            type: object
+            description: ''
+            properties: {}
+          revolut:
+            type: object
+            description: ''
+            properties: {}
+          scalapay:
+            type: object
+            description: ''
+            properties: {}
+          sofort:
+            type: object
+            description: ''
+            properties: {}
+          swish:
+            type: object
+            description: ''
+            properties:
+              network_decline_code:
+                type: object
+              reference:
+                type: object
+              reference_status:
+                type: object
+          th_bank_transfer:
+            type: object
+            description: ''
+            properties:
+              reference:
+                type: object
+              reference_status:
+                type: object
+          twint:
+            type: object
+            description: ''
+            properties: {}
+          type:
+            type: string
+            description: The type of transaction-specific details of the payment method used in the refund (e.g., `card`).
+              An additional hash is included on `destination_details` with a name matching this value. It contains information
+              specific to the refund transaction.
+          us_bank_transfer:
+            type: object
+            description: ''
+            properties:
+              reference:
+                type: object
+              reference_status:
+                type: object
+          wechat_pay:
+            type: object
+            description: ''
+            properties: {}
+          zip:
+            type: object
+            description: ''
+            properties: {}
+        required:
+        - type
+      failure_balance_transaction:
+        type: string
+      failure_reason:
+        type: string
+        description: 'Provides the reason for the refund failure. Possible values are: `lost_or_stolen_card`, `expired_or_canceled_card`,
+          `charge_for_pending_refund_disputed`, `insufficient_funds`, `declined`, `merchant_request`, or `unknown`.'
+      id:
+        type: string
+        description: Unique identifier for the object.
+      instructions_email:
+        type: string
+        description: For payment methods without native refund support (for example, Konbini, PromptPay), provide an email
+          address for the customer to receive refund instructions.
+      metadata:
+        type: object
+        description: Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This
+          can be useful for storing additional information about the object in a structured format.
+      next_action:
+        type: object
+        description: ''
+        properties:
+          display_details:
+            type: object
+            description: ''
+            properties:
+              email_sent:
+                type: object
+              expires_at:
+                type: object
+            required:
+            - email_sent
+            - expires_at
+          type:
+            type: string
+            description: Type of the next action to perform.
+        required:
+        - type
+      object:
+        type: string
+        description: String representing the object's type. Objects of the same type share the same value.
+        enum:
+        - refund
+      payment_intent:
+        type: string
+      pending_reason:
+        type: string
+        description: 'Provides the reason for why the refund is pending. Possible values are: `processing`, `insufficient_funds`,
+          or `charge_pending`.'
+        enum:
+        - charge_pending
+        - insufficient_funds
+        - processing
+      presentment_details:
+        type: object
+        description: ''
+        properties:
+          presentment_amount:
+            type: integer
+            description: Amount intended to be collected by this payment, denominated in `presentment_currency`.
+          presentment_currency:
+            type: string
+            description: Currency presented to the customer during payment.
+        required:
+        - presentment_amount
+        - presentment_currency
+      reason:
+        type: string
+        description: Reason for the refund, which is either user-provided (`duplicate`, `fraudulent`, or `requested_by_customer`)
+          or generated by Stripe internally (`expired_uncaptured_charge`).
+        enum:
+        - duplicate
+        - expired_uncaptured_charge
+        - fraudulent
+        - requested_by_customer
+      receipt_number:
+        type: string
+        description: This is the transaction number that appears on email receipts sent for this refund.
+      source_transfer_reversal:
+        type: string
+      status:
+        type: string
+        description: Status of the refund. This can be `pending`, `requires_action`, `succeeded`, `failed`, or `canceled`.
+          Learn more about [failed refunds](https://docs.stripe.com/refunds#failed-refunds).
+      transfer_reversal:
+        type: string
+    required:
+    - amount
+    - created
+    - currency
+    - id
+    - object
+tags: []

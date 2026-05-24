@@ -1,0 +1,25 @@
+name: intercom_create_contact
+app: intercom
+version: '1'
+description: Create a new contact (lead or user)
+method: POST
+path: /contacts
+base_url: https://api.intercom.io
+auth:
+  type: bearer
+  header: 'Authorization: Bearer {access_token}'
+request:
+  content_type: application/json
+  body_schema:
+    type: object
+    properties: {}
+response:
+  success_codes:
+  - 200
+tags:
+- intercom
+examples:
+- name: Basic create contact
+  request: {}
+  response:
+    status: success

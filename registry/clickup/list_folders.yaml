@@ -1,0 +1,26 @@
+name: clickup_list_folders
+app: clickup
+version: "1"
+description: "List folders in a space"
+method: GET
+path: /space/{space_id}/folder
+base_url: https://api.clickup.com/api/v2
+auth:
+  type: bearer
+  header: "Authorization: Bearer {access_token}"
+request:
+  content_type: application/json
+  body_schema:
+    type: object
+    properties:
+      space_id:
+        type: string
+        description: The space_id.
+response:
+  success_codes: [200]
+tags: [clickup]
+examples:
+  - name: "Basic list folders"
+    request: {}
+    response:
+      status: success

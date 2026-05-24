@@ -1,0 +1,212 @@
+# ──────────────────────────────────────────────────────────────────────
+# Stripe — Stripe Postprices
+# Auto-generated from OpenAPI spec. Review before use.
+# ──────────────────────────────────────────────────────────────────────
+
+name: stripe_create_price
+app: stripe
+version: '1'
+description: <p>Creates a new <a href="https://docs.stripe.com/api/prices">Price</a> for an existing <a href="https://docs.stripe.com/api/products">Product</a>.
+  The Price can be recurring or one-time.</p>
+method: POST
+path: /v1/prices
+base_url: https://api.stripe.com/
+auth:
+  type: oauth2
+  header: 'Authorization: Bearer {access_token}'
+response:
+  success_codes:
+  - 200
+  body_schema:
+    type: object
+    description: 'Prices define the unit cost, currency, and (optional) billing cycle for both recurring and one-time purchases
+      of products.
+
+      [Products](https://api.stripe.com#products) help you track inventory or provisioning, and prices help you track payment
+      terms. Different physical goods or levels of service should be represented by products, and pricing options should be
+      represented by prices. This approach lets you change prices without having to change your provisioning scheme.
+
+
+      For example, you might have a single "gold" product that has prices for $10/month, $100/year, and €9 once.
+
+
+      Related guides: [Set up a subscription](https://docs.stripe.com/billing/subscriptions/set-up-subscription), [create
+      an invoice](https://docs.stripe.com/billing/invoices/create), and more about [products and prices](https://docs.stripe.com/products-prices/overview).'
+    properties:
+      active:
+        type: boolean
+        description: Whether the price can be used for new purchases.
+      billing_scheme:
+        type: string
+        description: Describes how to compute the price per period. Either `per_unit` or `tiered`. `per_unit` indicates that
+          the fixed amount (specified in `unit_amount` or `unit_amount_decimal`) will be charged per unit in `quantity` (for
+          prices with `usage_type=licensed`), or per unit of total usage (for prices with `usage_type=metered`). `tiered`
+          indicates that the unit pricing will be computed using a tiering strategy as defined using the `tiers` and `tiers_mode`
+          attributes.
+        enum:
+        - per_unit
+        - tiered
+      created:
+        type: integer
+        description: Time at which the object was created. Measured in seconds since the Unix epoch.
+      currency:
+        type: string
+        description: Three-letter [ISO currency code](https://www.iso.org/iso-4217-currency-codes.html), in lowercase. Must
+          be a [supported currency](https://stripe.com/docs/currencies).
+      currency_options:
+        type: object
+        description: Prices defined in each available currency option. Each key must be a three-letter [ISO currency code](https://www.iso.org/iso-4217-currency-codes.html)
+          and a [supported currency](https://stripe.com/docs/currencies).
+      custom_unit_amount:
+        type: object
+        description: ''
+        properties:
+          maximum:
+            type: integer
+            description: The maximum unit amount the customer can specify for this item.
+          minimum:
+            type: integer
+            description: The minimum unit amount the customer can specify for this item. Must be at least the minimum charge
+              amount.
+          preset:
+            type: integer
+            description: The starting unit amount which can be updated by the customer.
+      id:
+        type: string
+        description: Unique identifier for the object.
+      livemode:
+        type: boolean
+        description: If the object exists in live mode, the value is `true`. If the object exists in test mode, the value
+          is `false`.
+      lookup_key:
+        type: string
+        description: A lookup key used to retrieve prices dynamically from a static string. This may be up to 200 characters.
+      metadata:
+        type: object
+        description: Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This
+          can be useful for storing additional information about the object in a structured format.
+      nickname:
+        type: string
+        description: A brief description of the price, hidden from customers.
+      object:
+        type: string
+        description: String representing the object's type. Objects of the same type share the same value.
+        enum:
+        - price
+      product:
+        type: string
+      recurring:
+        type: object
+        description: ''
+        properties:
+          interval:
+            type: string
+            description: The frequency at which a subscription is billed. One of `day`, `week`, `month` or `year`.
+            enum:
+            - day
+            - month
+            - week
+            - year
+          interval_count:
+            type: integer
+            description: The number of intervals (specified in the `interval` attribute) between subscription billings. For
+              example, `interval=month` and `interval_count=3` bills every 3 months.
+          meter:
+            type: string
+            description: The meter tracking the usage of a metered price
+          usage_type:
+            type: string
+            description: Configures how the quantity per period should be determined. Can be either `metered` or `licensed`.
+              `licensed` automatically bills the `quantity` set when adding it to a subscription. `metered` aggregates the
+              total usage based on usage records. Defaults to `licensed`.
+            enum:
+            - licensed
+            - metered
+        required:
+        - interval
+        - interval_count
+        - usage_type
+      tax_behavior:
+        type: string
+        description: Only required if a [default tax behavior](https://docs.stripe.com/tax/products-prices-tax-categories-tax-behavior#setting-a-default-tax-behavior-(recommended))
+          was not provided in the Stripe Tax settings. Specifies whether the price is considered inclusive of taxes or exclusive
+          of taxes. One of `inclusive`, `exclusive`, or `unspecified`. Once specified as either `inclusive` or `exclusive`,
+          it cannot be changed.
+        enum:
+        - exclusive
+        - inclusive
+        - unspecified
+      tiers:
+        type: array
+        description: Each element represents a pricing tier. This parameter requires `billing_scheme` to be set to `tiered`.
+          See also the documentation for `billing_scheme`.
+        items:
+          type: object
+          description: ''
+          properties:
+            flat_amount:
+              type: integer
+              description: Price for the entire tier.
+            flat_amount_decimal:
+              type: string
+              description: Same as `flat_amount`, but contains a decimal value with at most 12 decimal places.
+            unit_amount:
+              type: integer
+              description: Per unit price for units relevant to the tier.
+            unit_amount_decimal:
+              type: string
+              description: Same as `unit_amount`, but contains a decimal value with at most 12 decimal places.
+            up_to:
+              type: integer
+              description: Up to and including to this quantity will be contained in the tier.
+      tiers_mode:
+        type: string
+        description: Defines if the tiering price should be `graduated` or `volume` based. In `volume`-based tiering, the
+          maximum quantity within a period determines the per unit price. In `graduated` tiering, pricing can change as the
+          quantity grows.
+        enum:
+        - graduated
+        - volume
+      transform_quantity:
+        type: object
+        description: ''
+        properties:
+          divide_by:
+            type: integer
+            description: Divide usage by this number.
+          round:
+            type: string
+            description: After division, either round the result `up` or `down`.
+            enum:
+            - down
+            - up
+        required:
+        - divide_by
+        - round
+      type:
+        type: string
+        description: One of `one_time` or `recurring` depending on whether the price is for a one-time purchase or a recurring
+          (subscription) purchase.
+        enum:
+        - one_time
+        - recurring
+      unit_amount:
+        type: integer
+        description: The unit amount in cents (or local equivalent) to be charged, represented as a whole integer if possible.
+          Only set if `billing_scheme=per_unit`.
+      unit_amount_decimal:
+        type: string
+        description: The unit amount in cents (or local equivalent) to be charged, represented as a decimal string with at
+          most 12 decimal places. Only set if `billing_scheme=per_unit`.
+    required:
+    - active
+    - billing_scheme
+    - created
+    - currency
+    - id
+    - livemode
+    - metadata
+    - object
+    - product
+    - type
+tags: []

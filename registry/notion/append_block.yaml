@@ -1,0 +1,26 @@
+name: notion_append_block
+app: notion
+version: "1"
+description: "Append blocks to a page or block"
+method: PATCH
+path: /v1/blocks/{block_id}/children
+base_url: https://api.notion.com
+auth:
+  type: bearer
+  header: "Authorization: Bearer {access_token}"
+request:
+  content_type: application/json
+  body_schema:
+    type: object
+    properties:
+      block_id:
+        type: string
+        description: The block_id to use.
+response:
+  success_codes: [200]
+tags: [notion, productivity]
+examples:
+  - name: "Basic append block"
+    request: {}
+    response:
+      status: success

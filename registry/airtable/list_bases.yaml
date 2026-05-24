@@ -1,0 +1,25 @@
+name: airtable_list_bases
+app: airtable
+version: '1'
+description: List all accessible bases
+method: GET
+path: /meta/bases
+base_url: https://api.airtable.com/v0
+auth:
+  type: bearer
+  header: 'Authorization: Bearer {access_token}'
+request:
+  content_type: application/json
+  body_schema:
+    type: object
+    properties: {}
+response:
+  success_codes:
+  - 200
+tags:
+- airtable
+examples:
+- name: Basic list bases
+  request: {}
+  response:
+    status: success

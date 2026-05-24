@@ -1,0 +1,26 @@
+name: intercom_get_conversation
+app: intercom
+version: "1"
+description: "Get a single conversation"
+method: GET
+path: /conversations/{id}
+base_url: https://api.intercom.io
+auth:
+  type: bearer
+  header: "Authorization: Bearer {access_token}"
+request:
+  content_type: application/json
+  body_schema:
+    type: object
+    properties:
+      id:
+        type: string
+        description: The id.
+response:
+  success_codes: [200]
+tags: [intercom]
+examples:
+  - name: "Basic get conversation"
+    request: {}
+    response:
+      status: success

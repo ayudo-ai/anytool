@@ -1,0 +1,26 @@
+name: notion_query_database
+app: notion
+version: "1"
+description: "Query a database with filters and sorts"
+method: POST
+path: /v1/databases/{database_id}/query
+base_url: https://api.notion.com
+auth:
+  type: bearer
+  header: "Authorization: Bearer {access_token}"
+request:
+  content_type: application/json
+  body_schema:
+    type: object
+    properties:
+      database_id:
+        type: string
+        description: The database_id to use.
+response:
+  success_codes: [200]
+tags: [notion, productivity]
+examples:
+  - name: "Basic query database"
+    request: {}
+    response:
+      status: success

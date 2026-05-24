@@ -1,0 +1,25 @@
+name: linear_get_issue
+app: linear
+version: '1'
+description: Get a single issue by ID
+method: POST
+path: /graphql
+base_url: https://api.linear.app
+auth:
+  type: bearer
+  header: 'Authorization: Bearer {access_token}'
+request:
+  content_type: application/json
+  body_schema:
+    type: object
+    properties: {}
+response:
+  success_codes:
+  - 200
+tags:
+- linear
+examples:
+- name: Basic get issue
+  request: {}
+  response:
+    status: success

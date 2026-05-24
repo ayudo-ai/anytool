@@ -1,0 +1,39 @@
+# ──────────────────────────────────────────────────────────────────────
+# Asana — Asana Deletetask
+# Auto-generated from OpenAPI spec. Review before use.
+# ──────────────────────────────────────────────────────────────────────
+name: asana_delete_task
+app: asana
+version: '1'
+description: '<b>Required scope: </b><code>tasks:delete</code>
+
+
+  A specific, existing task can be deleted by making a DELETE request on
+
+  the URL for that task. Deleted tasks go into the “trash” of the user
+
+  making the delete request. Tasks can be recovered from the trash within a
+
+  period of 30 days; afterward they are completely removed from the system.
+
+
+  Returns an empty data record.'
+method: DELETE
+path: /tasks/{task_gid}
+base_url: https://app.asana.com/api/1.0
+auth:
+  type: oauth2
+  header: 'Authorization: Bearer {access_token}'
+response:
+  success_codes:
+  - 200
+tags:
+- Tasks
+request:
+  body_schema:
+    type: object
+    properties:
+      task_gid:
+        type: string
+        description: The task_gid.
+  content_type: application/json

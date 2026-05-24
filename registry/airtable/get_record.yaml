@@ -1,0 +1,32 @@
+name: airtable_get_record
+app: airtable
+version: "1"
+description: "Get a single record by ID"
+method: GET
+path: /{baseId}/{tableIdOrName}/{recordId}
+base_url: https://api.airtable.com/v0
+auth:
+  type: bearer
+  header: "Authorization: Bearer {access_token}"
+request:
+  content_type: application/json
+  body_schema:
+    type: object
+    properties:
+      baseId:
+        type: string
+        description: The baseId.
+      tableIdOrName:
+        type: string
+        description: The tableIdOrName.
+      recordId:
+        type: string
+        description: The recordId.
+response:
+  success_codes: [200]
+tags: [airtable]
+examples:
+  - name: "Basic get record"
+    request: {}
+    response:
+      status: success

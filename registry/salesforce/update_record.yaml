@@ -1,0 +1,29 @@
+name: salesforce_update_record
+app: salesforce
+version: "1"
+description: "Update a record"
+method: PATCH
+path: /sobjects/{sObjectType}/{recordId}
+base_url: https://{domain}.my.salesforce.com/services/data/v59.0
+auth:
+  type: bearer
+  header: "Authorization: Bearer {access_token}"
+request:
+  content_type: application/json
+  body_schema:
+    type: object
+    properties:
+      sObjectType:
+        type: string
+        description: The sObjectType.
+      recordId:
+        type: string
+        description: The recordId.
+response:
+  success_codes: [200]
+tags: [salesforce]
+examples:
+  - name: "Basic update record"
+    request: {}
+    response:
+      status: success

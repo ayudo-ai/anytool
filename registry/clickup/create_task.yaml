@@ -1,0 +1,26 @@
+name: clickup_create_task
+app: clickup
+version: "1"
+description: "Create a task in a list"
+method: POST
+path: /list/{list_id}/task
+base_url: https://api.clickup.com/api/v2
+auth:
+  type: bearer
+  header: "Authorization: Bearer {access_token}"
+request:
+  content_type: application/json
+  body_schema:
+    type: object
+    properties:
+      list_id:
+        type: string
+        description: The list_id.
+response:
+  success_codes: [200]
+tags: [clickup]
+examples:
+  - name: "Basic create task"
+    request: {}
+    response:
+      status: success

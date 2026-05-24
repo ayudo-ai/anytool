@@ -1,0 +1,26 @@
+name: intercom_reply_conversation
+app: intercom
+version: "1"
+description: "Reply to a conversation"
+method: POST
+path: /conversations/{id}/reply
+base_url: https://api.intercom.io
+auth:
+  type: bearer
+  header: "Authorization: Bearer {access_token}"
+request:
+  content_type: application/json
+  body_schema:
+    type: object
+    properties:
+      id:
+        type: string
+        description: The id.
+response:
+  success_codes: [200]
+tags: [intercom]
+examples:
+  - name: "Basic reply conversation"
+    request: {}
+    response:
+      status: success

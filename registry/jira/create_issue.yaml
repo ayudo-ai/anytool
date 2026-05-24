@@ -1,0 +1,170 @@
+# ──────────────────────────────────────────────────────────────────────
+# Jira — Jira Createissue
+# Auto-generated from OpenAPI spec. Review before use.
+# ──────────────────────────────────────────────────────────────────────
+
+name: jira_create_issue
+app: jira
+version: '1'
+description: "Creates an issue or, where the option to create subtasks is enabled in Jira, a subtask. A transition may be\
+  \ applied, to move the issue or subtask to a workflow step other than the default start step, and issue properties set.\n\
+  \nThe content of the issue or subtask is defined using `update` and `fields`. The fields that can be set in the issue or\
+  \ subtask are determined using the [ Get create issue metadata](#api-rest-api-3-issue-createmeta-get). These are the same\
+  \ fields that appear on the issue's create screen. Note that the `description`, `environment`, and any `textarea` type custom\
+  \ fields (multi-line text fields) take Atlassian Document Format content. Single line custom fields (`textfield`) accept\
+  \ a string and don't handle Atlassian Document Format content.\n\nCreating a subtask differs from creating an issue as follows:\n\
+  \n *  `issueType` must be set to a subtask issue type (use [ Get create issue metadata](#api-rest-api-3-issue-createmeta-get)\
+  \ to find subtask issue types).\n *  `parent` must contain the ID or key of the parent issue.\n\nIn a next-gen project any\
+  \ issue may be made a child providing that the parent and child are members of the same project.\n\n**[Permissions](#permissions)\
+  \ required:** *Browse projects* and *Create issues* [project permissions](https://confluence.atlassian.com/x/yodKLg) for\
+  \ the project in which the issue or subtask is created."
+method: POST
+path: /rest/api/3/issue
+base_url: https://{domain}.atlassian.net
+auth:
+  type: oauth2
+  header: 'Authorization: Bearer {access_token}'
+request:
+  query_params:
+    updateHistory:
+      type: boolean
+      default: false
+      description: Whether the project in which the issue is created is added to the user's **Recently viewed** project list,
+        as shown under **Projects** in Jira. When provided, the issue type and request type are added to the user's history
+        for a project. These values are then used to provide defaults on the issue create screen.
+  content_type: application/json
+  body_schema:
+    type: object
+    description: Details of an issue update request.
+    properties:
+      fields:
+        type: object
+        description: List of issue screen fields to update, specifying the sub-field to update and its value for each field.
+          This field provides a straightforward option when setting a sub-field. When multiple sub-fields or other operations
+          are required, use `update`. Fields included in here cannot be included in `update`.
+      historyMetadata:
+        type: object
+        properties:
+          activityDescription:
+            type: string
+            description: The activity described in the history record.
+          activityDescriptionKey:
+            type: string
+            description: The key of the activity described in the history record.
+          actor:
+            type: object
+            properties: {}
+          cause:
+            type: object
+            properties: {}
+          description:
+            type: string
+            description: The description of the history record.
+          descriptionKey:
+            type: string
+            description: The description key of the history record.
+          emailDescription:
+            type: string
+            description: The description of the email address associated the history record.
+          emailDescriptionKey:
+            type: string
+            description: The description key of the email address associated the history record.
+          extraData:
+            type: object
+            description: Additional arbitrary information about the history record.
+          generator:
+            type: object
+            properties: {}
+          type:
+            type: string
+            description: The type of the history record.
+      properties:
+        type: array
+        description: Details of issue properties to be add or update.
+        items:
+          type: object
+          description: An entity property, for more information see [Entity properties](https://developer.atlassian.com/cloud/jira/platform/jira-entity-properties/).
+          properties:
+            key:
+              type: string
+              description: The key of the property. Required on create and update.
+            value:
+              type: object
+              description: The value of the property. Required on create and update.
+      transition:
+        type: object
+        properties:
+          expand:
+            type: string
+            description: Expand options that include additional transition details in the response.
+          fields:
+            type: object
+            description: Details of the fields associated with the issue transition screen. Use this information to populate
+              `fields` and `update` in a transition request.
+          hasScreen:
+            type: boolean
+            description: Whether there is a screen associated with the issue transition.
+          id:
+            type: string
+            description: The ID of the issue transition. Required when specifying a transition to undertake.
+          isAvailable:
+            type: boolean
+            description: Whether the transition is available to be performed.
+          isConditional:
+            type: boolean
+            description: Whether the issue has to meet criteria before the issue transition is applied.
+          isGlobal:
+            type: boolean
+            description: Whether the issue transition is global, that is, the transition is applied to issues regardless of
+              their status.
+          isInitial:
+            type: boolean
+            description: Whether this is the initial issue transition for the workflow.
+          looped:
+            type: boolean
+          name:
+            type: string
+            description: The name of the issue transition.
+          to:
+            type: object
+            properties: {}
+      update:
+        type: object
+        description: A Map containing the field field name and a list of operations to perform on the issue screen field.
+          Note that fields included in here cannot be included in `fields`.
+response:
+  success_codes:
+  - 200
+  body_schema:
+    type: object
+    description: Details about a created issue or subtask.
+    properties:
+      id:
+        type: string
+        description: The ID of the created issue or subtask.
+      key:
+        type: string
+        description: The key of the created issue or subtask.
+      self:
+        type: string
+        description: The URL of the created issue or subtask.
+      transition:
+        type: object
+        properties:
+          errorCollection:
+            type: object
+          status:
+            type: integer
+          warningCollection:
+            type: object
+      watchers:
+        type: object
+        properties:
+          errorCollection:
+            type: object
+          status:
+            type: integer
+          warningCollection:
+            type: object
+tags:
+- Issues

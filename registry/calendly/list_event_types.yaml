@@ -1,0 +1,25 @@
+name: calendly_list_event_types
+app: calendly
+version: '1'
+description: List available event types
+method: GET
+path: /event_types
+base_url: https://api.calendly.com
+auth:
+  type: bearer
+  header: 'Authorization: Bearer {access_token}'
+request:
+  content_type: application/json
+  body_schema:
+    type: object
+    properties: {}
+response:
+  success_codes:
+  - 200
+tags:
+- calendly
+examples:
+- name: Basic list event types
+  request: {}
+  response:
+    status: success

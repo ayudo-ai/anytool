@@ -1,0 +1,26 @@
+name: clickup_list_tasks
+app: clickup
+version: "1"
+description: "List tasks in a list"
+method: GET
+path: /list/{list_id}/task
+base_url: https://api.clickup.com/api/v2
+auth:
+  type: bearer
+  header: "Authorization: Bearer {access_token}"
+request:
+  content_type: application/json
+  body_schema:
+    type: object
+    properties:
+      list_id:
+        type: string
+        description: The list_id.
+response:
+  success_codes: [200]
+tags: [clickup]
+examples:
+  - name: "Basic list tasks"
+    request: {}
+    response:
+      status: success

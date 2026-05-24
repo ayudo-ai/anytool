@@ -1,0 +1,38 @@
+name: notion_get_page
+app: notion
+version: "1"
+description: Retrieve a page by ID. Returns page properties and metadata.
+method: GET
+path: /v1/pages/{page_id}
+base_url: https://api.notion.com
+auth:
+  type: bearer
+  header: "Authorization: Bearer {access_token}"
+request:
+  content_type: application/json
+  body_schema:
+    type: object
+    required: [page_id]
+    properties:
+      page_id:
+        type: string
+        description: The ID of the page to retrieve.
+response:
+  success_codes: [200]
+  body_schema:
+    type: object
+    properties:
+      id:
+        type: string
+      properties:
+        type: object
+      url:
+        type: string
+tags: [notion, productivity]
+examples:
+  - name: Get a page
+    request:
+      page_id: "page-abc-123"
+    response:
+      id: "page-abc-123"
+      url: "https://www.notion.so/page-abc-123"

@@ -1,0 +1,29 @@
+name: airtable_create_records
+app: airtable
+version: "1"
+description: "Create one or more records in a table"
+method: POST
+path: /{baseId}/{tableIdOrName}
+base_url: https://api.airtable.com/v0
+auth:
+  type: bearer
+  header: "Authorization: Bearer {access_token}"
+request:
+  content_type: application/json
+  body_schema:
+    type: object
+    properties:
+      baseId:
+        type: string
+        description: The baseId.
+      tableIdOrName:
+        type: string
+        description: The tableIdOrName.
+response:
+  success_codes: [200]
+tags: [airtable]
+examples:
+  - name: "Basic create records"
+    request: {}
+    response:
+      status: success

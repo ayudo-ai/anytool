@@ -1,0 +1,26 @@
+name: notion_get_block_children
+app: notion
+version: "1"
+description: "Get child blocks of a page or block"
+method: GET
+path: /v1/blocks/{block_id}/children
+base_url: https://api.notion.com
+auth:
+  type: bearer
+  header: "Authorization: Bearer {access_token}"
+request:
+  content_type: application/json
+  body_schema:
+    type: object
+    properties:
+      block_id:
+        type: string
+        description: The block_id to use.
+response:
+  success_codes: [200]
+tags: [notion, productivity]
+examples:
+  - name: "Basic get block children"
+    request: {}
+    response:
+      status: success

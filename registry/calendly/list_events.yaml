@@ -1,0 +1,25 @@
+name: calendly_list_events
+app: calendly
+version: '1'
+description: List scheduled events
+method: GET
+path: /scheduled_events
+base_url: https://api.calendly.com
+auth:
+  type: bearer
+  header: 'Authorization: Bearer {access_token}'
+request:
+  content_type: application/json
+  body_schema:
+    type: object
+    properties: {}
+response:
+  success_codes:
+  - 200
+tags:
+- calendly
+examples:
+- name: Basic list events
+  request: {}
+  response:
+    status: success

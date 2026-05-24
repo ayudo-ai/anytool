@@ -1,0 +1,26 @@
+name: notion_search
+app: notion
+version: '1'
+description: Search pages and databases by title
+method: POST
+path: /v1/search
+base_url: https://api.notion.com
+auth:
+  type: bearer
+  header: 'Authorization: Bearer {access_token}'
+request:
+  content_type: application/json
+  body_schema:
+    type: object
+    properties: {}
+response:
+  success_codes:
+  - 200
+tags:
+- notion
+- productivity
+examples:
+- name: Basic search
+  request: {}
+  response:
+    status: success

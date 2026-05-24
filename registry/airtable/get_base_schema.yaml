@@ -1,0 +1,26 @@
+name: airtable_get_base_schema
+app: airtable
+version: "1"
+description: "Get schema for all tables in a base"
+method: GET
+path: /meta/bases/{baseId}/tables
+base_url: https://api.airtable.com/v0
+auth:
+  type: bearer
+  header: "Authorization: Bearer {access_token}"
+request:
+  content_type: application/json
+  body_schema:
+    type: object
+    properties:
+      baseId:
+        type: string
+        description: The baseId.
+response:
+  success_codes: [200]
+tags: [airtable]
+examples:
+  - name: "Basic get base schema"
+    request: {}
+    response:
+      status: success

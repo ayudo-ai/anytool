@@ -1,0 +1,25 @@
+name: intercom_list_tags
+app: intercom
+version: '1'
+description: List all tags
+method: GET
+path: /tags
+base_url: https://api.intercom.io
+auth:
+  type: bearer
+  header: 'Authorization: Bearer {access_token}'
+request:
+  content_type: application/json
+  body_schema:
+    type: object
+    properties: {}
+response:
+  success_codes:
+  - 200
+tags:
+- intercom
+examples:
+- name: Basic list tags
+  request: {}
+  response:
+    status: success

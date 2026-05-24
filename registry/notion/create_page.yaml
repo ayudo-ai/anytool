@@ -1,0 +1,81 @@
+name: notion_create_page
+app: notion
+version: "1"
+description: |
+  Create a new page in Notion. Can create a page inside a database (as a row)
+  or as a child of another page. Properties must match the parent database schema.
+method: POST
+path: /v1/pages
+base_url: https://api.notion.com
+auth:
+  type: bearer
+  header: "Authorization: Bearer {access_token}"
+request:
+  content_type: application/json
+  body_schema:
+    type: object
+    required: [parent, properties]
+    properties:
+      parent:
+        type: object
+        description: |
+          Parent of the page. Either a database_id or page_id.
+          For database rows: {"database_id": "abc123"}
+          For sub-pages: {"page_id": "abc123"}
+        properties:
+          database_id:
+            type: string
+            description: ID of the parent database.
+          page_id:
+            type: string
+            description: ID of the parent page.
+      properties:
+        type: object
+        description: |
+          Page properties. Keys must match the parent database property names.
+          Values are property value objects. Example:
+          {"Name": {"title": [{"text": {"content": "My Page"}}]},
+           "Status": {"select": {"name": "In Progress"}}}
+      children:
+        type: array
+        description: |
+          Block content for the page body. Array of block objects.
+          Example: [{"object": "block", "type": "paragraph",
+                    "paragraph": {"rich_text": [{"text": {"content": "Hello"}}]}}]
+        items:
+          type: object
+      icon:
+        type: object
+        description: "Page icon. Example: {\"emoji\": \"🚀\"}"
+      cover:
+        type: object
+        description: "Page cover image. Example: {\"external\": {\"url\": \"https://...\"}}"
+response:
+  success_codes: [200]
+  body_schema:
+    type: object
+    properties:
+      id:
+        type: string
+      url:
+        type: string
+  extract:
+    page_id: id
+    page_url: url
+tags: [notion, productivity, database]
+examples:
+  - name: Create a database row
+    request:
+      parent:
+        database_id: "d9824bdc-8445-4327-be8b-5b47500af6ce"
+      properties:
+        Name:
+          title:
+            - text:
+                content: "New task from AI"
+        Status:
+          select:
+            name: "To Do"
+    response:
+      id: "page-abc-123"
+      url: "https://www.notion.so/page-abc-123"

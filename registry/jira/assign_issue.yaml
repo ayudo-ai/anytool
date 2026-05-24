@@ -1,0 +1,142 @@
+# ──────────────────────────────────────────────────────────────────────
+# Jira — Jira Assignissue
+# Auto-generated from OpenAPI spec. Review before use.
+# ──────────────────────────────────────────────────────────────────────
+name: jira_assign_issue
+app: jira
+version: '1'
+description: "Assigns an issue to a user. Use this operation when the calling user does not have the *Edit Issues* permission\
+  \ but has the *Assign issue* permission for the project that the issue is in.\n\nIf `name` or `accountId` is set to:\n\n\
+  \ *  `\"-1\"`, the issue is assigned to the default assignee for the project.\n *  `null`, the issue is set to unassigned.\n\
+  \nThis operation can be accessed anonymously.\n\n**[Permissions](#permissions) required:**\n\n *  *Browse Projects* and\
+  \ *Assign Issues* [ project permission](https://confluence.atlassian.com/x/yodKLg) for the project that the issue is in.\n\
+  \ *  If [issue-level security](https://confluence.atlassian.com/x/J4lKLg) is configured, issue-level security permission\
+  \ to view the issue."
+method: PUT
+path: /rest/api/3/issue/{issueIdOrKey}/assignee
+base_url: https://{domain}.atlassian.net
+auth:
+  type: oauth2
+  header: 'Authorization: Bearer {access_token}'
+request:
+  content_type: application/json
+  body_schema:
+    type: object
+    description: "A user with details as permitted by the user's Atlassian Account privacy settings. However, be aware of\
+      \ these exceptions:\n\n *  User record deleted from Atlassian: This occurs as the result of a right to be forgotten\
+      \ request. In this case, `displayName` provides an indication and other parameters have default values or are blank\
+      \ (for example, email is blank).\n *  User record corrupted: This occurs as a results of events such as a server import\
+      \ and can only happen to deleted users. In this case, `accountId` returns *unknown* and all other parameters have fallback\
+      \ values.\n *  User record unavailable: This usually occurs due to an internal service outage. In this case, all parameters\
+      \ have fallback values."
+    properties:
+      accountId:
+        type: string
+        description: The account ID of the user, which uniquely identifies the user across all Atlassian products. For example,
+          *5b10ac8d82e05b22cc7d4ef5*. Required in requests.
+      accountType:
+        type: string
+        description: "The user account type. Can take the following values:\n\n *  `atlassian` regular Atlassian user account\n\
+          \ *  `app` system account used for Connect applications and OAuth to represent external systems\n *  `customer`\
+          \ Jira Service Desk account representing an external service desk"
+        enum:
+        - atlassian
+        - app
+        - customer
+        - unknown
+      active:
+        type: boolean
+        description: Whether the user is active.
+      appType:
+        type: string
+        description: "The app type of the user account when accountType is 'app'. Can take the following values:\n\n *  `service`\
+          \ Service Account\n *  `agent` Rovo Agent Account\n *  `unknown` Unknown app type"
+      applicationRoles:
+        type: object
+        properties:
+          callback:
+            type: object
+          items:
+            type: array
+            items:
+              type: object
+          max-results:
+            type: integer
+          pagingCallback:
+            type: object
+          size:
+            type: integer
+      avatarUrls:
+        type: object
+        properties:
+          16x16:
+            type: string
+            description: The URL of the item's 16x16 pixel avatar.
+          24x24:
+            type: string
+            description: The URL of the item's 24x24 pixel avatar.
+          32x32:
+            type: string
+            description: The URL of the item's 32x32 pixel avatar.
+          48x48:
+            type: string
+            description: The URL of the item's 48x48 pixel avatar.
+      displayName:
+        type: string
+        description: The display name of the user. Depending on the user’s privacy setting, this may return an alternative
+          value.
+      emailAddress:
+        type: string
+        description: The email address of the user. Depending on the user’s privacy setting, this may be returned as null.
+      expand:
+        type: string
+        description: Expand options that include additional user details in the response.
+      groups:
+        type: object
+        properties:
+          callback:
+            type: object
+          items:
+            type: array
+            items:
+              type: object
+          max-results:
+            type: integer
+          pagingCallback:
+            type: object
+          size:
+            type: integer
+      guest:
+        type: boolean
+        description: Whether the user is a guest.
+      key:
+        type: string
+        description: This property is no longer available and will be removed from the documentation soon. See the [deprecation
+          notice](https://developer.atlassian.com/cloud/jira/platform/deprecation-notice-user-privacy-api-migration-guide/)
+          for details.
+      locale:
+        type: string
+        description: The locale of the user. Depending on the user’s privacy setting, this may be returned as null.
+      name:
+        type: string
+        description: This property is no longer available and will be removed from the documentation soon. See the [deprecation
+          notice](https://developer.atlassian.com/cloud/jira/platform/deprecation-notice-user-privacy-api-migration-guide/)
+          for details.
+      self:
+        type: string
+        description: The URL of the user.
+      timeZone:
+        type: string
+        description: The time zone specified in the user's profile. If the user's time zone is not visible to the current
+          user (due to user's profile setting), or if a time zone has not been set, the instance's default time zone will
+          be returned.
+      issueIdOrKey:
+        type: string
+        description: The issueIdOrKey.
+response:
+  success_codes:
+  - 200
+  body_schema:
+    type: object
+tags:
+- Issues

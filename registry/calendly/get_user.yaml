@@ -1,0 +1,25 @@
+name: calendly_get_user
+app: calendly
+version: '1'
+description: Get current user info
+method: GET
+path: /users/me
+base_url: https://api.calendly.com
+auth:
+  type: bearer
+  header: 'Authorization: Bearer {access_token}'
+request:
+  content_type: application/json
+  body_schema:
+    type: object
+    properties: {}
+response:
+  success_codes:
+  - 200
+tags:
+- calendly
+examples:
+- name: Basic get user
+  request: {}
+  response:
+    status: success

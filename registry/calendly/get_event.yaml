@@ -1,0 +1,26 @@
+name: calendly_get_event
+app: calendly
+version: "1"
+description: "Get a scheduled event by UUID"
+method: GET
+path: /scheduled_events/{uuid}
+base_url: https://api.calendly.com
+auth:
+  type: bearer
+  header: "Authorization: Bearer {access_token}"
+request:
+  content_type: application/json
+  body_schema:
+    type: object
+    properties:
+      uuid:
+        type: string
+        description: The uuid.
+response:
+  success_codes: [200]
+tags: [calendly]
+examples:
+  - name: "Basic get event"
+    request: {}
+    response:
+      status: success

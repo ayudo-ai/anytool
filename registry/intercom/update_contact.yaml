@@ -1,0 +1,26 @@
+name: intercom_update_contact
+app: intercom
+version: "1"
+description: "Update a contact"
+method: PUT
+path: /contacts/{id}
+base_url: https://api.intercom.io
+auth:
+  type: bearer
+  header: "Authorization: Bearer {access_token}"
+request:
+  content_type: application/json
+  body_schema:
+    type: object
+    properties:
+      id:
+        type: string
+        description: The id.
+response:
+  success_codes: [200]
+tags: [intercom]
+examples:
+  - name: "Basic update contact"
+    request: {}
+    response:
+      status: success

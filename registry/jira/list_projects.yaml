@@ -1,0 +1,413 @@
+# ──────────────────────────────────────────────────────────────────────
+# Jira — Jira Getallprojects
+# Auto-generated from OpenAPI spec. Review before use.
+# ──────────────────────────────────────────────────────────────────────
+
+name: jira_list_projects
+app: jira
+version: '1'
+description: 'Returns all projects visible to the user. Deprecated, use [ Get projects paginated](#api-rest-api-3-project-search-get)
+  that supports search and pagination.
+
+
+  This operation can be accessed anonymously.
+
+
+  **[Permissions](#permissions) required:** Projects are returned only where the user has *Browse Projects* or *Administer
+  projects* [project permission](https://confluence.atlassian.com/x/yodKLg) for the project.'
+method: GET
+path: /rest/api/3/project
+base_url: https://{domain}.atlassian.net
+auth:
+  type: oauth2
+  header: 'Authorization: Bearer {access_token}'
+request:
+  query_params:
+    expand:
+      type: string
+      description: "Use [expand](#expansion) to include additional information in the response. This parameter accepts a comma-separated\
+        \ list. Expanded options include:\n\n *  `description` Returns the project description.\n *  `issueTypes` Returns\
+        \ all issue types associated with the project.\n *  `lead` Returns information about the project lead.\n *  `projectKeys`\
+        \ Returns all project keys associated with the project."
+    recent:
+      type: integer
+      description: Returns the user's most recently accessed projects. You may specify the number of results to return up
+        to a maximum of 20. If access is anonymous, then the recently accessed projects are based on the current HTTP session.
+    properties:
+      type: array
+      items:
+        type: string
+        default: ''
+      description: A list of project properties to return for the project. This parameter accepts a comma-separated list.
+response:
+  success_codes:
+  - 200
+  body_schema:
+    type: array
+    items:
+      type: object
+      description: Details about a project.
+      properties:
+        archived:
+          type: boolean
+          description: Whether the project is archived.
+        archivedBy:
+          type: object
+          properties:
+            accountId:
+              type: object
+            accountType:
+              type: object
+            active:
+              type: object
+            appType:
+              type: object
+            applicationRoles:
+              type: object
+            avatarUrls:
+              type: object
+            displayName:
+              type: object
+            emailAddress:
+              type: object
+            expand:
+              type: object
+            groups:
+              type: object
+            guest:
+              type: object
+            key:
+              type: object
+            locale:
+              type: object
+            name:
+              type: object
+            self:
+              type: object
+            timeZone:
+              type: object
+        archivedDate:
+          type: string
+          description: The date when the project was archived.
+        assigneeType:
+          type: string
+          description: The default assignee when creating issues for this project.
+          enum:
+          - PROJECT_LEAD
+          - UNASSIGNED
+        avatarUrls:
+          type: object
+          properties:
+            16x16:
+              type: object
+            24x24:
+              type: object
+            32x32:
+              type: object
+            48x48:
+              type: object
+        components:
+          type: array
+          description: List of the components contained in the project.
+          items:
+            type: object
+            description: Details about a project component.
+            properties:
+              ari:
+                type: object
+              assignee:
+                type: object
+              assigneeType:
+                type: object
+              description:
+                type: object
+              id:
+                type: object
+              isAssigneeTypeValid:
+                type: object
+              lead:
+                type: object
+              leadAccountId:
+                type: object
+              leadUserName:
+                type: object
+              metadata:
+                type: object
+              name:
+                type: object
+              project:
+                type: object
+              projectId:
+                type: object
+              realAssignee:
+                type: object
+              realAssigneeType:
+                type: object
+              self:
+                type: object
+        deleted:
+          type: boolean
+          description: Whether the project is marked as deleted.
+        deletedBy:
+          type: object
+          properties:
+            accountId:
+              type: object
+            accountType:
+              type: object
+            active:
+              type: object
+            appType:
+              type: object
+            applicationRoles:
+              type: object
+            avatarUrls:
+              type: object
+            displayName:
+              type: object
+            emailAddress:
+              type: object
+            expand:
+              type: object
+            groups:
+              type: object
+            guest:
+              type: object
+            key:
+              type: object
+            locale:
+              type: object
+            name:
+              type: object
+            self:
+              type: object
+            timeZone:
+              type: object
+        deletedDate:
+          type: string
+          description: The date when the project was marked as deleted.
+        description:
+          type: string
+          description: A brief description of the project.
+        email:
+          type: string
+          description: An email address associated with the project.
+        expand:
+          type: string
+          description: Expand options that include additional project details in the response.
+        favourite:
+          type: boolean
+          description: Whether the project is selected as a favorite.
+        id:
+          type: string
+          description: The ID of the project.
+        insight:
+          type: object
+          properties:
+            lastIssueUpdateTime:
+              type: object
+            totalIssueCount:
+              type: object
+        isPrivate:
+          type: boolean
+          description: Whether the project is private from the user's perspective. This means the user can't see the project
+            or any associated issues.
+        issueTypeHierarchy:
+          type: object
+          properties:
+            baseLevelId:
+              type: object
+            levels:
+              type: object
+        issueTypes:
+          type: array
+          description: List of the issue types available in the project.
+          items:
+            type: object
+            description: Details about an issue type.
+            properties:
+              avatarId:
+                type: object
+              description:
+                type: object
+              entityId:
+                type: object
+              hierarchyLevel:
+                type: object
+              iconUrl:
+                type: object
+              id:
+                type: object
+              name:
+                type: object
+              scope:
+                type: object
+              self:
+                type: object
+              subtask:
+                type: object
+        key:
+          type: string
+          description: The key of the project.
+        landingPageInfo:
+          type: object
+          properties:
+            attributes:
+              type: object
+            boardId:
+              type: object
+            boardName:
+              type: object
+            projectKey:
+              type: object
+            projectType:
+              type: object
+            queueCategory:
+              type: object
+            queueId:
+              type: object
+            queueName:
+              type: object
+            simpleBoard:
+              type: object
+            simplified:
+              type: object
+            url:
+              type: object
+        lead:
+          type: object
+          properties:
+            accountId:
+              type: object
+            accountType:
+              type: object
+            active:
+              type: object
+            appType:
+              type: object
+            applicationRoles:
+              type: object
+            avatarUrls:
+              type: object
+            displayName:
+              type: object
+            emailAddress:
+              type: object
+            expand:
+              type: object
+            groups:
+              type: object
+            guest:
+              type: object
+            key:
+              type: object
+            locale:
+              type: object
+            name:
+              type: object
+            self:
+              type: object
+            timeZone:
+              type: object
+        name:
+          type: string
+          description: The name of the project.
+        permissions:
+          type: object
+          properties:
+            canEdit:
+              type: object
+        projectCategory:
+          type: object
+          properties:
+            description:
+              type: object
+            id:
+              type: object
+            name:
+              type: object
+            self:
+              type: object
+        projectTypeKey:
+          type: string
+          description: The [project type](https://confluence.atlassian.com/x/GwiiLQ#Jiraapplicationsoverview-Productfeaturesandprojecttypes)
+            of the project.
+          enum:
+          - software
+          - service_desk
+          - business
+        properties:
+          type: object
+          description: Map of project properties
+        retentionTillDate:
+          type: string
+          description: The date when the project is deleted permanently.
+        roles:
+          type: object
+          description: The name and self URL for each role defined in the project. For more information, see [Create project
+            role](#api-rest-api-3-role-post).
+        self:
+          type: string
+          description: The URL of the project details.
+        simplified:
+          type: boolean
+          description: Whether the project is simplified.
+        style:
+          type: string
+          description: The type of the project.
+          enum:
+          - classic
+          - next-gen
+        url:
+          type: string
+          description: A link to information about this project, such as project documentation.
+        uuid:
+          type: string
+          description: Unique ID for next-gen projects.
+        versions:
+          type: array
+          description: The versions defined in the project. For more information, see [Create version](#api-rest-api-3-version-post).
+          items:
+            type: object
+            description: Details about a project version.
+            properties:
+              approvers:
+                type: object
+              archived:
+                type: object
+              description:
+                type: object
+              driver:
+                type: object
+              expand:
+                type: object
+              id:
+                type: object
+              issuesStatusForFixVersion:
+                type: object
+              moveUnfixedIssuesTo:
+                type: object
+              name:
+                type: object
+              operations:
+                type: object
+              overdue:
+                type: object
+              project:
+                type: object
+              projectId:
+                type: object
+              releaseDate:
+                type: object
+              released:
+                type: object
+              self:
+                type: object
+              startDate:
+                type: object
+              userReleaseDate:
+                type: object
+              userStartDate:
+                type: object
+tags:
+- Projects

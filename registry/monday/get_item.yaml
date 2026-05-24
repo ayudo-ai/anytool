@@ -1,0 +1,25 @@
+name: monday_get_item
+app: monday
+version: '1'
+description: Get a single item by ID
+method: POST
+path: /
+base_url: https://api.monday.com/v2
+auth:
+  type: bearer
+  header: 'Authorization: Bearer {access_token}'
+request:
+  content_type: application/json
+  body_schema:
+    type: object
+    properties: {}
+response:
+  success_codes:
+  - 200
+tags:
+- monday
+examples:
+- name: Basic get item
+  request: {}
+  response:
+    status: success

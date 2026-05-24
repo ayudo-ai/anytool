@@ -1,0 +1,26 @@
+name: trello_move_card
+app: trello
+version: "1"
+description: "Move a card to a different list"
+method: PUT
+path: /cards/{id}
+base_url: https://api.trello.com/1
+auth:
+  type: bearer
+  header: "Authorization: OAuth {access_token}"
+request:
+  content_type: application/json
+  body_schema:
+    type: object
+    properties:
+      id:
+        type: string
+        description: The id.
+response:
+  success_codes: [200]
+tags: [trello]
+examples:
+  - name: "Basic move card"
+    request: {}
+    response:
+      status: success

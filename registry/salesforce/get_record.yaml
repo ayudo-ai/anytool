@@ -1,0 +1,29 @@
+name: salesforce_get_record
+app: salesforce
+version: "1"
+description: "Get a record by ID"
+method: GET
+path: /sobjects/{sObjectType}/{recordId}
+base_url: https://{domain}.my.salesforce.com/services/data/v59.0
+auth:
+  type: bearer
+  header: "Authorization: Bearer {access_token}"
+request:
+  content_type: application/json
+  body_schema:
+    type: object
+    properties:
+      sObjectType:
+        type: string
+        description: The sObjectType.
+      recordId:
+        type: string
+        description: The recordId.
+response:
+  success_codes: [200]
+tags: [salesforce]
+examples:
+  - name: "Basic get record"
+    request: {}
+    response:
+      status: success

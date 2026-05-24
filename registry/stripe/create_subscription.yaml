@@ -1,0 +1,648 @@
+# ──────────────────────────────────────────────────────────────────────
+# Stripe — Stripe Postsubscriptions
+# Auto-generated from OpenAPI spec. Review before use.
+# ──────────────────────────────────────────────────────────────────────
+
+name: stripe_create_subscription
+app: stripe
+version: '1'
+description: '<p>Creates a new subscription on an existing customer. Each customer can have up to 500 active or scheduled
+  subscriptions.</p>
+
+
+  <p>When you create a subscription with <code>collection_method=charge_automatically</code>, the first invoice is finalized
+  as part of the request.
+
+  The <code>payment_behavior</code> parameter determines the exact behavior of the initial payment.</p>
+
+
+  <p>To start subscriptions where the first invoice always begins in a <code>draft</code> status, use <a href="/docs/billing/subscriptions/subscription-schedules#managing">subscription
+  schedules</a> instead.
+
+  Schedules provide the flexibility to model more complex billing configurations that change over time.</p>'
+method: POST
+path: /v1/subscriptions
+base_url: https://api.stripe.com/
+auth:
+  type: oauth2
+  header: 'Authorization: Bearer {access_token}'
+response:
+  success_codes:
+  - 200
+  body_schema:
+    type: object
+    description: 'Subscriptions allow you to charge a customer on a recurring basis.
+
+
+      Related guide: [Creating subscriptions](https://docs.stripe.com/billing/subscriptions/creating)'
+    properties:
+      application:
+        type: string
+      application_fee_percent:
+        type: number
+        description: A non-negative decimal between 0 and 100, with at most two decimal places. This represents the percentage
+          of the subscription invoice total that will be transferred to the application owner's Stripe account.
+      automatic_tax:
+        type: object
+        description: ''
+        properties:
+          disabled_reason:
+            type: string
+            description: If Stripe disabled automatic tax, this enum describes why.
+            enum:
+            - requires_location_inputs
+          enabled:
+            type: boolean
+            description: Whether Stripe automatically computes tax on this subscription.
+          liability:
+            type: object
+        required:
+        - enabled
+      billing_cycle_anchor:
+        type: integer
+        description: The reference point that aligns future [billing cycle](https://docs.stripe.com/subscriptions/billing-cycle)
+          dates. It sets the day of week for `week` intervals, the day of month for `month` and `year` intervals, and the
+          month of year for `year` intervals. The timestamp is in UTC format.
+      billing_cycle_anchor_config:
+        type: object
+        description: ''
+        properties:
+          day_of_month:
+            type: integer
+            description: The day of the month of the billing_cycle_anchor.
+          hour:
+            type: integer
+            description: The hour of the day of the billing_cycle_anchor.
+          minute:
+            type: integer
+            description: The minute of the hour of the billing_cycle_anchor.
+          month:
+            type: integer
+            description: The month to start full cycle billing periods.
+          second:
+            type: integer
+            description: The second of the minute of the billing_cycle_anchor.
+        required:
+        - day_of_month
+      billing_mode:
+        type: object
+        description: The billing mode of the subscription.
+        properties:
+          flexible:
+            type: object
+          type:
+            type: string
+            description: Controls how prorations and invoices for subscriptions are calculated and orchestrated.
+            enum:
+            - classic
+            - flexible
+          updated_at:
+            type: integer
+            description: Details on when the current billing_mode was adopted.
+        required:
+        - type
+      billing_schedules:
+        type: array
+        description: Billing schedules for this subscription.
+        items:
+          type: object
+          description: Sets the billing schedule for the subscription.
+          properties:
+            applies_to:
+              type: array
+              description: Specifies which subscription items the billing schedule applies to.
+              items:
+                type: object
+            bill_until:
+              type: object
+            key:
+              type: string
+              description: Unique identifier for the billing schedule.
+          required:
+          - bill_until
+          - key
+      billing_thresholds:
+        type: object
+        description: ''
+        properties:
+          amount_gte:
+            type: integer
+            description: Monetary threshold that triggers the subscription to create an invoice
+          reset_billing_cycle_anchor:
+            type: boolean
+            description: Indicates if the `billing_cycle_anchor` should be reset when a threshold is reached. If true, `billing_cycle_anchor`
+              will be updated to the date/time the threshold was last reached; otherwise, the value will remain unchanged.
+              This value may not be `true` if the subscription contains items with plans that have `aggregate_usage=last_ever`.
+      cancel_at:
+        type: integer
+        description: A date in the future at which the subscription will automatically get canceled
+      cancel_at_period_end:
+        type: boolean
+        description: Whether this subscription will (if `status=active`) or did (if `status=canceled`) cancel at the end of
+          the current billing period.
+      canceled_at:
+        type: integer
+        description: If the subscription has been canceled, the date of that cancellation. If the subscription was canceled
+          with `cancel_at_period_end`, `canceled_at` will reflect the time of the most recent update request, not the end
+          of the subscription period when the subscription is automatically moved to a canceled state.
+      cancellation_details:
+        type: object
+        description: ''
+        properties:
+          comment:
+            type: string
+            description: Additional comments about why the user canceled the subscription, if the subscription was canceled
+              explicitly by the user.
+          feedback:
+            type: string
+            description: The customer submitted reason for why they canceled, if the subscription was canceled explicitly
+              by the user.
+            enum:
+            - customer_service
+            - low_quality
+            - missing_features
+            - other
+            - switched_service
+            - too_complex
+            - too_expensive
+            - unused
+          reason:
+            type: string
+            description: Why this subscription was canceled.
+            enum:
+            - canceled_by_retention_policy
+            - cancellation_requested
+            - payment_disputed
+            - payment_failed
+      collection_method:
+        type: string
+        description: Either `charge_automatically`, or `send_invoice`. When charging automatically, Stripe will attempt to
+          pay this subscription at the end of the cycle using the default source attached to the customer. When sending an
+          invoice, Stripe will email your customer an invoice with payment instructions and mark the subscription as `active`.
+        enum:
+        - charge_automatically
+        - send_invoice
+      created:
+        type: integer
+        description: Time at which the object was created. Measured in seconds since the Unix epoch.
+      currency:
+        type: string
+        description: Three-letter [ISO currency code](https://www.iso.org/iso-4217-currency-codes.html), in lowercase. Must
+          be a [supported currency](https://stripe.com/docs/currencies).
+      customer:
+        type: string
+      customer_account:
+        type: string
+        description: ID of the account representing the customer who owns the subscription.
+      days_until_due:
+        type: integer
+        description: Number of days a customer has to pay invoices generated by this subscription. This value will be `null`
+          for subscriptions where `collection_method=charge_automatically`.
+      default_payment_method:
+        type: string
+      default_source:
+        type: string
+      default_tax_rates:
+        type: array
+        description: The tax rates that will apply to any subscription item that does not have `tax_rates` set. Invoices created
+          will have their `default_tax_rates` populated from the subscription.
+        items:
+          type: object
+          description: 'Tax rates can be applied to [invoices](/invoicing/taxes/tax-rates), [subscriptions](/billing/taxes/tax-rates)
+            and [Checkout Sessions](/payments/checkout/use-manual-tax-rates) to collect tax.
+
+
+            Related guide: [Tax rates](/billing/taxes/tax-rates)'
+          properties:
+            active:
+              type: boolean
+              description: Defaults to `true`. When set to `false`, this tax rate cannot be used with new applications or
+                Checkout Sessions, but will still work for subscriptions and invoices that already have it set.
+            country:
+              type: string
+              description: Two-letter country code ([ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)).
+            created:
+              type: integer
+              description: Time at which the object was created. Measured in seconds since the Unix epoch.
+            description:
+              type: string
+              description: An arbitrary string attached to the tax rate for your internal use only. It will not be visible
+                to your customers.
+            display_name:
+              type: string
+              description: The display name of the tax rates as it will appear to your customer on their receipt email, PDF,
+                and the hosted invoice page.
+            effective_percentage:
+              type: number
+              description: 'Actual/effective tax rate percentage out of 100. For tax calculations with automatic_tax[enabled]=true,
+
+                this percentage reflects the rate actually used to calculate tax based on the product''s taxability
+
+                and whether the user is registered to collect taxes in the corresponding jurisdiction.'
+            flat_amount:
+              type: object
+            id:
+              type: string
+              description: Unique identifier for the object.
+            inclusive:
+              type: boolean
+              description: This specifies if the tax rate is inclusive or exclusive.
+            jurisdiction:
+              type: string
+              description: The jurisdiction for the tax rate. You can use this label field for tax reporting purposes. It
+                also appears on your customer’s invoice.
+            jurisdiction_level:
+              type: string
+              description: The level of the jurisdiction that imposes this tax rate. Will be `null` for manually defined tax
+                rates.
+              enum:
+              - city
+              - country
+              - county
+              - district
+              - multiple
+              - state
+            livemode:
+              type: boolean
+              description: If the object exists in live mode, the value is `true`. If the object exists in test mode, the
+                value is `false`.
+            metadata:
+              type: object
+              description: Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object.
+                This can be useful for storing additional information about the object in a structured format.
+            object:
+              type: string
+              description: String representing the object's type. Objects of the same type share the same value.
+              enum:
+              - tax_rate
+            percentage:
+              type: number
+              description: Tax rate percentage out of 100. For tax calculations with automatic_tax[enabled]=true, this percentage
+                includes the statutory tax rate of non-taxable jurisdictions.
+            rate_type:
+              type: string
+              description: Indicates the type of tax rate applied to the taxable amount. This value can be `null` when no
+                tax applies to the location. This field is only present for TaxRates created by Stripe Tax.
+              enum:
+              - flat_amount
+              - percentage
+            state:
+              type: string
+              description: '[ISO 3166-2 subdivision code](https://en.wikipedia.org/wiki/ISO_3166-2), without country prefix.
+                For example, "NY" for New York, United States.'
+            tax_type:
+              type: string
+              description: The high-level tax type, such as `vat` or `sales_tax`.
+              enum:
+              - amusement_tax
+              - communications_tax
+              - gst
+              - hst
+              - igst
+              - jct
+              - lease_tax
+              - pst
+              - qst
+              - retail_delivery_fee
+              - rst
+              - sales_tax
+              - service_tax
+              - vat
+          required:
+          - active
+          - created
+          - display_name
+          - id
+          - inclusive
+          - livemode
+          - object
+          - percentage
+      description:
+        type: string
+        description: The subscription's description, meant to be displayable to the customer. Use this field to optionally
+          store an explanation of the subscription for rendering in Stripe surfaces and certain local payment methods UIs.
+      discounts:
+        type: array
+        description: The discounts applied to the subscription. Subscription item discounts are applied before subscription
+          discounts. Use `expand[]=discounts` to expand each discount.
+        items:
+          type: string
+      ended_at:
+        type: integer
+        description: If the subscription has ended, the date the subscription ended.
+      id:
+        type: string
+        description: Unique identifier for the object.
+      invoice_settings:
+        type: object
+        description: ''
+        properties:
+          account_tax_ids:
+            type: array
+            description: The account tax IDs associated with the subscription. Will be set on invoices generated by the subscription.
+            items:
+              type: object
+          issuer:
+            type: object
+            description: ''
+            properties:
+              account:
+                type: object
+              type:
+                type: object
+            required:
+            - type
+        required:
+        - issuer
+      items:
+        type: object
+        description: List of subscription items, each with an attached price.
+        properties:
+          data:
+            type: array
+            description: Details about each object.
+            items:
+              type: object
+              description: 'Subscription items allow you to create customer subscriptions with more than
+
+                one plan, making it easy to represent complex billing relationships.'
+              properties:
+                billed_until:
+                  type: object
+                billing_thresholds:
+                  type: object
+                created:
+                  type: object
+                current_period_end:
+                  type: object
+                current_period_start:
+                  type: object
+                discounts:
+                  type: object
+                id:
+                  type: object
+                metadata:
+                  type: object
+                object:
+                  type: object
+                price:
+                  type: object
+                quantity:
+                  type: object
+                subscription:
+                  type: object
+                tax_rates:
+                  type: object
+              required:
+              - created
+              - current_period_end
+              - current_period_start
+              - discounts
+              - id
+              - metadata
+              - object
+              - price
+              - subscription
+          has_more:
+            type: boolean
+            description: True if this list has another page of items after this one that can be fetched.
+          object:
+            type: string
+            description: String representing the object's type. Objects of the same type share the same value. Always has
+              the value `list`.
+            enum:
+            - list
+          url:
+            type: string
+            description: The URL where this list can be accessed.
+        required:
+        - data
+        - has_more
+        - object
+        - url
+      latest_invoice:
+        type: string
+      livemode:
+        type: boolean
+        description: If the object exists in live mode, the value is `true`. If the object exists in test mode, the value
+          is `false`.
+      managed_payments:
+        type: object
+        description: ''
+        properties:
+          enabled:
+            type: boolean
+            description: Set to `true` to enable [Managed Payments](https://docs.stripe.com/payments/managed-payments), Stripe's
+              merchant of record solution, for this session.
+        required:
+        - enabled
+      metadata:
+        type: object
+        description: Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This
+          can be useful for storing additional information about the object in a structured format.
+      next_pending_invoice_item_invoice:
+        type: integer
+        description: Specifies the approximate timestamp on which any pending invoice items will be billed according to the
+          schedule provided at `pending_invoice_item_interval`.
+      object:
+        type: string
+        description: String representing the object's type. Objects of the same type share the same value.
+        enum:
+        - subscription
+      on_behalf_of:
+        type: string
+      pause_collection:
+        type: object
+        description: 'The Pause Collection settings determine how we will pause collection for this subscription and for how
+          long the subscription
+
+          should be paused.'
+        properties:
+          behavior:
+            type: string
+            description: The payment collection behavior for this subscription while paused.
+            enum:
+            - keep_as_draft
+            - mark_uncollectible
+            - void
+          resumes_at:
+            type: integer
+            description: The time after which the subscription will resume collecting payments.
+        required:
+        - behavior
+      payment_settings:
+        type: object
+        description: ''
+        properties:
+          payment_method_options:
+            type: object
+          payment_method_types:
+            type: array
+            description: The list of payment method types to provide to every invoice created by the subscription. If not
+              set, Stripe attempts to automatically determine the types to use by looking at the invoice’s default payment
+              method, the subscription’s default payment method, the customer’s default payment method, and your [invoice
+              template settings](https://dashboard.stripe.com/settings/billing/invoice).
+            items:
+              type: object
+          save_default_payment_method:
+            type: string
+            description: Configure whether Stripe updates `subscription.default_payment_method` when payment succeeds. Defaults
+              to `off`.
+            enum:
+            - 'off'
+            - on_subscription
+      pending_invoice_item_interval:
+        type: object
+        description: ''
+        properties:
+          interval:
+            type: string
+            description: Specifies invoicing frequency. Either `day`, `week`, `month` or `year`.
+            enum:
+            - day
+            - month
+            - week
+            - year
+          interval_count:
+            type: integer
+            description: The number of intervals between invoices. For example, `interval=month` and `interval_count=3` bills
+              every 3 months. Maximum of one year interval allowed (1 year, 12 months, or 52 weeks).
+        required:
+        - interval
+        - interval_count
+      pending_setup_intent:
+        type: string
+      pending_update:
+        type: object
+        description: 'Pending Updates store the changes pending from a previous update that will be applied
+
+          to the Subscription upon successful payment.'
+        properties:
+          billing_cycle_anchor:
+            type: integer
+            description: If the update is applied, determines the date of the first full invoice, and, for plans with `month`
+              or `year` intervals, the day of the month for subsequent invoices. The timestamp is in UTC format.
+          discount:
+            type: object
+          discounts:
+            type: array
+            description: The discounts that will be applied to the subscription when the pending update is applied. Use `expand[]=discounts`
+              to expand each discount.
+            items:
+              type: object
+          expires_at:
+            type: integer
+            description: The point after which the changes reflected by this update will be discarded and no longer applied.
+          metadata:
+            type: object
+            description: Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object.
+              This can be useful for storing additional information about the object in a structured format.
+          subscription_items:
+            type: array
+            description: List of subscription items, each with an attached plan, that will be set if the update is applied.
+            items:
+              type: object
+          trial_end:
+            type: integer
+            description: Unix timestamp representing the end of the trial period the customer will get before being charged
+              for the first time, if the update is applied.
+          trial_from_plan:
+            type: boolean
+            description: Indicates if a plan's `trial_period_days` should be applied to the subscription. Setting `trial_end`
+              per subscription is preferred, and this defaults to `false`. Setting this flag to `true` together with `trial_end`
+              is not allowed. See [Using trial periods on subscriptions](https://docs.stripe.com/billing/subscriptions/trials)
+              to learn more.
+        required:
+        - expires_at
+      presentment_details:
+        type: object
+        description: ''
+        properties:
+          presentment_currency:
+            type: string
+            description: Currency used for customer payments.
+        required:
+        - presentment_currency
+      schedule:
+        type: string
+      start_date:
+        type: integer
+        description: Date when the subscription was first created. The date might differ from the `created` date due to backdating.
+      status:
+        type: string
+        description: "Possible values are `incomplete`, `incomplete_expired`, `trialing`, `active`, `past_due`, `canceled`,\
+          \ `unpaid`, or `paused`. \n\nFor `collection_method=charge_automatically` a subscription moves into `incomplete`\
+          \ if the initial payment attempt fails. A subscription in this status can only have metadata and default_source\
+          \ updated. Once the first invoice is paid, the subscription moves into an `active` status. If the first invoice\
+          \ is not paid within 23 hours, the subscription transitions to `incomplete_expired`. This is a terminal status,\
+          \ the open invoice will be voided and no further invoices will be generated. \n\nA subscription that is currently\
+          \ in a trial period is `trialing` and moves to `active` when the trial period is over. \n\nA subscription can only\
+          \ enter a `paused` status [when a trial ends without a payment method](https://docs.stripe.com/billing/subscriptions/trials#create-free-trials-without-payment).\
+          \ A `paused` subscription doesn't generate invoices and can be resumed after your customer adds their payment method.\
+          \ The `paused` status is different from [pausing collection](https://docs.stripe.com/billing/subscriptions/pause-payment),\
+          \ which still generates invoices and leaves the subscription's status unchanged. \n\nIf subscription `collection_method=charge_automatically`,\
+          \ it becomes `past_due` when payment is required but cannot be paid (due to failed payment or awaiting additional\
+          \ user actions). Once Stripe has exhausted all payment retry attempts, the subscription will become `canceled` or\
+          \ `unpaid` (depending on your subscriptions settings). \n\nIf subscription `collection_method=send_invoice` it becomes\
+          \ `past_due` when its invoice is not paid by the due date, and `canceled` or `unpaid` if it is still not paid by\
+          \ an additional deadline after that. Note that when a subscription has a status of `unpaid`, no subsequent invoices\
+          \ will be attempted (invoices will be created, but then immediately automatically closed). After receiving updated\
+          \ payment information from a customer, you may choose to reopen and pay their closed invoices."
+        enum:
+        - active
+        - canceled
+        - incomplete
+        - incomplete_expired
+        - past_due
+        - paused
+        - trialing
+        - unpaid
+      test_clock:
+        type: string
+      transfer_data:
+        type: object
+        description: ''
+        properties:
+          amount_percent:
+            type: number
+            description: A non-negative decimal between 0 and 100, with at most two decimal places. This represents the percentage
+              of the subscription invoice total that will be transferred to the destination account. By default, the entire
+              amount is transferred to the destination.
+          destination:
+            type: object
+        required:
+        - destination
+      trial_end:
+        type: integer
+        description: If the subscription has a trial, the end of that trial.
+      trial_settings:
+        type: object
+        description: Configures how this subscription behaves during the trial period.
+        properties:
+          end_behavior:
+            type: object
+        required:
+        - end_behavior
+      trial_start:
+        type: integer
+        description: If the subscription has a trial, the beginning of that trial.
+    required:
+    - automatic_tax
+    - billing_cycle_anchor
+    - billing_mode
+    - billing_schedules
+    - cancel_at_period_end
+    - collection_method
+    - created
+    - currency
+    - customer
+    - discounts
+    - id
+    - invoice_settings
+    - items
+    - livemode
+    - metadata
+    - object
+    - start_date
+    - status
+tags: []

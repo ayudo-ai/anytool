@@ -1,0 +1,26 @@
+name: salesforce_describe_object
+app: salesforce
+version: "1"
+description: "Get metadata for an object type"
+method: GET
+path: /sobjects/{sObjectType}/describe
+base_url: https://{domain}.my.salesforce.com/services/data/v59.0
+auth:
+  type: bearer
+  header: "Authorization: Bearer {access_token}"
+request:
+  content_type: application/json
+  body_schema:
+    type: object
+    properties:
+      sObjectType:
+        type: string
+        description: The sObjectType.
+response:
+  success_codes: [200]
+tags: [salesforce]
+examples:
+  - name: "Basic describe object"
+    request: {}
+    response:
+      status: success

@@ -1,0 +1,85 @@
+# ──────────────────────────────────────────────────────────────────────
+# Shopify — Shopify Get Products
+# Auto-generated from OpenAPI spec. Review before use.
+# ──────────────────────────────────────────────────────────────────────
+
+name: shopify_list_products
+app: shopify
+version: '1'
+description: https://shopify.dev/docs/admin-api/rest/reference/products/product#index-2020-10
+method: GET
+path: /admin/api/2020-10/products.json
+base_url: https://{domain}.myshopify.com/admin/api/2024-01
+auth:
+  type: oauth2
+  header: 'Authorization: Bearer {access_token}'
+request:
+  query_params:
+    ids:
+      type: object
+      description: Return only products specified by a comma-separated list of product IDs.
+    limit:
+      type: object
+      description: "Return up to this many results per page.\n                  (default: 50, maximum: 250)"
+    since_id:
+      type: object
+      description: Restrict results to after the specified ID.
+    title:
+      type: object
+      description: Filter results by product title.
+    vendor:
+      type: object
+      description: Filter results by product vendor.
+    handle:
+      type: object
+      description: Filter results by product handle.
+    product_type:
+      type: object
+      description: Filter results by product type.
+    status:
+      type: object
+      description: "Return products by their status.\n                  (default: active)\n                    \n        \
+        \                active: Show only active products.\n                        archived: Show only archived products.\n\
+        \                        draft: Show only draft products."
+    collection_id:
+      type: object
+      description: Filter results by product collection ID.
+    created_at_min:
+      type: object
+      description: 'Show products created after date. (format: 2014-04-25T16:15:47-04:00)'
+    created_at_max:
+      type: object
+      description: 'Show products created before date. (format: 2014-04-25T16:15:47-04:00)'
+    updated_at_min:
+      type: object
+      description: 'Show products last updated after date. (format: 2014-04-25T16:15:47-04:00)'
+    updated_at_max:
+      type: object
+      description: 'Show products last updated before date. (format: 2014-04-25T16:15:47-04:00)'
+    published_at_min:
+      type: object
+      description: 'Show products published after date. (format: 2014-04-25T16:15:47-04:00)'
+    published_at_max:
+      type: object
+      description: 'Show products published before date. (format: 2014-04-25T16:15:47-04:00)'
+    published_status:
+      type: object
+      description: "Return products by their published status\n                  (default: any)\n                    \n  \
+        \                      published: Show only published products.\n                        unpublished: Show only unpublished\
+        \ products.\n                        any: Show all products."
+    fields:
+      type: object
+      description: Show only certain fields, specified by a comma-separated list of field names.
+    presentment_currencies:
+      type: object
+      description: Return presentment prices in only certain currencies, specified by a comma-separated list of ISO 4217 currency
+        codes.
+response:
+  success_codes:
+  - 200
+  - 204
+tags:
+- products
+- product
+- products/product
+- latest_api_version

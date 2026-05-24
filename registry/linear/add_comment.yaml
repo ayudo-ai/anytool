@@ -1,0 +1,25 @@
+name: linear_add_comment
+app: linear
+version: '1'
+description: Add a comment to an issue
+method: POST
+path: /graphql
+base_url: https://api.linear.app
+auth:
+  type: bearer
+  header: 'Authorization: Bearer {access_token}'
+request:
+  content_type: application/json
+  body_schema:
+    type: object
+    properties: {}
+response:
+  success_codes:
+  - 200
+tags:
+- linear
+examples:
+- name: Basic add comment
+  request: {}
+  response:
+    status: success

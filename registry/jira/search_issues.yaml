@@ -1,0 +1,165 @@
+# ──────────────────────────────────────────────────────────────────────
+# Jira — Jira Searchforissuesusingjqlpost
+# Auto-generated from OpenAPI spec. Review before use.
+# ──────────────────────────────────────────────────────────────────────
+
+name: jira_search_issues
+app: jira
+version: '1'
+description: "Endpoint is currently being removed. [More details](https://developer.atlassian.com/changelog/#CHANGE-2046)\n\
+  \nSearches for issues using [JQL](https://confluence.atlassian.com/x/egORLQ).\n\nThere is a [GET](#api-rest-api-3-search-get)\
+  \ version of this resource that can be used for smaller JQL query expressions.\n\nThis operation can be accessed anonymously.\n\
+  \n**[Permissions](#permissions) required:** Issues are included in the response where the user has:\n\n *  *Browse projects*\
+  \ [project permission](https://confluence.atlassian.com/x/yodKLg) for the project containing the issue.\n *  If [issue-level\
+  \ security](https://confluence.atlassian.com/x/J4lKLg) is configured, issue-level security permission to view the issue."
+method: POST
+path: /rest/api/3/search
+base_url: https://{domain}.atlassian.net
+auth:
+  type: oauth2
+  header: 'Authorization: Bearer {access_token}'
+request:
+  content_type: application/json
+  body_schema:
+    type: object
+    properties:
+      expand:
+        type: array
+        description: "Use [expand](#expansion) to include additional information about issues in the response. Note that,\
+          \ unlike the majority of instances where `expand` is specified, `expand` is defined as a list of values. The expand\
+          \ options are:\n\n *  `renderedFields` Returns field values rendered in HTML format.\n *  `names` Returns the display\
+          \ name of each field.\n *  `schema` Returns the schema describing a field type.\n *  `transitions` Returns all possible\
+          \ transitions for the issue.\n *  `operations` Returns all possible operations for the issue.\n *  `editmeta` Returns\
+          \ information about how each field can be edited.\n *  `changelog` Returns a list of recent updates to an issue,\
+          \ sorted by date, starting from the most recent.\n *  `versionedRepresentations` Instead of `fields`, returns `versionedRepresentations`\
+          \ a JSON array containing each version of a field's value, with the highest numbered item representing the most\
+          \ recent version."
+        items:
+          type: string
+      fields:
+        type: array
+        description: "A list of fields to return for each issue, use it to retrieve a subset of fields. This parameter accepts\
+          \ a comma-separated list. Expand options include:\n\n *  `*all` Returns all fields.\n *  `*navigable` Returns navigable\
+          \ fields.\n *  Any issue field, prefixed with a minus to exclude.\n\nThe default is `*navigable`.\n\nExamples:\n\
+          \n *  `summary,comment` Returns the summary and comments fields only.\n *  `-description` Returns all navigable\
+          \ (default) fields except description.\n *  `*all,-comment` Returns all fields except comments.\n\nMultiple `fields`\
+          \ parameters can be included in a request.\n\nNote: All navigable fields are returned by default. This differs from\
+          \ [GET issue](#api-rest-api-3-issue-issueIdOrKey-get) where the default is all fields."
+        items:
+          type: string
+      fieldsByKeys:
+        type: boolean
+        description: Reference fields by their key (rather than ID). The default is `false`.
+      jql:
+        type: string
+        description: A [JQL](https://confluence.atlassian.com/x/egORLQ) expression.
+      maxResults:
+        type: integer
+        description: The maximum number of items to return per page.
+        default: 50
+      properties:
+        type: array
+        description: A list of up to 5 issue properties to include in the results. This parameter accepts a comma-separated
+          list.
+        items:
+          type: string
+      startAt:
+        type: integer
+        description: The index of the first item to return in the page of results (page offset). The base index is `0`.
+      validateQuery:
+        type: string
+        description: "Determines how to validate the JQL query and treat the validation results. Supported values:\n\n * \
+          \ `strict` Returns a 400 response code if any errors are found, along with a list of all errors (and warnings).\n\
+          \ *  `warn` Returns all errors as warnings.\n *  `none` No validation is performed.\n *  `true` *Deprecated* A legacy\
+          \ synonym for `strict`.\n *  `false` *Deprecated* A legacy synonym for `warn`.\n\nThe default is `strict`.\n\nNote:\
+          \ If the JQL is not correctly formed a 400 response code is returned, regardless of the `validateQuery` value."
+        enum:
+        - strict
+        - warn
+        - none
+        - 'true'
+        - 'false'
+response:
+  success_codes:
+  - 200
+  body_schema:
+    type: object
+    description: The result of a JQL search.
+    properties:
+      expand:
+        type: string
+        description: Expand options that include additional search result details in the response.
+      issues:
+        type: array
+        description: The list of issues found by the search.
+        items:
+          type: object
+          description: Details about an issue.
+          properties:
+            changelog:
+              type: object
+              properties: {}
+            editmeta:
+              type: object
+              properties: {}
+            expand:
+              type: string
+              description: Expand options that include additional issue details in the response.
+            fields:
+              type: object
+            fieldsToInclude:
+              type: object
+            id:
+              type: string
+              description: The ID of the issue.
+            key:
+              type: string
+              description: The key of the issue.
+            names:
+              type: object
+              description: The ID and name of each field present on the issue.
+            operations:
+              type: object
+              properties: {}
+            properties:
+              type: object
+              description: Details of the issue properties identified in the request.
+            renderedFields:
+              type: object
+              description: The rendered value of each field present on the issue.
+            schema:
+              type: object
+              description: The schema describing each field present on the issue.
+            self:
+              type: string
+              description: The URL of the issue details.
+            transitions:
+              type: array
+              description: The transitions that can be performed on the issue.
+              items:
+                type: object
+            versionedRepresentations:
+              type: object
+              description: The versions of each field on the issue.
+      maxResults:
+        type: integer
+        description: The maximum number of results that could be on the page.
+      names:
+        type: object
+        description: The ID and name of each field in the search results.
+      schema:
+        type: object
+        description: The schema describing the field types in the search results.
+      startAt:
+        type: integer
+        description: The index of the first item returned on the page.
+      total:
+        type: integer
+        description: The number of results on the page.
+      warningMessages:
+        type: array
+        description: Any warnings related to the JQL query.
+        items:
+          type: string
+tags:
+- Issue search

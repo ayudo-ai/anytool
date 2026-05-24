@@ -1,0 +1,921 @@
+# ──────────────────────────────────────────────────────────────────────
+# Stripe — Stripe Postcheckoutsessions
+# Auto-generated from OpenAPI spec. Review before use.
+# ──────────────────────────────────────────────────────────────────────
+
+name: stripe_create_checkout_session
+app: stripe
+version: '1'
+description: <p>Creates a Checkout Session object.</p>
+method: POST
+path: /v1/checkout/sessions
+base_url: https://api.stripe.com/
+auth:
+  type: oauth2
+  header: 'Authorization: Bearer {access_token}'
+response:
+  success_codes:
+  - 200
+  body_schema:
+    type: object
+    description: 'A Checkout Session represents your customer''s session as they pay for
+
+      one-time purchases or subscriptions through [Checkout](https://docs.stripe.com/payments/checkout)
+
+      or [Payment Links](https://docs.stripe.com/payments/payment-links). We recommend creating a
+
+      new Session each time your customer attempts to pay.
+
+
+      Once payment is successful, the Checkout Session will contain a reference
+
+      to the [Customer](https://docs.stripe.com/api/customers), and either the successful
+
+      [PaymentIntent](https://docs.stripe.com/api/payment_intents) or an active
+
+      [Subscription](https://docs.stripe.com/api/subscriptions).
+
+
+      You can create a Checkout Session on your server and redirect to its URL
+
+      to begin Checkout.
+
+
+      Related guide: [Checkout quickstart](https://docs.stripe.com/checkout/quickstart)'
+    properties:
+      adaptive_pricing:
+        type: object
+        description: ''
+        properties:
+          enabled:
+            type: boolean
+            description: If enabled, Adaptive Pricing is available on [eligible sessions](https://docs.stripe.com/payments/currencies/localize-prices/adaptive-pricing?payment-ui=stripe-hosted#restrictions).
+        required:
+        - enabled
+      after_expiration:
+        type: object
+        description: ''
+        properties:
+          recovery:
+            type: object
+      allow_promotion_codes:
+        type: boolean
+        description: Enables user redeemable promotion codes.
+      amount_subtotal:
+        type: integer
+        description: Total of all items before discounts or taxes are applied.
+      amount_total:
+        type: integer
+        description: Total of all items after discounts and taxes are applied.
+      automatic_tax:
+        type: object
+        description: ''
+        properties:
+          enabled:
+            type: boolean
+            description: Indicates whether automatic tax is enabled for the session
+          liability:
+            type: object
+          provider:
+            type: string
+            description: The tax provider powering automatic tax.
+          status:
+            type: string
+            description: The status of the most recent automated tax calculation for this session.
+            enum:
+            - complete
+            - failed
+            - requires_location_inputs
+        required:
+        - enabled
+      billing_address_collection:
+        type: string
+        description: Describes whether Checkout should collect the customer's billing address. Defaults to `auto`.
+        enum:
+        - auto
+        - required
+      branding_settings:
+        type: object
+        description: ''
+        properties:
+          background_color:
+            type: string
+            description: A hex color value starting with `#` representing the background color for the Checkout Session.
+          border_style:
+            type: string
+            description: The border style for the Checkout Session. Must be one of `rounded`, `rectangular`, or `pill`.
+            enum:
+            - pill
+            - rectangular
+            - rounded
+          button_color:
+            type: string
+            description: A hex color value starting with `#` representing the button color for the Checkout Session.
+          display_name:
+            type: string
+            description: The display name shown on the Checkout Session.
+          font_family:
+            type: string
+            description: The font family for the Checkout Session. Must be one of the [supported font families](https://docs.stripe.com/payments/checkout/customization/appearance?payment-ui=stripe-hosted#font-compatibility).
+          icon:
+            type: object
+          logo:
+            type: object
+        required:
+        - background_color
+        - border_style
+        - button_color
+        - display_name
+        - font_family
+      cancel_url:
+        type: string
+        description: If set, Checkout displays a back button and customers will be directed to this URL if they decide to
+          cancel payment and return to your website.
+      client_reference_id:
+        type: string
+        description: 'A unique string to reference the Checkout Session. This can be a
+
+          customer ID, a cart ID, or similar, and can be used to reconcile the
+
+          Session with your internal systems.'
+      client_secret:
+        type: string
+        description: "The client secret of your Checkout Session. Applies to Checkout Sessions with `ui_mode: embedded_page`\
+          \ or `ui_mode: elements`. For `ui_mode: embedded_page`, the client secret is to be used when initializing Stripe.js\
+          \ embedded checkout.\n For `ui_mode: elements`, use the client secret with [initCheckout](https://docs.stripe.com/js/custom_checkout/init)\
+          \ on your front end."
+      collected_information:
+        type: object
+        description: ''
+        properties:
+          business_name:
+            type: string
+            description: Customer’s business name for this Checkout Session
+          individual_name:
+            type: string
+            description: Customer’s individual name for this Checkout Session
+          shipping_details:
+            type: object
+      consent:
+        type: object
+        description: ''
+        properties:
+          promotions:
+            type: string
+            description: 'If `opt_in`, the customer consents to receiving promotional communications
+
+              from the merchant about this Checkout Session.'
+            enum:
+            - opt_in
+            - opt_out
+          terms_of_service:
+            type: string
+            description: If `accepted`, the customer in this Checkout Session has agreed to the merchant's terms of service.
+            enum:
+            - accepted
+      consent_collection:
+        type: object
+        description: ''
+        properties:
+          payment_method_reuse_agreement:
+            type: object
+          promotions:
+            type: string
+            description: 'If set to `auto`, enables the collection of customer consent for promotional communications. The
+              Checkout
+
+              Session will determine whether to display an option to opt into promotional communication
+
+              from the merchant depending on the customer''s locale. Only available to US merchants and US customers.'
+            enum:
+            - auto
+            - none
+          terms_of_service:
+            type: string
+            description: If set to `required`, it requires customers to accept the terms of service before being able to pay.
+            enum:
+            - none
+            - required
+      created:
+        type: integer
+        description: Time at which the object was created. Measured in seconds since the Unix epoch.
+      currency:
+        type: string
+        description: Three-letter [ISO currency code](https://www.iso.org/iso-4217-currency-codes.html), in lowercase. Must
+          be a [supported currency](https://stripe.com/docs/currencies).
+      currency_conversion:
+        type: object
+        description: ''
+        properties:
+          amount_subtotal:
+            type: integer
+            description: Total of all items in source currency before discounts or taxes are applied.
+          amount_total:
+            type: integer
+            description: Total of all items in source currency after discounts and taxes are applied.
+          fx_rate:
+            type: string
+            description: Exchange rate used to convert source currency amounts to customer currency amounts
+          source_currency:
+            type: string
+            description: Creation currency of the CheckoutSession before localization
+        required:
+        - amount_subtotal
+        - amount_total
+        - fx_rate
+        - source_currency
+      custom_fields:
+        type: array
+        description: Collect additional information from your customer using custom fields. Up to 3 fields are supported.
+          You can't set this parameter if `ui_mode` is `custom`.
+        items:
+          type: object
+          description: ''
+          properties:
+            dropdown:
+              type: object
+            key:
+              type: string
+              description: String of your choice that your integration can use to reconcile this field. Must be unique to
+                this field, alphanumeric, and up to 200 characters.
+            label:
+              type: object
+            numeric:
+              type: object
+            optional:
+              type: boolean
+              description: Whether the customer is required to complete the field before completing the Checkout Session.
+                Defaults to `false`.
+            text:
+              type: object
+            type:
+              type: string
+              description: The type of the field.
+              enum:
+              - dropdown
+              - numeric
+              - text
+          required:
+          - key
+          - label
+          - optional
+          - type
+      custom_text:
+        type: object
+        description: ''
+        properties:
+          after_submit:
+            type: object
+          shipping_address:
+            type: object
+          submit:
+            type: object
+          terms_of_service_acceptance:
+            type: object
+      customer:
+        type: string
+      customer_account:
+        type: string
+        description: The ID of the account for this Session.
+      customer_creation:
+        type: string
+        description: Configure whether a Checkout Session creates a Customer when the Checkout Session completes.
+        enum:
+        - always
+        - if_required
+      customer_details:
+        type: object
+        description: ''
+        properties:
+          address:
+            type: object
+          business_name:
+            type: string
+            description: The customer's business name after a completed Checkout Session.
+          email:
+            type: string
+            description: 'The email associated with the Customer, if one exists, on the Checkout Session after a completed
+              Checkout Session or at time of session expiry.
+
+              Otherwise, if the customer has consented to promotional content, this value is the most recent valid email provided
+              by the customer on the Checkout form.'
+          individual_name:
+            type: string
+            description: The customer's individual name after a completed Checkout Session.
+          name:
+            type: string
+            description: 'The customer''s name after a completed Checkout Session. Note: This property is populated only for
+              sessions on or after March 30, 2022.'
+          phone:
+            type: string
+            description: The customer's phone number after a completed Checkout Session.
+          tax_exempt:
+            type: string
+            description: The customer’s tax exempt status after a completed Checkout Session.
+            enum:
+            - exempt
+            - none
+            - reverse
+          tax_ids:
+            type: array
+            description: The customer’s tax IDs after a completed Checkout Session.
+            items:
+              type: object
+      customer_email:
+        type: string
+        description: 'If provided, this value will be used when the Customer object is created.
+
+          If not provided, customers will be asked to enter their email address.
+
+          Use this parameter to prefill customer data if you already have an email
+
+          on file. To access information about the customer once the payment flow is
+
+          complete, use the `customer` attribute.'
+      discounts:
+        type: array
+        description: List of coupons and promotion codes attached to the Checkout Session.
+        items:
+          type: object
+          description: ''
+          properties:
+            coupon:
+              type: object
+            promotion_code:
+              type: object
+      excluded_payment_method_types:
+        type: array
+        description: A list of the types of payment methods (e.g., `card`) that should be excluded from this Checkout Session.
+          This should only be used when payment methods for this Checkout Session are managed through the [Stripe Dashboard](https://dashboard.stripe.com/settings/payment_methods).
+        items:
+          type: string
+      expires_at:
+        type: integer
+        description: The timestamp at which the Checkout Session will expire.
+      id:
+        type: string
+        description: Unique identifier for the object.
+      integration_identifier:
+        type: string
+        description: The integration identifier for this Checkout Session. Multiple Checkout Sessions can have the same integration
+          identifier.
+      invoice:
+        type: string
+      invoice_creation:
+        type: object
+        description: ''
+        properties:
+          enabled:
+            type: boolean
+            description: Indicates whether invoice creation is enabled for the Checkout Session.
+          invoice_data:
+            type: object
+        required:
+        - enabled
+        - invoice_data
+      line_items:
+        type: object
+        description: The line items purchased by the customer.
+        properties:
+          data:
+            type: array
+            description: Details about each object.
+            items:
+              type: object
+              description: A line item.
+              properties:
+                adjustable_quantity:
+                  type: object
+                amount_discount:
+                  type: object
+                amount_subtotal:
+                  type: object
+                amount_tax:
+                  type: object
+                amount_total:
+                  type: object
+                currency:
+                  type: object
+                description:
+                  type: object
+                discounts:
+                  type: object
+                id:
+                  type: object
+                metadata:
+                  type: object
+                object:
+                  type: object
+                price:
+                  type: object
+                quantity:
+                  type: object
+                taxes:
+                  type: object
+              required:
+              - amount_discount
+              - amount_subtotal
+              - amount_tax
+              - amount_total
+              - currency
+              - id
+              - object
+          has_more:
+            type: boolean
+            description: True if this list has another page of items after this one that can be fetched.
+          object:
+            type: string
+            description: String representing the object's type. Objects of the same type share the same value. Always has
+              the value `list`.
+            enum:
+            - list
+          url:
+            type: string
+            description: The URL where this list can be accessed.
+        required:
+        - data
+        - has_more
+        - object
+        - url
+      livemode:
+        type: boolean
+        description: If the object exists in live mode, the value is `true`. If the object exists in test mode, the value
+          is `false`.
+      locale:
+        type: string
+        description: The IETF language tag of the locale Checkout is displayed in. If blank or `auto`, the browser's locale
+          is used.
+        enum:
+        - auto
+        - bg
+        - cs
+        - da
+        - de
+        - el
+        - en
+        - en-GB
+        - es
+        - es-419
+        - et
+        - fi
+        - fil
+        - fr
+        - fr-CA
+        - hr
+        - hu
+        - id
+        - it
+        - ja
+        - ko
+        - lt
+        - lv
+        - ms
+        - mt
+        - nb
+        - nl
+        - pl
+        - pt
+        - pt-BR
+        - ro
+        - ru
+        - sk
+        - sl
+        - sv
+        - th
+        - tr
+        - vi
+        - zh
+        - zh-HK
+        - zh-TW
+      managed_payments:
+        type: object
+        description: ''
+        properties:
+          enabled:
+            type: boolean
+            description: Set to `true` to enable [Managed Payments](https://docs.stripe.com/payments/managed-payments), Stripe's
+              merchant of record solution, for this session.
+        required:
+        - enabled
+      metadata:
+        type: object
+        description: Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This
+          can be useful for storing additional information about the object in a structured format.
+      mode:
+        type: string
+        description: The mode of the Checkout Session.
+        enum:
+        - payment
+        - setup
+        - subscription
+      name_collection:
+        type: object
+        description: ''
+        properties:
+          business:
+            type: object
+            description: ''
+            properties:
+              enabled:
+                type: object
+              optional:
+                type: object
+            required:
+            - enabled
+            - optional
+          individual:
+            type: object
+            description: ''
+            properties:
+              enabled:
+                type: object
+              optional:
+                type: object
+            required:
+            - enabled
+            - optional
+      object:
+        type: string
+        description: String representing the object's type. Objects of the same type share the same value.
+        enum:
+        - checkout.session
+      optional_items:
+        type: array
+        description: The optional items presented to the customer at checkout.
+        items:
+          type: object
+          description: ''
+          properties:
+            adjustable_quantity:
+              type: object
+            price:
+              type: string
+            quantity:
+              type: integer
+          required:
+          - price
+          - quantity
+      origin_context:
+        type: string
+        description: Where the user is coming from. This informs the optimizations that are applied to the session.
+        enum:
+        - mobile_app
+        - web
+      payment_intent:
+        type: string
+      payment_link:
+        type: string
+      payment_method_collection:
+        type: string
+        description: Configure whether a Checkout Session should collect a payment method. Defaults to `always`.
+        enum:
+        - always
+        - if_required
+      payment_method_configuration_details:
+        type: object
+        description: ''
+        properties:
+          id:
+            type: string
+            description: ID of the payment method configuration used.
+          parent:
+            type: string
+            description: ID of the parent payment method configuration used.
+        required:
+        - id
+      payment_method_options:
+        type: object
+        description: ''
+        properties:
+          acss_debit:
+            type: object
+          affirm:
+            type: object
+          afterpay_clearpay:
+            type: object
+          alipay:
+            type: object
+          alma:
+            type: object
+          amazon_pay:
+            type: object
+          au_becs_debit:
+            type: object
+          bacs_debit:
+            type: object
+          bancontact:
+            type: object
+          billie:
+            type: object
+          boleto:
+            type: object
+          card:
+            type: object
+          cashapp:
+            type: object
+          customer_balance:
+            type: object
+          eps:
+            type: object
+          fpx:
+            type: object
+          giropay:
+            type: object
+          grabpay:
+            type: object
+          ideal:
+            type: object
+          kakao_pay:
+            type: object
+          klarna:
+            type: object
+          konbini:
+            type: object
+          kr_card:
+            type: object
+          link:
+            type: object
+          mobilepay:
+            type: object
+          multibanco:
+            type: object
+          naver_pay:
+            type: object
+          oxxo:
+            type: object
+          p24:
+            type: object
+          payco:
+            type: object
+          paynow:
+            type: object
+          paypal:
+            type: object
+          payto:
+            type: object
+          pix:
+            type: object
+          revolut_pay:
+            type: object
+          samsung_pay:
+            type: object
+          satispay:
+            type: object
+          scalapay:
+            type: object
+          sepa_debit:
+            type: object
+          sofort:
+            type: object
+          swish:
+            type: object
+          twint:
+            type: object
+          upi:
+            type: object
+          us_bank_account:
+            type: object
+      payment_method_types:
+        type: array
+        description: 'A list of the types of payment methods (e.g. card) this Checkout
+
+          Session is allowed to accept.'
+        items:
+          type: string
+      payment_status:
+        type: string
+        description: 'The payment status of the Checkout Session, one of `paid`, `unpaid`, or `no_payment_required`.
+
+          You can use this value to decide when to fulfill your customer''s order.'
+        enum:
+        - no_payment_required
+        - paid
+        - unpaid
+      permissions:
+        type: object
+        description: ''
+        properties:
+          update_shipping_details:
+            type: string
+            description: 'Determines which entity is allowed to update the shipping details.
+
+
+              Default is `client_only`. Stripe Checkout client will automatically update the shipping details. If set to `server_only`,
+              only your server is allowed to update the shipping details.
+
+
+              When set to `server_only`, you must add the onShippingDetailsChange event handler when initializing the Stripe
+              Checkout client and manually update the shipping details from your server using the Stripe API.'
+            enum:
+            - client_only
+            - server_only
+      phone_number_collection:
+        type: object
+        description: ''
+        properties:
+          enabled:
+            type: boolean
+            description: Indicates whether phone number collection is enabled for the session
+        required:
+        - enabled
+      presentment_details:
+        type: object
+        description: ''
+        properties:
+          presentment_amount:
+            type: integer
+            description: Amount intended to be collected by this payment, denominated in `presentment_currency`.
+          presentment_currency:
+            type: string
+            description: Currency presented to the customer during payment.
+        required:
+        - presentment_amount
+        - presentment_currency
+      recovered_from:
+        type: string
+        description: The ID of the original expired Checkout Session that triggered the recovery flow.
+      redirect_on_completion:
+        type: string
+        description: 'This parameter applies to `ui_mode: embedded_page`. Learn more about the [redirect behavior](https://docs.stripe.com/payments/checkout/custom-success-page?payment-ui=embedded-form)
+          of embedded sessions. Defaults to `always`.'
+        enum:
+        - always
+        - if_required
+        - never
+      return_url:
+        type: string
+        description: 'Applies to Checkout Sessions with `ui_mode: embedded_page` or `ui_mode: elements`. The URL to redirect
+          your customer back to after they authenticate or cancel their payment on the payment method''s app or site.'
+      saved_payment_method_options:
+        type: object
+        description: ''
+        properties:
+          allow_redisplay_filters:
+            type: array
+            description: 'Uses the `allow_redisplay` value of each saved payment method to filter the set presented to a returning
+              customer. By default, only saved payment methods with ’allow_redisplay: ‘always’ are shown in Checkout.'
+            items:
+              type: object
+          payment_method_remove:
+            type: string
+            description: Enable customers to choose if they wish to remove their saved payment methods. Disabled by default.
+            enum:
+            - disabled
+            - enabled
+          payment_method_save:
+            type: string
+            description: Enable customers to choose if they wish to save their payment method for future use. Disabled by
+              default.
+            enum:
+            - disabled
+            - enabled
+      setup_intent:
+        type: string
+      shipping_address_collection:
+        type: object
+        description: ''
+        properties:
+          allowed_countries:
+            type: array
+            description: 'An array of two-letter ISO country codes representing which countries Checkout should provide as
+              options for
+
+              shipping locations. Unsupported country codes: `AS, CX, CC, CU, HM, IR, KP, MH, FM, NF, MP, PW, SY, UM, VI`.'
+            items:
+              type: object
+        required:
+        - allowed_countries
+      shipping_cost:
+        type: object
+        description: ''
+        properties:
+          amount_subtotal:
+            type: integer
+            description: Total shipping cost before any discounts or taxes are applied.
+          amount_tax:
+            type: integer
+            description: Total tax amount applied due to shipping costs. If no tax was applied, defaults to 0.
+          amount_total:
+            type: integer
+            description: Total shipping cost after discounts and taxes are applied.
+          shipping_rate:
+            type: object
+          taxes:
+            type: array
+            description: The taxes applied to the shipping rate.
+            items:
+              type: object
+        required:
+        - amount_subtotal
+        - amount_tax
+        - amount_total
+      shipping_options:
+        type: array
+        description: The shipping rate options applied to this Session.
+        items:
+          type: object
+          description: ''
+          properties:
+            shipping_amount:
+              type: integer
+              description: A non-negative integer in cents representing how much to charge.
+            shipping_rate:
+              type: object
+          required:
+          - shipping_amount
+          - shipping_rate
+      status:
+        type: string
+        description: The status of the Checkout Session, one of `open`, `complete`, or `expired`.
+        enum:
+        - complete
+        - expired
+        - open
+      submit_type:
+        type: string
+        description: 'Describes the type of transaction being performed by Checkout in order to customize
+
+          relevant text on the page, such as the submit button. `submit_type` can only be
+
+          specified on Checkout Sessions in `payment` mode. If blank or `auto`, `pay` is used.'
+        enum:
+        - auto
+        - book
+        - donate
+        - pay
+        - subscribe
+      subscription:
+        type: string
+      success_url:
+        type: string
+        description: 'The URL the customer will be directed to after the payment or
+
+          subscription creation is successful.'
+      tax_id_collection:
+        type: object
+        description: ''
+        properties:
+          enabled:
+            type: boolean
+            description: Indicates whether tax ID collection is enabled for the session
+          required:
+            type: string
+            description: Indicates whether a tax ID is required on the payment page
+            enum:
+            - if_supported
+            - never
+        required:
+        - enabled
+        - required
+      total_details:
+        type: object
+        description: ''
+        properties:
+          amount_discount:
+            type: integer
+            description: This is the sum of all the discounts.
+          amount_shipping:
+            type: integer
+            description: This is the sum of all the shipping amounts.
+          amount_tax:
+            type: integer
+            description: This is the sum of all the tax amounts.
+          breakdown:
+            type: object
+        required:
+        - amount_discount
+        - amount_tax
+      ui_mode:
+        type: string
+        description: The UI mode of the Session. Defaults to `hosted_page`.
+        enum:
+        - elements
+        - embedded_page
+        - hosted_page
+      url:
+        type: string
+        description: 'The URL to the Checkout Session. Applies to Checkout Sessions with `ui_mode: hosted_page`. Redirect
+          customers to this URL to take them to Checkout. If you’re using [Custom Domains](https://docs.stripe.com/payments/checkout/custom-domains),
+          the URL will use your subdomain. Otherwise, it’ll use `checkout.stripe.com.`
+
+          This value is only present when the session is active.'
+      wallet_options:
+        type: object
+        description: ''
+        properties:
+          link:
+            type: object
+    required:
+    - automatic_tax
+    - created
+    - custom_fields
+    - custom_text
+    - expires_at
+    - id
+    - livemode
+    - mode
+    - object
+    - payment_method_types
+    - payment_status
+    - shipping_options
+tags: []

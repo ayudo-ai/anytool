@@ -1,0 +1,25 @@
+name: intercom_search_contacts
+app: intercom
+version: '1'
+description: Search contacts with filters
+method: POST
+path: /contacts/search
+base_url: https://api.intercom.io
+auth:
+  type: bearer
+  header: 'Authorization: Bearer {access_token}'
+request:
+  content_type: application/json
+  body_schema:
+    type: object
+    properties: {}
+response:
+  success_codes:
+  - 200
+tags:
+- intercom
+examples:
+- name: Basic search contacts
+  request: {}
+  response:
+    status: success

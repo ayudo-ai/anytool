@@ -1,0 +1,26 @@
+name: notion_update_page
+app: notion
+version: "1"
+description: "Update page properties"
+method: PATCH
+path: /v1/pages/{page_id}
+base_url: https://api.notion.com
+auth:
+  type: bearer
+  header: "Authorization: Bearer {access_token}"
+request:
+  content_type: application/json
+  body_schema:
+    type: object
+    properties:
+      page_id:
+        type: string
+        description: The page_id to use.
+response:
+  success_codes: [200]
+tags: [notion, productivity]
+examples:
+  - name: "Basic update page"
+    request: {}
+    response:
+      status: success
