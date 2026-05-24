@@ -32,6 +32,11 @@ PROVIDER_MAP = {
     "google_calendar": "google",
     "google_docs": "google",
     "google": "google",
+    # No-underscore variants (from slug format GOOGLECALENDAR → googlecalendar)
+    "googledrive": "google",
+    "googlesheets": "google",
+    "googlecalendar": "google",
+    "googledocs": "google",
     "slack": "slack",
     "docusign": "docusign",
     "freshdesk": "freshdesk",
