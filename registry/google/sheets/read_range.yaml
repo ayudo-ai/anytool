@@ -1,0 +1,87 @@
+# ──────────────────────────────────────────────────────────────────────
+# Google Sheets — Sheets Read Range
+# Tier 1: Auto-generated from Google Discovery doc.
+# Review and adjust descriptions/examples before use.
+# ──────────────────────────────────────────────────────────────────────
+
+name: sheets_read_range
+app: google
+version: '1'
+description: Returns a range of values from a spreadsheet. The caller must specify the spreadsheet ID and a range.
+method: GET
+path: /v4/spreadsheets/{spreadsheetId}/values/{range}
+base_url: https://sheets.googleapis.com
+auth:
+  type: oauth2
+  scopes:
+  - https://www.googleapis.com/auth/spreadsheets
+  header: 'Authorization: Bearer {access_token}'
+request:
+  query_params:
+    majorDimension:
+      type: string
+      description: 'The major dimension that results should use. For example, if the spreadsheet data in Sheet1 is: `A1=1,B1=2,A2=3,B2=4`,
+        then requesting `range=Sheet1!A1:B2?majorDimension=ROWS` returns `[[1,2],[3,4]]`, whereas requesting `range=Sheet1!A1:B2?majorDimension=COLUMNS`
+        returns `[[1,3],[2,4]]`.'
+      enum:
+      - DIMENSION_UNSPECIFIED
+      - ROWS
+      - COLUMNS
+    valueRenderOption:
+      type: string
+      description: How values should be represented in the output. The default render option is FORMATTED_VALUE.
+      enum:
+      - FORMATTED_VALUE
+      - UNFORMATTED_VALUE
+      - FORMULA
+    dateTimeRenderOption:
+      type: string
+      description: How dates, times, and durations should be represented in the output. This is ignored if value_render_option
+        is FORMATTED_VALUE. The default dateTime render option is SERIAL_NUMBER.
+      enum:
+      - SERIAL_NUMBER
+      - FORMATTED_STRING
+response:
+  success_codes:
+  - 200
+  body_schema:
+    type: object
+    properties:
+      range:
+        type: string
+        description: The range the values cover, in [A1 notation](https://developers.google.com/workspace/sheets/api/guides/concepts#cell).
+          For output, this range indicates the entire requested range, even though the values will exclude trailing rows and
+          columns. When appending values, this field represents the range to search for a table, after which values will be
+          appended.
+      majorDimension:
+        type: string
+        enum:
+        - DIMENSION_UNSPECIFIED
+        - ROWS
+        - COLUMNS
+        description: 'The major dimension of the values. For output, if the spreadsheet data is: `A1=1,B1=2,A2=3,B2=4`, then
+          requesting `range=A1:B2,majorDimension=ROWS` will return `[[1,2],[3,4]]`, whereas requesting `range=A1:B2,majorDimension=COLUMNS`
+          will return `[[1,3],[2,4]]`. For input, with `range=A1:B2,majorDimension=ROWS` then `[[1,2],[3,4]]` will set `A1=1,B1=2,A2=3,B2=4`.
+          With `range=A1:B2,majorDimension=COLUMNS` then `[[1,2],[3,4]]` will set `A1=1,B1=3,A2=2,B2=4`. When writing, if
+          this field is not set, it defaults to ROWS.'
+      values:
+        type: array
+        items:
+          type: array
+          items: {}
+        description: 'The data that was read or to be written. This is an array of arrays, the outer array representing all
+          the data and each inner array representing a major dimension. Each item in the inner array corresponds with one
+          cell. For output, empty trailing rows and columns will not be included. For input, supported value types are: bool,
+          string, and double. Null values will be skipped. To set a cell to an empty value, set the string value to an empty
+          string.'
+    description: Data within a range of the spreadsheet.
+tags:
+- google
+- sheets
+examples:
+- name: Basic sheets read range
+  request:
+    spreadsheetId: <spreadsheetId>
+    range: <range>
+  response:
+    status: success

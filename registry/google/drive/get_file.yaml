@@ -1,0 +1,99 @@
+# ──────────────────────────────────────────────────────────────────────
+# Google Drive — Drive Get File
+# Tier 1: Auto-generated from Google Discovery doc.
+# Review and adjust descriptions/examples before use.
+# ──────────────────────────────────────────────────────────────────────
+
+name: drive_get_file
+app: google
+version: '1'
+description: ' Gets a file''s metadata or content by ID. For more information, see [Search for files and folders](https://developers.google.com/workspace/drive/api/guides/search-files).
+  If you provide the URL parameter `alt=media`, then the response includes the file contents in the response body. Downloading
+  content with `alt=media` only works if the file is stored in Drive. To download Google Docs, Sheets, and Slides use [`files.export`](https://developers.google.com/workspace/drive/api/reference/rest/v3/files/export)
+  instead. For more information, see [Download and export files](https://developers.google.com/workspace/drive/api/guides/manage-downloads).'
+method: GET
+path: /files/{fileId}
+base_url: https://www.googleapis.com
+auth:
+  type: oauth2
+  scopes:
+  - https://www.googleapis.com/auth/drive
+  header: 'Authorization: Bearer {access_token}'
+request:
+  query_params:
+    acknowledgeAbuse:
+      type: boolean
+      description: Whether the user is acknowledging the risk of downloading known malware or other abusive files. This is
+        only applicable when the `alt` parameter is set to `media` and the user is the owner of the file or an organizer of
+        the shared drive in which the file resides.
+      default: 'false'
+    supportsAllDrives:
+      type: boolean
+      description: Whether the requesting application supports both My Drives and shared drives.
+      default: 'false'
+    supportsTeamDrives:
+      type: boolean
+      description: 'Deprecated: Use `supportsAllDrives` instead.'
+      default: 'false'
+    includePermissionsForView:
+      type: string
+      description: Specifies which additional view's permissions to include in the response. Only `published` is supported.
+    includeLabels:
+      type: string
+      description: A comma-separated list of IDs of labels to include in the `labelInfo` part of the response.
+response:
+  success_codes:
+  - 200
+  body_schema:
+    type: object
+    properties:
+      kind:
+        type: string
+        description: 'Output only. Identifies what kind of resource this is. Value: the fixed string `"drive#file"`.'
+        default: drive#file
+      mimeType:
+        type: string
+        description: The MIME type of the file. Google Drive attempts to automatically detect an appropriate value from uploaded
+          content, if no value is provided. The value cannot be changed unless a new revision is uploaded. If a file is created
+          with a Google Doc MIME type, the uploaded content is imported, if possible. The supported import formats are published
+          in the [`about`](/workspace/drive/api/reference/rest/v3/about) resource.
+      parents:
+        type: array
+        items:
+          type: string
+        description: The ID of the parent folder containing the file. A file can only have one parent folder; specifying multiple
+          parents isn't supported. If not specified as part of a create request, the file is placed directly in the user's
+          My Drive folder. If not specified as part of a copy request, the file inherits any discoverable parent of the source
+          file. Update requests must use the `addParents` and `removeParents` parameters to modify the parents list.
+      webViewLink:
+        type: string
+        description: Output only. A link for opening the file in a relevant Google editor or viewer in a browser.
+      id:
+        type: string
+        description: The ID of the file.
+      name:
+        type: string
+        description: The name of the file. This isn't necessarily unique within a folder. Note that for immutable items such
+          as the top-level folders of shared drives, the My Drive root folder, and the Application Data folder, the name is
+          constant.
+      description:
+        type: string
+        description: A short description of the file.
+      properties:
+        type: object
+        additionalProperties:
+          type: string
+        description: 'A collection of arbitrary key-value pairs which are visible to all apps.
+
+          Entries with null values are cleared in update and copy requests.'
+    description: The metadata for a file. Some resource methods (such as `files.update`) require a `fileId`. Use the `files.list`
+      method to retrieve the ID for a file.
+tags:
+- google
+- drive
+examples:
+- name: Basic drive get file
+  request:
+    fileId: <fileId>
+  response:
+    status: success

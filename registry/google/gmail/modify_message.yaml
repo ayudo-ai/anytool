@@ -1,0 +1,94 @@
+# ──────────────────────────────────────────────────────────────────────
+# Google Gmail — Gmail Modify Message
+# Tier 1: Auto-generated from Google Discovery doc.
+# Review and adjust descriptions/examples before use.
+# ──────────────────────────────────────────────────────────────────────
+
+name: gmail_modify_message
+app: google
+version: '1'
+description: Modifies the labels and the Classification Label values on the specified message. For administrators modifying
+  message for users in their organization, requests require authorization with a [service account](https://developers.google.com/identity/protocols/OAuth2ServiceAccount)
+  that has [domain-wide delegation authority](https://developers.google.com/identity/protocols/OAuth2ServiceAccount#delegatingauthority)
+  to impersonate users with the `https://www.googleapis.com/auth/gmail.modify.restricted` scope.
+method: POST
+path: /gmail/v1/users/{userId}/messages/{id}/modify
+base_url: https://gmail.googleapis.com
+auth:
+  type: oauth2
+  scopes:
+  - https://www.googleapis.com/auth/gmail.modify
+  header: 'Authorization: Bearer {access_token}'
+request:
+  content_type: application/json
+  body_schema:
+    type: object
+    properties:
+      addLabelIds:
+        type: array
+        items:
+          type: string
+        description: A list of IDs of labels to add to this message. You can add up to 100 labels with each update.
+      removeLabelIds:
+        type: array
+        items:
+          type: string
+        description: A list IDs of labels to remove from this message. You can remove up to 100 labels with each update.
+      addClassificationLabels:
+        type: array
+        items:
+          type: object
+          properties:
+            labelId:
+              type: string
+              description: Required. The canonical or raw alphanumeric classification label ID. Maps to the ID field of the
+                Google Drive Label resource.
+            fields:
+              type: array
+              items:
+                type: object
+                description: Nested object (depth limit reached)
+              description: Field values for the given classification label ID.
+          description: Classification Labels applied to the email message. Classification Labels are different from Gmail
+            inbox labels. Only used for Google Workspace accounts. [Learn more about classification labels](https://support.google.com/a/answer/9292382).
+        description: A list of classification label values to add. If a Classification Label with the same label ID is already
+          applied to the message, fields with existing field IDs will be updated and fields with new field IDs will be added.
+          There's a limit of 20 Classification Label values per request. If the message is already classified and the final
+          total number of Classification Label values exceeds the maximum allowed number of Classification Label values per
+          message, the modification fails.
+      removeClassificationLabelIds:
+        type: array
+        items:
+          type: string
+        description: A list of Classification Label values to remove from this message.
+response:
+  success_codes:
+  - 200
+  body_schema:
+    type: object
+    properties:
+      id:
+        type: string
+        description: The immutable ID of the message.
+      threadId:
+        type: string
+        description: 'The ID of the thread the message belongs to. To add a message or draft to a thread, the following criteria
+          must be met: 1. The requested `threadId` must be specified on the `Message` or `Draft.Message` you supply with your
+          request. 2. The `References` and `In-Reply-To` headers must be set in compliance with the [RFC 2822](https://tools.ietf.org/html/rfc2822)
+          standard. 3. The `Subject` headers must match. '
+      labelIds:
+        type: array
+        items:
+          type: string
+        description: List of IDs of labels applied to this message.
+    description: An email message.
+tags:
+- google
+- gmail
+examples:
+- name: Basic gmail modify message
+  request:
+    userId: <userId>
+    id: <id>
+  response:
+    status: success

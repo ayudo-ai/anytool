@@ -1,0 +1,98 @@
+# ──────────────────────────────────────────────────────────────────────
+# Google Gmail — Gmail List Labels
+# Tier 1: Auto-generated from Google Discovery doc.
+# Review and adjust descriptions/examples before use.
+# ──────────────────────────────────────────────────────────────────────
+
+name: gmail_list_labels
+app: google
+version: '1'
+description: Lists all labels in the user's mailbox. For more information, see [Manage labels](https://developers.google.com/workspace/gmail/api/guides/labels).
+method: GET
+path: /gmail/v1/users/{userId}/labels
+base_url: https://gmail.googleapis.com
+auth:
+  type: oauth2
+  scopes:
+  - https://www.googleapis.com/auth/gmail.modify
+  header: 'Authorization: Bearer {access_token}'
+response:
+  success_codes:
+  - 200
+  body_schema:
+    type: object
+    properties:
+      labels:
+        type: array
+        items:
+          type: object
+          properties:
+            id:
+              type: string
+              description: The immutable ID of the label.
+            name:
+              type: string
+              description: The display name of the label.
+            messageListVisibility:
+              type: string
+              enum:
+              - show
+              - hide
+              description: The visibility of messages with this label in the message list in the Gmail web interface.
+            labelListVisibility:
+              type: string
+              enum:
+              - labelShow
+              - labelShowIfUnread
+              - labelHide
+              description: The visibility of the label in the label list in the Gmail web interface.
+            type:
+              type: string
+              enum:
+              - system
+              - user
+              description: The owner type for the label. User labels are created by the user and can be modified and deleted
+                by the user and can be applied to any message or thread. System labels are internally created and cannot be
+                added, modified, or deleted. System labels may be able to be applied to or removed from messages and threads
+                under some circumstances but this is not guaranteed. For example, users can apply and remove the `INBOX` and
+                `UNREAD` labels from messages and threads, but cannot apply or remove the `DRAFTS` or `SENT` labels from messages
+                or threads.
+            messagesTotal:
+              type: integer
+              format: int32
+              description: The total number of messages with the label.
+            messagesUnread:
+              type: integer
+              format: int32
+              description: The number of unread messages with the label.
+            threadsTotal:
+              type: integer
+              format: int32
+              description: The total number of threads with the label.
+            threadsUnread:
+              type: integer
+              format: int32
+              description: The number of unread threads with the label.
+            color:
+              type: object
+              properties:
+                textColor:
+                  type: object
+                  description: Nested object (depth limit reached)
+                backgroundColor:
+                  type: object
+                  description: Nested object (depth limit reached)
+          description: Labels are used to categorize messages and threads within the user's mailbox. The maximum number of
+            labels supported for a user's mailbox is 10,000.
+        description: List of labels. Note that each label resource only contains an `id`, `name`, `messageListVisibility`,
+          `labelListVisibility`, and `type`. The [`labels.get`](https://developers.google.com/workspace/gmail/api/v1/reference/users/labels/get)
+          method can fetch additional label details.
+tags:
+- google
+- gmail
+examples:
+- name: Basic gmail list labels
+  request:
+    userId: <userId>
+  response:
+    status: success

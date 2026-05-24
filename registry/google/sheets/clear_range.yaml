@@ -1,0 +1,45 @@
+# ──────────────────────────────────────────────────────────────────────
+# Google Sheets — Sheets Clear Range
+# Tier 1: Auto-generated from Google Discovery doc.
+# Review and adjust descriptions/examples before use.
+# ──────────────────────────────────────────────────────────────────────
+
+name: sheets_clear_range
+app: google
+version: '1'
+description: Clears values from a spreadsheet. The caller must specify the spreadsheet ID and range. Only values are cleared
+  -- all other properties of the cell (such as formatting, data validation, etc..) are kept.
+method: POST
+path: /v4/spreadsheets/{spreadsheetId}/values/{range}:clear
+base_url: https://sheets.googleapis.com
+auth:
+  type: oauth2
+  scopes:
+  - https://www.googleapis.com/auth/spreadsheets
+  header: 'Authorization: Bearer {access_token}'
+request:
+  content_type: application/json
+  body_schema:
+    type: object
+    properties: {}
+    description: The request for clearing a range of values in a spreadsheet.
+response:
+  success_codes:
+  - 200
+  body_schema:
+    type: object
+    properties:
+      spreadsheetId:
+        type: string
+        description: The spreadsheet the updates were applied to.
+    description: The response when clearing a range of values in a spreadsheet.
+tags:
+- google
+- sheets
+examples:
+- name: Basic sheets clear range
+  request:
+    spreadsheetId: <spreadsheetId>
+    range: <range>
+  response:
+    status: success

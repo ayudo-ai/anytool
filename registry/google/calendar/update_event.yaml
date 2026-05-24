@@ -1,0 +1,362 @@
+# ──────────────────────────────────────────────────────────────────────
+# Google Calendar — Calendar Update Event
+# Tier 1: Auto-generated from Google Discovery doc.
+# Review and adjust descriptions/examples before use.
+# ──────────────────────────────────────────────────────────────────────
+
+name: calendar_update_event
+app: google
+version: '1'
+description: Updates an event.
+method: PUT
+path: /calendars/{calendarId}/events/{eventId}
+base_url: https://www.googleapis.com
+auth:
+  type: oauth2
+  scopes:
+  - https://www.googleapis.com/auth/calendar
+  header: 'Authorization: Bearer {access_token}'
+request:
+  query_params:
+    alwaysIncludeEmail:
+      type: boolean
+      description: Deprecated and ignored. A value will always be returned in the email field for the organizer, creator and
+        attendees, even if no real email address is available (i.e. a generated, non-working value will be provided).
+    conferenceDataVersion:
+      type: integer
+      description: Version number of conference data supported by the API client. Version 0 assumes no conference data support
+        and ignores conference data in the event's body. Version 1 enables support for copying of ConferenceData as well as
+        for creating new conferences using the createRequest field of conferenceData. The default is 0.
+    maxAttendees:
+      type: integer
+      description: The maximum number of attendees to include in the response. If there are more than the specified number
+        of attendees, only the participant is returned. Optional.
+    sendNotifications:
+      type: boolean
+      description: 'Deprecated. Please use sendUpdates instead.
+
+
+        Whether to send notifications about the event update (for example, description changes, etc.). Note that some emails
+        might still be sent even if you set the value to false. The default is false.'
+    sendUpdates:
+      type: string
+      description: Guests who should receive notifications about the event update (for example, title changes, etc.).
+      enum:
+      - all
+      - externalOnly
+      - none
+    supportsAttachments:
+      type: boolean
+      description: Whether API client performing operation supports event attachments. Optional. The default is False.
+  content_type: application/json
+  body_schema:
+    type: object
+    properties:
+      attendees:
+        type: array
+        items:
+          type: object
+          properties:
+            additionalGuests:
+              type: integer
+              format: int32
+              description: Number of additional guests. Optional. The default is 0.
+              default: '0'
+            asyncOperation:
+              type: string
+              description: "If present, indicates the status of an asynchronous operation ongoing for this attendee (e.g.\
+                \ listing of members of large attendee groups). Read-only. The default is to not be present.\nPossible values\
+                \ are:  \n- \"inProgress\" - The asynchronous operation is in progress. \n- (not present) - Otherwise."
+              default: ''
+            comment:
+              type: string
+              description: The attendee's response comment. Optional.
+            displayName:
+              type: string
+              description: The attendee's name, if available. Optional.
+            email:
+              type: string
+              description: 'The attendee''s email address, if available. This field must be present when adding an attendee.
+                It must be a valid email address as per RFC5322.
+
+                Required when adding an attendee.'
+            id:
+              type: string
+              description: The attendee's Profile ID, if available.
+            optional:
+              type: boolean
+              description: Whether this is an optional attendee. Optional. The default is False.
+              default: 'false'
+            organizer:
+              type: boolean
+              description: Whether the attendee is the organizer of the event. Read-only. The default is False.
+            resource:
+              type: boolean
+              description: Whether the attendee is a resource. Can only be set when the attendee is added to the event for
+                the first time. Subsequent modifications are ignored. Optional. The default is False.
+              default: 'false'
+            responseStatus:
+              type: string
+              description: "The attendee's response status. Possible values are:  \n- \"needsAction\" - The attendee has not\
+                \ responded to the invitation (recommended for new events). \n- \"declined\" - The attendee has declined the\
+                \ invitation. \n- \"tentative\" - The attendee has tentatively accepted the invitation. \n- \"accepted\" -\
+                \ The attendee has accepted the invitation.  Warning: If you add an event using the values declined, tentative,\
+                \ or accepted, attendees with the \"Add invitations to my calendar\" setting set to \"When I respond to invitation\
+                \ in email\" or \"Only if the sender is known\" might have their response reset to needsAction and won't see\
+                \ an event in their calendar unless they change their response in the event invitation email. Furthermore,\
+                \ if more than 200 guests are invited to the event, response status is not propagated to the guests."
+            self:
+              type: boolean
+              description: Whether this entry represents the calendar on which this copy of the event appears. Read-only.
+                The default is False.
+              default: 'false'
+        description: The attendees of the event. See the Events with attendees guide for more information on scheduling events
+          with other calendar users. Service accounts need to use domain-wide delegation of authority to populate the attendee
+          list.
+      description:
+        type: string
+        description: Description of the event. Can contain HTML. Optional.
+      end:
+        type: object
+        properties:
+          date:
+            type: string
+            description: The date, in the format "yyyy-mm-dd", if this is an all-day event.
+          dateTime:
+            type: string
+            format: date-time
+            description: The time, as a combined date-time value (formatted according to RFC3339). A time zone offset is required
+              unless a time zone is explicitly specified in timeZone.
+          timeZone:
+            type: string
+            description: The time zone in which the time is specified. (Formatted as an IANA Time Zone Database name, e.g.
+              "Europe/Zurich".) For recurring events this field is required and specifies the time zone in which the recurrence
+              is expanded. For single events this field is optional and indicates a custom time zone for the event start/end.
+      id:
+        type: string
+        description: "Opaque identifier of the event. When creating new single or recurring events, you can specify their\
+          \ IDs. Provided IDs must follow these rules:  \n- characters allowed in the ID are those used in base32hex encoding,\
+          \ i.e. lowercase letters a-v and digits 0-9, see section 3.1.2 in RFC2938 \n- the length of the ID must be between\
+          \ 5 and 1024 characters \n- the ID must be unique per calendar  Due to the globally distributed nature of the system,\
+          \ we cannot guarantee that ID collisions will be detected at event creation time. To minimize the risk of collisions\
+          \ we recommend using an established UUID algorithm such as one described in RFC4122.\nIf you do not specify an ID,\
+          \ it will be automatically generated by the server.\nNote that the icalUID and the id are not identical and only\
+          \ one of them should be supplied at event creation time. One difference in their semantics is that in recurring\
+          \ events, all occurrences of one event have different ids while they all share the same icalUIDs."
+      location:
+        type: string
+        description: Geographic location of the event as free-form text. Optional.
+      recurrence:
+        type: array
+        items:
+          type: string
+        description: List of RRULE, EXRULE, RDATE and EXDATE lines for a recurring event, as specified in RFC5545. Note that
+          DTSTART and DTEND lines are not allowed in this field; event start and end times are specified in the start and
+          end fields. This field is omitted for single events or instances of recurring events.
+      reminders:
+        type: object
+        properties:
+          overrides:
+            type: array
+            items:
+              type: object
+              properties:
+                method:
+                  type: string
+                  description: "The method used by this reminder. Possible values are:  \n- \"email\" - Reminders are sent\
+                    \ via email. \n- \"popup\" - Reminders are sent via a UI popup.  \nRequired when adding a reminder."
+                minutes:
+                  type: integer
+                  format: int32
+                  description: 'Number of minutes before the start of the event when the reminder should trigger. Valid values
+                    are between 0 and 40320 (4 weeks in minutes).
+
+                    Required when adding a reminder.'
+            description: If the event doesn't use the default reminders, this lists the reminders specific to the event, or,
+              if not set, indicates that no reminders are set for this event. The maximum number of override reminders is
+              5.
+          useDefault:
+            type: boolean
+            description: Whether the default reminders of the calendar apply to the event.
+        description: Information about the event's reminders for the authenticated user. Note that changing reminders does
+          not also change the updated property of the enclosing event.
+      start:
+        type: object
+        properties:
+          date:
+            type: string
+            description: The date, in the format "yyyy-mm-dd", if this is an all-day event.
+          dateTime:
+            type: string
+            format: date-time
+            description: The time, as a combined date-time value (formatted according to RFC3339). A time zone offset is required
+              unless a time zone is explicitly specified in timeZone.
+          timeZone:
+            type: string
+            description: The time zone in which the time is specified. (Formatted as an IANA Time Zone Database name, e.g.
+              "Europe/Zurich".) For recurring events this field is required and specifies the time zone in which the recurrence
+              is expanded. For single events this field is optional and indicates a custom time zone for the event start/end.
+      status:
+        type: string
+        description: "Status of the event. Optional. Possible values are:  \n- \"confirmed\" - The event is confirmed. This\
+          \ is the default status. \n- \"tentative\" - The event is tentatively confirmed. \n- \"cancelled\" - The event is\
+          \ cancelled (deleted). The list method returns cancelled events only on incremental sync (when syncToken or updatedMin\
+          \ are specified) or if the showDeleted flag is set to true. The get method always returns them.\nA cancelled status\
+          \ represents two different states depending on the event type:  \n- Cancelled exceptions of an uncancelled recurring\
+          \ event indicate that this instance should no longer be presented to the user. Clients should store these events\
+          \ for the lifetime of the parent recurring event.\nCancelled exceptions are only guaranteed to have values for the\
+          \ id, recurringEventId and originalStartTime fields populated. The other fields might be empty.  \n- All other cancelled\
+          \ events represent deleted events. Clients should remove their locally synced copies. Such cancelled events will\
+          \ eventually disappear, so do not rely on them being available indefinitely.\nDeleted events are only guaranteed\
+          \ to have the id field populated.   On the organizer's calendar, cancelled events continue to expose event details\
+          \ (summary, location, etc.) so that they can be restored (undeleted). Similarly, the events to which the user was\
+          \ invited and that they manually removed continue to provide details. However, incremental sync requests with showDeleted\
+          \ set to false will not return these details.\nIf an event changes its organizer (for example via the move operation)\
+          \ and the original organizer is not on the attendee list, it will leave behind a cancelled event where only the\
+          \ id field is guaranteed to be populated."
+      summary:
+        type: string
+        description: Title of the event.
+response:
+  success_codes:
+  - 200
+  body_schema:
+    type: object
+    properties:
+      attendees:
+        type: array
+        items:
+          type: object
+          properties:
+            additionalGuests:
+              type: integer
+              format: int32
+              description: Number of additional guests. Optional. The default is 0.
+              default: '0'
+            asyncOperation:
+              type: string
+              description: "If present, indicates the status of an asynchronous operation ongoing for this attendee (e.g.\
+                \ listing of members of large attendee groups). Read-only. The default is to not be present.\nPossible values\
+                \ are:  \n- \"inProgress\" - The asynchronous operation is in progress. \n- (not present) - Otherwise."
+              default: ''
+            comment:
+              type: string
+              description: The attendee's response comment. Optional.
+            displayName:
+              type: string
+              description: The attendee's name, if available. Optional.
+            email:
+              type: string
+              description: 'The attendee''s email address, if available. This field must be present when adding an attendee.
+                It must be a valid email address as per RFC5322.
+
+                Required when adding an attendee.'
+            id:
+              type: string
+              description: The attendee's Profile ID, if available.
+            optional:
+              type: boolean
+              description: Whether this is an optional attendee. Optional. The default is False.
+              default: 'false'
+            organizer:
+              type: boolean
+              description: Whether the attendee is the organizer of the event. Read-only. The default is False.
+            resource:
+              type: boolean
+              description: Whether the attendee is a resource. Can only be set when the attendee is added to the event for
+                the first time. Subsequent modifications are ignored. Optional. The default is False.
+              default: 'false'
+            responseStatus:
+              type: string
+              description: "The attendee's response status. Possible values are:  \n- \"needsAction\" - The attendee has not\
+                \ responded to the invitation (recommended for new events). \n- \"declined\" - The attendee has declined the\
+                \ invitation. \n- \"tentative\" - The attendee has tentatively accepted the invitation. \n- \"accepted\" -\
+                \ The attendee has accepted the invitation.  Warning: If you add an event using the values declined, tentative,\
+                \ or accepted, attendees with the \"Add invitations to my calendar\" setting set to \"When I respond to invitation\
+                \ in email\" or \"Only if the sender is known\" might have their response reset to needsAction and won't see\
+                \ an event in their calendar unless they change their response in the event invitation email. Furthermore,\
+                \ if more than 200 guests are invited to the event, response status is not propagated to the guests."
+            self:
+              type: boolean
+              description: Whether this entry represents the calendar on which this copy of the event appears. Read-only.
+                The default is False.
+              default: 'false'
+        description: The attendees of the event. See the Events with attendees guide for more information on scheduling events
+          with other calendar users. Service accounts need to use domain-wide delegation of authority to populate the attendee
+          list.
+      description:
+        type: string
+        description: Description of the event. Can contain HTML. Optional.
+      end:
+        type: object
+        properties: {}
+      hangoutLink:
+        type: string
+        description: An absolute link to the Google Hangout associated with this event. Read-only.
+      htmlLink:
+        type: string
+        description: An absolute link to this event in the Google Calendar Web UI. Read-only.
+      id:
+        type: string
+        description: "Opaque identifier of the event. When creating new single or recurring events, you can specify their\
+          \ IDs. Provided IDs must follow these rules:  \n- characters allowed in the ID are those used in base32hex encoding,\
+          \ i.e. lowercase letters a-v and digits 0-9, see section 3.1.2 in RFC2938 \n- the length of the ID must be between\
+          \ 5 and 1024 characters \n- the ID must be unique per calendar  Due to the globally distributed nature of the system,\
+          \ we cannot guarantee that ID collisions will be detected at event creation time. To minimize the risk of collisions\
+          \ we recommend using an established UUID algorithm such as one described in RFC4122.\nIf you do not specify an ID,\
+          \ it will be automatically generated by the server.\nNote that the icalUID and the id are not identical and only\
+          \ one of them should be supplied at event creation time. One difference in their semantics is that in recurring\
+          \ events, all occurrences of one event have different ids while they all share the same icalUIDs."
+      kind:
+        type: string
+        description: Type of the resource ("calendar#event").
+        default: calendar#event
+      location:
+        type: string
+        description: Geographic location of the event as free-form text. Optional.
+      recurrence:
+        type: array
+        items:
+          type: string
+        description: List of RRULE, EXRULE, RDATE and EXDATE lines for a recurring event, as specified in RFC5545. Note that
+          DTSTART and DTEND lines are not allowed in this field; event start and end times are specified in the start and
+          end fields. This field is omitted for single events or instances of recurring events.
+      reminders:
+        type: object
+        properties: {}
+        description: Information about the event's reminders for the authenticated user. Note that changing reminders does
+          not also change the updated property of the enclosing event.
+      start:
+        type: object
+        properties: {}
+      status:
+        type: string
+        description: "Status of the event. Optional. Possible values are:  \n- \"confirmed\" - The event is confirmed. This\
+          \ is the default status. \n- \"tentative\" - The event is tentatively confirmed. \n- \"cancelled\" - The event is\
+          \ cancelled (deleted). The list method returns cancelled events only on incremental sync (when syncToken or updatedMin\
+          \ are specified) or if the showDeleted flag is set to true. The get method always returns them.\nA cancelled status\
+          \ represents two different states depending on the event type:  \n- Cancelled exceptions of an uncancelled recurring\
+          \ event indicate that this instance should no longer be presented to the user. Clients should store these events\
+          \ for the lifetime of the parent recurring event.\nCancelled exceptions are only guaranteed to have values for the\
+          \ id, recurringEventId and originalStartTime fields populated. The other fields might be empty.  \n- All other cancelled\
+          \ events represent deleted events. Clients should remove their locally synced copies. Such cancelled events will\
+          \ eventually disappear, so do not rely on them being available indefinitely.\nDeleted events are only guaranteed\
+          \ to have the id field populated.   On the organizer's calendar, cancelled events continue to expose event details\
+          \ (summary, location, etc.) so that they can be restored (undeleted). Similarly, the events to which the user was\
+          \ invited and that they manually removed continue to provide details. However, incremental sync requests with showDeleted\
+          \ set to false will not return these details.\nIf an event changes its organizer (for example via the move operation)\
+          \ and the original organizer is not on the attendee list, it will leave behind a cancelled event where only the\
+          \ id field is guaranteed to be populated."
+      summary:
+        type: string
+        description: Title of the event.
+tags:
+- google
+- calendar
+examples:
+- name: Basic calendar update event
+  request:
+    calendarId: primary
+    eventId: <eventId>
+  response:
+    status: success

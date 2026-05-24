@@ -1,0 +1,203 @@
+# ──────────────────────────────────────────────────────────────────────
+# Google Sheets — Sheets Get Spreadsheet
+# Tier 1: Auto-generated from Google Discovery doc.
+# Review and adjust descriptions/examples before use.
+# ──────────────────────────────────────────────────────────────────────
+
+name: sheets_get_spreadsheet
+app: google
+version: '1'
+description: 'Returns the spreadsheet at the given ID. The caller must specify the spreadsheet ID. By default, data within
+  grids is not returned. You can include grid data in one of 2 ways: * Specify a [field mask](https://developers.google.com/workspace/sheets/api/guides/field-masks)
+  listing your desired fields using the `fields` URL parameter in HTTP * Set the includeGridData URL parameter to true. If
+  a field mask is set, the `includeGridData` parameter is ignored For large spreadsheets, as a best practice, retrieve only
+  the specific spreadsheet fields that you want. To retrieve only subsets of spreadsheet data, use the ranges URL parameter.
+  Ranges are specified using [A1 notation](https://developers.google.com/workspace/sheets/api/guides/concepts#cell). You can
+  define a single cell (for example, `A1`) or multiple cells (for example, `A1:D5`). You can also get cells from other sheets
+  within the same spreadsheet (for example, `Sheet2!A1:C4`) or retrieve multiple ranges at once (for example, `?ranges=A1:D5&ranges=Sheet2!A1:C4`).
+  Limiting the range returns only the portions of the spreadsheet that intersect the requested ranges.'
+method: GET
+path: /v4/spreadsheets/{spreadsheetId}
+base_url: https://sheets.googleapis.com
+auth:
+  type: oauth2
+  scopes:
+  - https://www.googleapis.com/auth/spreadsheets
+  header: 'Authorization: Bearer {access_token}'
+request:
+  query_params:
+    ranges:
+      type: string
+      description: The ranges to retrieve from the spreadsheet.
+    includeGridData:
+      type: boolean
+      description: True if grid data should be returned. This parameter is ignored if a field mask was set in the request.
+    excludeTablesInBandedRanges:
+      type: boolean
+      description: True if tables should be excluded in the banded ranges. False if not set.
+response:
+  success_codes:
+  - 200
+  body_schema:
+    type: object
+    properties:
+      spreadsheetId:
+        type: string
+        description: The ID of the spreadsheet. This field is read-only.
+      properties:
+        type: object
+        properties:
+          title:
+            type: string
+            description: The title of the spreadsheet.
+        description: Properties of a spreadsheet.
+      sheets:
+        type: array
+        items:
+          type: object
+          properties:
+            properties:
+              type: object
+              properties:
+                sheetId:
+                  type: object
+                  description: Nested object (depth limit reached)
+                title:
+                  type: object
+                  description: Nested object (depth limit reached)
+                index:
+                  type: object
+                  description: Nested object (depth limit reached)
+                sheetType:
+                  type: object
+                  description: Nested object (depth limit reached)
+                gridProperties:
+                  type: object
+                  description: Nested object (depth limit reached)
+                hidden:
+                  type: object
+                  description: Nested object (depth limit reached)
+                tabColor:
+                  type: object
+                  description: Nested object (depth limit reached)
+                tabColorStyle:
+                  type: object
+                  description: Nested object (depth limit reached)
+                rightToLeft:
+                  type: object
+                  description: Nested object (depth limit reached)
+                dataSourceSheetProperties:
+                  type: object
+                  description: Nested object (depth limit reached)
+              description: Properties of a sheet.
+            data:
+              type: array
+              items:
+                type: object
+                description: Nested object (depth limit reached)
+              description: Data in the grid, if this is a grid sheet. The number of GridData objects returned is dependent
+                on the number of ranges requested on this sheet. For example, if this is representing `Sheet1`, and the spreadsheet
+                was requested with ranges `Sheet1!A1:C10` and `Sheet1!D15:E20`, then the first GridData will have a startRow/startColumn
+                of `0`, while the second one will have `startRow 14` (zero-based row 15), and `startColumn 3` (zero-based
+                column D). For a DATA_SOURCE sheet, you can not request a specific range, the GridData contains all the values.
+            merges:
+              type: array
+              items:
+                type: object
+                description: Nested object (depth limit reached)
+              description: The ranges that are merged together.
+            conditionalFormats:
+              type: array
+              items:
+                type: object
+                description: Nested object (depth limit reached)
+              description: The conditional format rules in this sheet.
+            filterViews:
+              type: array
+              items:
+                type: object
+                description: Nested object (depth limit reached)
+              description: The filter views in this sheet.
+            protectedRanges:
+              type: array
+              items:
+                type: object
+                description: Nested object (depth limit reached)
+              description: The protected ranges in this sheet.
+            basicFilter:
+              type: object
+              properties:
+                range:
+                  type: object
+                  description: Nested object (depth limit reached)
+                tableId:
+                  type: object
+                  description: Nested object (depth limit reached)
+                sortSpecs:
+                  type: object
+                  description: Nested object (depth limit reached)
+                criteria:
+                  type: object
+                  description: Nested object (depth limit reached)
+                filterSpecs:
+                  type: object
+                  description: Nested object (depth limit reached)
+              description: The default filter associated with a sheet. For more information, see [Manage data visibility with
+                filters](https://developers.google.com/workspace/sheets/api/guides/filters).
+            charts:
+              type: array
+              items:
+                type: object
+                description: Nested object (depth limit reached)
+              description: The specifications of every chart on this sheet.
+            bandedRanges:
+              type: array
+              items:
+                type: object
+                description: Nested object (depth limit reached)
+              description: The banded (alternating colors) ranges on this sheet.
+            developerMetadata:
+              type: array
+              items:
+                type: object
+                description: Nested object (depth limit reached)
+              description: The developer metadata associated with a sheet.
+            rowGroups:
+              type: array
+              items:
+                type: object
+                description: Nested object (depth limit reached)
+              description: All row groups on this sheet, ordered by increasing range start index, then by group depth.
+            columnGroups:
+              type: array
+              items:
+                type: object
+                description: Nested object (depth limit reached)
+              description: All column groups on this sheet, ordered by increasing range start index, then by group depth.
+            slicers:
+              type: array
+              items:
+                type: object
+                description: Nested object (depth limit reached)
+              description: The slicers on this sheet.
+            tables:
+              type: array
+              items:
+                type: object
+                description: Nested object (depth limit reached)
+              description: The tables on this sheet.
+          description: A sheet in a spreadsheet.
+        description: The sheets that are part of a spreadsheet.
+      spreadsheetUrl:
+        type: string
+        description: The url of the spreadsheet. This field is read-only.
+    description: Resource that represents a spreadsheet.
+tags:
+- google
+- sheets
+examples:
+- name: Basic sheets get spreadsheet
+  request:
+    spreadsheetId: <spreadsheetId>
+  response:
+    status: success

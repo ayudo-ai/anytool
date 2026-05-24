@@ -1,0 +1,769 @@
+# ──────────────────────────────────────────────────────────────────────
+# Google Drive — Drive List Files
+# Tier 1: Auto-generated from Google Discovery doc.
+# Review and adjust descriptions/examples before use.
+# ──────────────────────────────────────────────────────────────────────
+
+name: drive_list_files
+app: google
+version: '1'
+description: ' Lists the user''s files. For more information, see [Search for files and folders](https://developers.google.com/workspace/drive/api/guides/search-files).
+  This method accepts the `q` parameter, which is a search query combining one or more search terms. This method returns *all*
+  files by default, including trashed files. If you don''t want trashed files to appear in the list, use the `trashed=false`
+  query parameter to remove trashed files from the results.'
+method: GET
+path: /files
+base_url: https://www.googleapis.com
+auth:
+  type: oauth2
+  scopes:
+  - https://www.googleapis.com/auth/drive
+  header: 'Authorization: Bearer {access_token}'
+request:
+  query_params:
+    corpora:
+      type: string
+      description: 'Specifies a collection of items (files or documents) to which the query applies. Supported items include:
+        * `user` * `domain` * `drive` * `allDrives` Prefer `user` or `drive` to `allDrives` for efficiency. By default, corpora
+        is set to `user`. However, this can change depending on the filter set through the `q` parameter. For more information,
+        see [File organization](https://developers.google.com/workspace/drive/api/guides/about-files#file-organization).'
+    corpus:
+      type: string
+      description: 'Deprecated: The source of files to list. Use `corpora` instead.'
+      enum:
+      - domain
+      - user
+    driveId:
+      type: string
+      description: ID of the shared drive to search.
+    includeItemsFromAllDrives:
+      type: boolean
+      description: Whether both My Drive and shared drive items should be included in results.
+      default: 'false'
+    includeTeamDriveItems:
+      type: boolean
+      description: 'Deprecated: Use `includeItemsFromAllDrives` instead.'
+      default: 'false'
+    orderBy:
+      type: string
+      description: 'A comma-separated list of sort keys. Valid keys are: * `createdTime`: When the file was created. Avoid
+        using this key for queries on large item collections as it might result in timeouts or other issues. For time-related
+        sorting on large item collections, use `modifiedTime desc` instead. * `folder`: The folder ID. This field is sorted
+        using alphabetical ordering. * `modifiedByMeTime`: The last time the file was modified by the user. * `modifiedTime`:
+        The last time the file was modified by anyone. * `name`: The name of the file. This field is sorted using alphabetical
+        ordering, so 1, 12, 2, 22. * `name_natural`: The name of the file. This field is sorted using natural sort ordering,
+        so 1, 2, 12, 22. * `quotaBytesUsed`: The number of storage quota bytes used by the file. * `recency`: The most recent
+        timestamp from the file''s date-time fields. * `sharedWithMeTime`: When the file was shared with the user, if applicable.
+        * `starred`: Whether the user has starred the file. * `viewedByMeTime`: The last time the file was viewed by the user.
+        Each key sorts ascending by default, but can be reversed with the `desc` modifier. Example usage: `?orderBy=folder,modifiedTime
+        desc,name`.'
+    pageSize:
+      type: integer
+      description: The maximum number of files to return per page. Pages may be partial or empty even before reaching the
+        end of the file list. If unspecified, at most 100 files are returned for shared drives, and the entire list of files
+        for non-shared drives. The maximum value is 100; values above 100 are changed to 100.
+      default: '100'
+    pageToken:
+      type: string
+      description: The token for continuing a previous list request on the next page. This should be set to the value of `nextPageToken`
+        from the previous response.
+    q:
+      type: string
+      description: A query for filtering the file results. For supported syntax, see [Search for files and folders](/workspace/drive/api/guides/search-files).
+    spaces:
+      type: string
+      description: A comma-separated list of spaces to query within the corpora. Supported values are `drive` and `appDataFolder`.
+        For more information, see [File organization](https://developers.google.com/workspace/drive/api/guides/about-files#file-organization).
+      default: drive
+    supportsAllDrives:
+      type: boolean
+      description: Whether the requesting application supports both My Drives and shared drives.
+      default: 'false'
+    supportsTeamDrives:
+      type: boolean
+      description: 'Deprecated: Use `supportsAllDrives` instead.'
+      default: 'false'
+    teamDriveId:
+      type: string
+      description: 'Deprecated: Use `driveId` instead.'
+    includePermissionsForView:
+      type: string
+      description: Specifies which additional view's permissions to include in the response. Only `published` is supported.
+    includeLabels:
+      type: string
+      description: A comma-separated list of IDs of labels to include in the `labelInfo` part of the response.
+response:
+  success_codes:
+  - 200
+  body_schema:
+    type: object
+    properties:
+      nextPageToken:
+        type: string
+        description: The page token for the next page of files. This will be absent if the end of the files list has been
+          reached. If the token is rejected for any reason, it should be discarded, and pagination should be restarted from
+          the first page of results. The page token is typically valid for several hours. However, if new items are added
+          or removed, your expected results might differ.
+      kind:
+        type: string
+        description: 'Identifies what kind of resource this is. Value: the fixed string `"drive#fileList"`.'
+        default: drive#fileList
+      files:
+        type: array
+        items:
+          type: object
+          properties:
+            kind:
+              type: string
+              description: 'Output only. Identifies what kind of resource this is. Value: the fixed string `"drive#file"`.'
+              default: drive#file
+            driveId:
+              type: string
+              description: Output only. ID of the shared drive the file resides in. Only populated for items in shared drives.
+            fileExtension:
+              type: string
+              description: Output only. The final component of `fullFileExtension`. This is only available for files with
+                binary content in Google Drive.
+            copyRequiresWriterPermission:
+              type: boolean
+              description: Whether the options to copy, print, or download this file should be disabled for readers and commenters.
+            md5Checksum:
+              type: string
+              description: Output only. The MD5 checksum for the content of the file. This is only applicable to files with
+                binary content in Google Drive.
+            contentHints:
+              type: object
+              properties:
+                indexableText:
+                  type: string
+                  description: Text to be indexed for the file to improve fullText queries. This is limited to 128 KB in length
+                    and may contain HTML elements.
+                thumbnail:
+                  type: object
+                  properties:
+                    image:
+                      type: object
+                      description: Nested object (depth limit reached)
+                    mimeType:
+                      type: object
+                      description: Nested object (depth limit reached)
+                  description: A thumbnail for the file. This will only be used if Google Drive cannot generate a standard
+                    thumbnail.
+              description: Additional information about the content of the file. These fields are never populated in responses.
+            writersCanShare:
+              type: boolean
+              description: Whether users with only `writer` permission can modify the file's permissions. Not populated for
+                items in shared drives.
+            viewedByMe:
+              type: boolean
+              description: Output only. Whether the file has been viewed by this user.
+            mimeType:
+              type: string
+              description: The MIME type of the file. Google Drive attempts to automatically detect an appropriate value from
+                uploaded content, if no value is provided. The value cannot be changed unless a new revision is uploaded.
+                If a file is created with a Google Doc MIME type, the uploaded content is imported, if possible. The supported
+                import formats are published in the [`about`](/workspace/drive/api/reference/rest/v3/about) resource.
+            exportLinks:
+              type: object
+              additionalProperties:
+                type: string
+              description: Output only. Links for exporting Docs Editors files to specific formats.
+            parents:
+              type: array
+              items:
+                type: string
+              description: The ID of the parent folder containing the file. A file can only have one parent folder; specifying
+                multiple parents isn't supported. If not specified as part of a create request, the file is placed directly
+                in the user's My Drive folder. If not specified as part of a copy request, the file inherits any discoverable
+                parent of the source file. Update requests must use the `addParents` and `removeParents` parameters to modify
+                the parents list.
+            thumbnailLink:
+              type: string
+              description: Output only. A short-lived link to the file's thumbnail, if available. Typically lasts on the order
+                of hours. Not intended for direct usage on web applications due to [Cross-Origin Resource Sharing (CORS)](https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS)
+                policies. Consider using a proxy server. Only populated when the requesting app can access the file's content.
+                If the file isn't shared publicly, the URL returned in `files.thumbnailLink` must be fetched using a credentialed
+                request.
+            iconLink:
+              type: string
+              description: Output only. A static, unauthenticated link to the file's icon.
+            shared:
+              type: boolean
+              description: Output only. Whether the file has been shared. Not populated for items in shared drives.
+            lastModifyingUser:
+              type: object
+              properties:
+                displayName:
+                  type: object
+                  description: Nested object (depth limit reached)
+                kind:
+                  type: object
+                  description: Nested object (depth limit reached)
+                me:
+                  type: object
+                  description: Nested object (depth limit reached)
+                permissionId:
+                  type: object
+                  description: Nested object (depth limit reached)
+                emailAddress:
+                  type: object
+                  description: Nested object (depth limit reached)
+                photoLink:
+                  type: object
+                  description: Nested object (depth limit reached)
+              description: Information about a Drive user.
+            owners:
+              type: array
+              items:
+                type: object
+                description: Nested object (depth limit reached)
+              description: Output only. The owner of this file. Only certain legacy files may have more than one owner. This
+                field isn't populated for items in shared drives.
+            headRevisionId:
+              type: string
+              description: Output only. The ID of the file's head revision. This is currently only available for files with
+                binary content in Google Drive.
+            sharingUser:
+              type: object
+              properties:
+                displayName:
+                  type: object
+                  description: Nested object (depth limit reached)
+                kind:
+                  type: object
+                  description: Nested object (depth limit reached)
+                me:
+                  type: object
+                  description: Nested object (depth limit reached)
+                permissionId:
+                  type: object
+                  description: Nested object (depth limit reached)
+                emailAddress:
+                  type: object
+                  description: Nested object (depth limit reached)
+                photoLink:
+                  type: object
+                  description: Nested object (depth limit reached)
+              description: Information about a Drive user.
+            webViewLink:
+              type: string
+              description: Output only. A link for opening the file in a relevant Google editor or viewer in a browser.
+            webContentLink:
+              type: string
+              description: Output only. A link for downloading the content of the file in a browser. This is only available
+                for files with binary content in Google Drive.
+            size:
+              type: string
+              description: Output only. Size in bytes of blobs and Google Workspace editor files. Won't be populated for files
+                that have no size, like shortcuts and folders.
+            viewersCanCopyContent:
+              type: boolean
+              description: 'Deprecated: Use `copyRequiresWriterPermission` instead.'
+            permissions:
+              type: array
+              items:
+                type: object
+                description: Nested object (depth limit reached)
+              description: Output only. The full list of permissions for the file. This is only available if the requesting
+                user can share the file. Not populated for items in shared drives.
+            hasThumbnail:
+              type: boolean
+              description: Output only. Whether this file has a thumbnail. This doesn't indicate whether the requesting app
+                has access to the thumbnail. To check access, look for the presence of the thumbnailLink field.
+            spaces:
+              type: array
+              items:
+                type: string
+              description: Output only. The list of spaces which contain the file. The currently supported values are `drive`,
+                `appDataFolder`, and `photos`.
+            folderColorRgb:
+              type: string
+              description: The color for a folder or a shortcut to a folder as an RGB hex string. The supported colors are
+                published in the `folderColorPalette` field of the [`about`](/workspace/drive/api/reference/rest/v3/about)
+                resource. If an unsupported color is specified, the closest color in the palette is used instead.
+            id:
+              type: string
+              description: The ID of the file.
+            name:
+              type: string
+              description: The name of the file. This isn't necessarily unique within a folder. Note that for immutable items
+                such as the top-level folders of shared drives, the My Drive root folder, and the Application Data folder,
+                the name is constant.
+            description:
+              type: string
+              description: A short description of the file.
+            starred:
+              type: boolean
+              description: Whether the user has starred the file.
+            trashed:
+              type: boolean
+              description: Whether the file has been trashed, either explicitly or from a trashed parent folder. Only the
+                owner may trash a file, but other users can still access the file in the owner's trash until it's permanently
+                deleted.
+            explicitlyTrashed:
+              type: boolean
+              description: Output only. Whether the file has been explicitly trashed, as opposed to recursively trashed from
+                a parent folder.
+            createdTime:
+              type: string
+              format: date-time
+              description: The time at which the file was created (RFC 3339 date-time).
+            modifiedTime:
+              type: string
+              format: date-time
+              description: he last time the file was modified by anyone (RFC 3339 date-time). Note that setting modifiedTime
+                will also update modifiedByMeTime for the user.
+            modifiedByMeTime:
+              type: string
+              format: date-time
+              description: The last time the file was modified by the user (RFC 3339 date-time).
+            viewedByMeTime:
+              type: string
+              format: date-time
+              description: The last time the file was viewed by the user (RFC 3339 date-time).
+            sharedWithMeTime:
+              type: string
+              format: date-time
+              description: The time at which the file was shared with the user, if applicable (RFC 3339 date-time).
+            quotaBytesUsed:
+              type: string
+              description: Output only. The number of storage quota bytes used by the file. This includes the head revision
+                as well as previous revisions with `keepForever` enabled.
+            version:
+              type: string
+              description: Output only. A monotonically increasing version number for the file. This reflects every change
+                made to the file on the server, even those not visible to the user.
+            originalFilename:
+              type: string
+              description: The original filename of the uploaded content if available, or else the original value of the `name`
+                field. This is only available for files with binary content in Google Drive.
+            ownedByMe:
+              type: boolean
+              description: Output only. Whether the user owns the file. Not populated for items in shared drives.
+            fullFileExtension:
+              type: string
+              description: Output only. The full file extension extracted from the `name` field. May contain multiple concatenated
+                extensions, such as "tar.gz". This is only available for files with binary content in Google Drive. This is
+                automatically updated when the `name` field changes, however it's not cleared if the new name doesn't contain
+                a valid extension.
+            properties:
+              type: object
+              additionalProperties:
+                type: string
+              description: 'A collection of arbitrary key-value pairs which are visible to all apps.
+
+                Entries with null values are cleared in update and copy requests.'
+            appProperties:
+              type: object
+              additionalProperties:
+                type: string
+              description: 'A collection of arbitrary key-value pairs which are private to the requesting app.
+
+                Entries with null values are cleared in update and copy requests. These properties can only be retrieved using
+                an authenticated request. An authenticated request uses an access token obtained with a OAuth 2 client ID.
+                You cannot use an API key to retrieve private properties.'
+            isAppAuthorized:
+              type: boolean
+              description: Output only. Whether the file was created or opened by the requesting app.
+            teamDriveId:
+              type: string
+              description: 'Deprecated: Output only. Use `driveId` instead.'
+            capabilities:
+              type: object
+              properties:
+                canChangeViewersCanCopyContent:
+                  type: boolean
+                  description: 'Deprecated: Output only.'
+                canMoveChildrenOutOfDrive:
+                  type: boolean
+                  description: Output only. Whether the current user can move children of this folder outside of the shared
+                    drive. This is `false` when the item isn't a folder. Only populated for items in shared drives.
+                canReadDrive:
+                  type: boolean
+                  description: Output only. Whether the current user can read the shared drive to which this file belongs.
+                    Only populated for items in shared drives.
+                canEdit:
+                  type: boolean
+                  description: Output only. Whether the current user can edit this file. Other factors may limit the type
+                    of changes a user can make to a file. For example, see `canChangeCopyRequiresWriterPermission` or `canModifyContent`.
+                canCopy:
+                  type: boolean
+                  description: Output only. Whether the current user can copy this file. For an item in a shared drive, whether
+                    the current user can copy non-folder descendants of this item, or this item if it's not a folder.
+                canComment:
+                  type: boolean
+                  description: Output only. Whether the current user can comment on this file.
+                canAddChildren:
+                  type: boolean
+                  description: Output only. Whether the current user can add children to this folder. This is always `false`
+                    when the item isn't a folder.
+                canDelete:
+                  type: boolean
+                  description: Output only. Whether the current user can delete this file.
+                canDownload:
+                  type: boolean
+                  description: Output only. Whether the current user can download this file.
+                canListChildren:
+                  type: boolean
+                  description: Output only. Whether the current user can list the children of this folder. This is always
+                    `false` when the item isn't a folder.
+                canRemoveChildren:
+                  type: boolean
+                  description: Output only. Whether the current user can remove children from this folder. This is always
+                    `false` when the item isn't a folder. For a folder in a shared drive, use `canDeleteChildren` or `canTrashChildren`
+                    instead.
+                canRename:
+                  type: boolean
+                  description: Output only. Whether the current user can rename this file.
+                canTrash:
+                  type: boolean
+                  description: Output only. Whether the current user can move this file to trash.
+                canReadRevisions:
+                  type: boolean
+                  description: Output only. Whether the current user can read the revisions resource of this file. For a shared
+                    drive item, whether revisions of non-folder descendants of this item, or this item if it's not a folder,
+                    can be read.
+                canReadTeamDrive:
+                  type: boolean
+                  description: 'Deprecated: Output only. Use `canReadDrive` instead.'
+                canMoveTeamDriveItem:
+                  type: boolean
+                  description: 'Deprecated: Output only. Use `canMoveItemWithinDrive` or `canMoveItemOutOfDrive` instead.'
+                canChangeCopyRequiresWriterPermission:
+                  type: boolean
+                  description: Output only. Whether the current user can change the `copyRequiresWriterPermission` restriction
+                    of this file.
+                canMoveItemIntoTeamDrive:
+                  type: boolean
+                  description: 'Deprecated: Output only. Use `canMoveItemOutOfDrive` instead.'
+                canUntrash:
+                  type: boolean
+                  description: Output only. Whether the current user can restore this file from trash.
+                canModifyContent:
+                  type: boolean
+                  description: Output only. Whether the current user can modify the content of this file.
+                canMoveItemWithinTeamDrive:
+                  type: boolean
+                  description: 'Deprecated: Output only. Use `canMoveItemWithinDrive` instead.'
+                canMoveItemOutOfTeamDrive:
+                  type: boolean
+                  description: 'Deprecated: Output only. Use `canMoveItemOutOfDrive` instead.'
+                canDeleteChildren:
+                  type: boolean
+                  description: Output only. Whether the current user can delete children of this folder. This is `false` when
+                    the item isn't a folder. Only populated for items in shared drives.
+                canMoveChildrenOutOfTeamDrive:
+                  type: boolean
+                  description: 'Deprecated: Output only. Use `canMoveChildrenOutOfDrive` instead.'
+                canMoveChildrenWithinTeamDrive:
+                  type: boolean
+                  description: 'Deprecated: Output only. Use `canMoveChildrenWithinDrive` instead.'
+                canTrashChildren:
+                  type: boolean
+                  description: Output only. Whether the current user can trash children of this folder. This is `false` when
+                    the item isn't a folder. Only populated for items in shared drives.
+                canMoveItemOutOfDrive:
+                  type: boolean
+                  description: Output only. Whether the current user can move this item outside of this drive by changing
+                    its parent. Note that a request to change the parent of the item may still fail depending on the new parent
+                    that's being added.
+                canAddMyDriveParent:
+                  type: boolean
+                  description: Output only. Whether the current user can add a parent for the item without removing an existing
+                    parent in the same request. Not populated for shared drive files.
+                canRemoveMyDriveParent:
+                  type: boolean
+                  description: Output only. Whether the current user can remove a parent from the item without adding another
+                    parent in the same request. Not populated for shared drive files.
+                canMoveItemWithinDrive:
+                  type: boolean
+                  description: Output only. Whether the current user can move this item within this drive. Note that a request
+                    to change the parent of the item may still fail depending on the new parent that's being added and the
+                    parent that is being removed.
+                canShare:
+                  type: boolean
+                  description: Output only. Whether the current user can modify the sharing settings for this file.
+                canMoveChildrenWithinDrive:
+                  type: boolean
+                  description: Output only. Whether the current user can move children of this folder within this drive. This
+                    is `false` when the item isn't a folder. Note that a request to move the child may still fail depending
+                    on the current user's access to the child and to the destination folder.
+                canModifyContentRestriction:
+                  type: boolean
+                  description: 'Deprecated: Output only. Use one of `canModifyEditorContentRestriction`, `canModifyOwnerContentRestriction`,
+                    or `canRemoveContentRestriction`.'
+                canAddFolderFromAnotherDrive:
+                  type: boolean
+                  description: Output only. Whether the current user can add a folder from another drive (different shared
+                    drive or My Drive) to this folder. This is `false` when the item isn't a folder. Only populated for items
+                    in shared drives.
+                canChangeSecurityUpdateEnabled:
+                  type: boolean
+                  description: Output only. Whether the current user can change the `securityUpdateEnabled` field on link
+                    share metadata.
+                canAcceptOwnership:
+                  type: boolean
+                  description: Output only. Whether the current user is the pending owner of the file. Not populated for shared
+                    drive files.
+                canReadLabels:
+                  type: boolean
+                  description: Output only. Whether the current user can read the labels on the file.
+                canModifyLabels:
+                  type: boolean
+                  description: Output only. Whether the current user can modify the labels on the file.
+                canModifyEditorContentRestriction:
+                  type: boolean
+                  description: Output only. Whether the current user can add or modify content restrictions on the file which
+                    are editor restricted.
+                canModifyOwnerContentRestriction:
+                  type: boolean
+                  description: Output only. Whether the current user can add or modify content restrictions which are owner
+                    restricted.
+                canRemoveContentRestriction:
+                  type: boolean
+                  description: Output only. Whether there's a content restriction on the file that can be removed by the current
+                    user.
+                canDisableInheritedPermissions:
+                  type: boolean
+                  description: Whether a user can disable inherited permissions.
+                canEnableInheritedPermissions:
+                  type: boolean
+                  description: Whether a user can re-enable inherited permissions.
+                canChangeItemDownloadRestriction:
+                  type: boolean
+                  description: Output only. Whether the current user can change the owner or organizer-applied download restrictions
+                    of the file.
+                canStartApproval:
+                  type: boolean
+                  description: Whether the current user can start an approval on the file.
+              description: Output only. Capabilities the current user has on this file. Each capability corresponds to a fine-grained
+                action that a user may take. For more information, see [Understand file capabilities](https://developers.google.com/workspace/drive/api/guides/manage-sharing#capabilities).
+            hasAugmentedPermissions:
+              type: boolean
+              description: Output only. Whether there are permissions directly on this file. This field is only populated
+                for items in shared drives.
+            trashingUser:
+              type: object
+              properties:
+                displayName:
+                  type: object
+                  description: Nested object (depth limit reached)
+                kind:
+                  type: object
+                  description: Nested object (depth limit reached)
+                me:
+                  type: object
+                  description: Nested object (depth limit reached)
+                permissionId:
+                  type: object
+                  description: Nested object (depth limit reached)
+                emailAddress:
+                  type: object
+                  description: Nested object (depth limit reached)
+                photoLink:
+                  type: object
+                  description: Nested object (depth limit reached)
+              description: Information about a Drive user.
+            thumbnailVersion:
+              type: string
+              description: Output only. The thumbnail version for use in thumbnail cache invalidation.
+            trashedTime:
+              type: string
+              format: date-time
+              description: The time that the item was trashed (RFC 3339 date-time). Only populated for items in shared drives.
+            modifiedByMe:
+              type: boolean
+              description: Output only. Whether the file has been modified by this user.
+            permissionIds:
+              type: array
+              items:
+                type: string
+              description: Output only. List of permission IDs for users with access to this file.
+            imageMediaMetadata:
+              type: object
+              properties:
+                flashUsed:
+                  type: boolean
+                  description: Output only. Whether a flash was used to create the photo.
+                meteringMode:
+                  type: string
+                  description: Output only. The metering mode used to create the photo.
+                sensor:
+                  type: string
+                  description: Output only. The type of sensor used to create the photo.
+                exposureMode:
+                  type: string
+                  description: Output only. The exposure mode used to create the photo.
+                colorSpace:
+                  type: string
+                  description: Output only. The color space of the photo.
+                whiteBalance:
+                  type: string
+                  description: Output only. The white balance mode used to create the photo.
+                width:
+                  type: integer
+                  format: int32
+                  description: Output only. The width of the image in pixels.
+                height:
+                  type: integer
+                  format: int32
+                  description: Output only. The height of the image in pixels.
+                location:
+                  type: object
+                  properties:
+                    latitude:
+                      type: object
+                      description: Nested object (depth limit reached)
+                    longitude:
+                      type: object
+                      description: Nested object (depth limit reached)
+                    altitude:
+                      type: object
+                      description: Nested object (depth limit reached)
+                  description: Output only. Geographic location information stored in the image.
+                rotation:
+                  type: integer
+                  format: int32
+                  description: Output only. The number of clockwise 90 degree rotations applied from the image's original
+                    orientation.
+                time:
+                  type: string
+                  description: Output only. The date and time the photo was taken (EXIF DateTime).
+                cameraMake:
+                  type: string
+                  description: Output only. The make of the camera used to create the photo.
+                cameraModel:
+                  type: string
+                  description: Output only. The model of the camera used to create the photo.
+                exposureTime:
+                  type: number
+                  description: Output only. The length of the exposure, in seconds.
+                aperture:
+                  type: number
+                  description: Output only. The aperture used to create the photo (f-number).
+                focalLength:
+                  type: number
+                  description: Output only. The focal length used to create the photo, in millimeters.
+                isoSpeed:
+                  type: integer
+                  format: int32
+                  description: Output only. The ISO speed used to create the photo.
+                exposureBias:
+                  type: number
+                  description: Output only. The exposure bias of the photo (APEX value).
+                maxApertureValue:
+                  type: number
+                  description: Output only. The smallest f-number of the lens at the focal length used to create the photo
+                    (APEX value).
+                subjectDistance:
+                  type: integer
+                  format: int32
+                  description: Output only. The distance to the subject of the photo, in meters.
+                lens:
+                  type: string
+                  description: Output only. The lens used to create the photo.
+              description: Output only. Additional metadata about image media, if available.
+            videoMediaMetadata:
+              type: object
+              properties:
+                width:
+                  type: integer
+                  format: int32
+                  description: Output only. The width of the video in pixels.
+                height:
+                  type: integer
+                  format: int32
+                  description: Output only. The height of the video in pixels.
+                durationMillis:
+                  type: string
+                  description: Output only. The duration of the video in milliseconds.
+              description: Output only. Additional metadata about video media. This may not be available immediately upon
+                upload.
+            shortcutDetails:
+              type: object
+              properties:
+                targetId:
+                  type: string
+                  description: The ID of the file that this shortcut points to. Can only be set on `files.create` requests.
+                targetMimeType:
+                  type: string
+                  description: Output only. The MIME type of the file that this shortcut points to. The value of this field
+                    is a snapshot of the target's MIME type, captured when the shortcut is created.
+                targetResourceKey:
+                  type: string
+                  description: Output only. The `resourceKey` for the target file.
+              description: Information about a shortcut file.
+            contentRestrictions:
+              type: array
+              items:
+                type: object
+                description: Nested object (depth limit reached)
+              description: Restrictions for accessing the content of the file. Only populated if such a restriction exists.
+            resourceKey:
+              type: string
+              description: Output only. A key needed to access the item via a shared link.
+            linkShareMetadata:
+              type: object
+              properties:
+                securityUpdateEligible:
+                  type: boolean
+                  description: Output only. Whether the file is eligible for security update.
+                securityUpdateEnabled:
+                  type: boolean
+                  description: Output only. Whether the security update is enabled for this file.
+              description: Contains details about the link URLs that clients are using to refer to this item.
+            labelInfo:
+              type: object
+              properties:
+                labels:
+                  type: array
+                  items:
+                    type: object
+                    description: Nested object (depth limit reached)
+                  description: Output only. The set of labels on the file as requested by the label IDs in the `includeLabels`
+                    parameter. By default, no labels are returned.
+              description: Label information on the file.
+            sha1Checksum:
+              type: string
+              description: Output only. The SHA1 checksum associated with this file, if available. This field is only populated
+                for files with content stored in Google Drive; it's not populated for Docs Editors or shortcut files.
+            sha256Checksum:
+              type: string
+              description: Output only. The SHA256 checksum associated with this file, if available. This field is only populated
+                for files with content stored in Google Drive; it's not populated for Docs Editors or shortcut files.
+            inheritedPermissionsDisabled:
+              type: boolean
+              description: Whether this file has inherited permissions disabled. Inherited permissions are enabled by default.
+            downloadRestrictions:
+              type: object
+              properties:
+                itemDownloadRestriction:
+                  type: object
+                  description: Nested object (depth limit reached)
+                effectiveDownloadRestrictionWithContext:
+                  type: object
+                  description: Nested object (depth limit reached)
+              description: Download restrictions applied to the file.
+            clientEncryptionDetails:
+              type: object
+              properties:
+                encryptionState:
+                  type: object
+                  description: Nested object (depth limit reached)
+                decryptionMetadata:
+                  type: object
+                  description: Nested object (depth limit reached)
+              description: Details about the client-side encryption applied to the file.
+          description: The metadata for a file. Some resource methods (such as `files.update`) require a `fileId`. Use the
+            `files.list` method to retrieve the ID for a file.
+        description: The list of files. If `nextPageToken` is populated, then this list may be incomplete and an additional
+          page of results should be fetched.
+    description: A list of files.
+tags:
+- google
+- drive
+examples:
+- name: Basic drive list files
+  request: {}
+  response:
+    status: success

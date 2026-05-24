@@ -1,0 +1,151 @@
+# ──────────────────────────────────────────────────────────────────────
+# Google Gmail — Gmail Create Draft
+# Tier 1: Auto-generated from Google Discovery doc.
+# Review and adjust descriptions/examples before use.
+# ──────────────────────────────────────────────────────────────────────
+
+name: gmail_create_draft
+app: google
+version: '1'
+description: Creates a draft with the `DRAFT` label. For more information, see [Create and send draft emails](https://developers.google.com/workspace/gmail/api/guides/drafts).
+method: POST
+path: /gmail/v1/users/{userId}/drafts
+base_url: https://gmail.googleapis.com
+auth:
+  type: oauth2
+  scopes:
+  - https://www.googleapis.com/auth/gmail.modify
+  header: 'Authorization: Bearer {access_token}'
+request:
+  content_type: application/json
+  body_schema:
+    type: object
+    properties:
+      id:
+        type: string
+        description: The immutable ID of the draft.
+      message:
+        type: object
+        properties:
+          id:
+            type: string
+            description: The immutable ID of the message.
+          threadId:
+            type: string
+            description: 'The ID of the thread the message belongs to. To add a message or draft to a thread, the following
+              criteria must be met: 1. The requested `threadId` must be specified on the `Message` or `Draft.Message` you
+              supply with your request. 2. The `References` and `In-Reply-To` headers must be set in compliance with the [RFC
+              2822](https://tools.ietf.org/html/rfc2822) standard. 3. The `Subject` headers must match. '
+          labelIds:
+            type: array
+            items:
+              type: string
+            description: List of IDs of labels applied to this message.
+          snippet:
+            type: string
+            description: A short part of the message text.
+          historyId:
+            type: string
+            description: The ID of the last history record that modified this message.
+          internalDate:
+            type: string
+            description: The internal message creation timestamp (epoch ms), which determines ordering in the inbox. For normal
+              SMTP-received email, this represents the time the message was originally accepted by Google, which is more reliable
+              than the `Date` header. However, for API-migrated mail, it can be configured by client to be based on the `Date`
+              header.
+          payload:
+            type: object
+            properties:
+              partId:
+                type: string
+                description: The immutable ID of the message part.
+              mimeType:
+                type: string
+                description: The MIME type of the message part.
+              filename:
+                type: string
+                description: The filename of the attachment. Only present if this message part represents an attachment.
+              headers:
+                type: array
+                items:
+                  type: object
+                  description: Nested object (depth limit reached)
+                description: List of headers on this message part. For the top-level message part, representing the entire
+                  message payload, it will contain the standard RFC 2822 email headers such as `To`, `From`, and `Subject`.
+              body:
+                type: object
+                description: Nested object (depth limit reached)
+              parts:
+                type: array
+                items:
+                  type: object
+                  description: Nested object (depth limit reached)
+                description: The child MIME message parts of this part. This only applies to container MIME message parts,
+                  for example `multipart/*`. For non- container MIME message part types, such as `text/plain`, this field
+                  is empty. For more information, see RFC 1521.
+            description: A single MIME message part.
+          sizeEstimate:
+            type: integer
+            format: int32
+            description: Estimated size in bytes of the message.
+          raw:
+            type: string
+            description: The entire email message in an RFC 2822 formatted and base64url encoded string. Returned in `messages.get`
+              and `drafts.get` responses when the `format=RAW` parameter is supplied.
+          classificationLabelValues:
+            type: array
+            items:
+              type: object
+              properties:
+                labelId:
+                  type: object
+                  description: Nested object (depth limit reached)
+                fields:
+                  type: object
+                  description: Nested object (depth limit reached)
+              description: Classification Labels applied to the email message. Classification Labels are different from Gmail
+                inbox labels. Only used for Google Workspace accounts. [Learn more about classification labels](https://support.google.com/a/answer/9292382).
+            description: Classification Label values on the message. Available Classification Label schemas can be queried
+              using the Google Drive Labels API. Each classification label ID must be unique. If duplicate IDs are provided,
+              only one will be retained, and the selection is arbitrary. Only used for Google Workspace accounts. There's
+              a limit of 20 Classification Label values per request. If the Classification Label values exceeds the maximum
+              allowed number, the request fails.
+        description: An email message.
+    description: A draft email in the user's mailbox.
+response:
+  success_codes:
+  - 200
+  body_schema:
+    type: object
+    properties:
+      id:
+        type: string
+        description: The immutable ID of the draft.
+      message:
+        type: object
+        properties:
+          id:
+            type: string
+            description: The immutable ID of the message.
+          threadId:
+            type: string
+            description: 'The ID of the thread the message belongs to. To add a message or draft to a thread, the following
+              criteria must be met: 1. The requested `threadId` must be specified on the `Message` or `Draft.Message` you
+              supply with your request. 2. The `References` and `In-Reply-To` headers must be set in compliance with the [RFC
+              2822](https://tools.ietf.org/html/rfc2822) standard. 3. The `Subject` headers must match. '
+          labelIds:
+            type: array
+            items:
+              type: string
+            description: List of IDs of labels applied to this message.
+        description: An email message.
+    description: A draft email in the user's mailbox.
+tags:
+- google
+- gmail
+examples:
+- name: Basic gmail create draft
+  request:
+    userId: <userId>
+  response:
+    status: success

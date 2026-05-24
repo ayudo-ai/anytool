@@ -1,0 +1,49 @@
+# ──────────────────────────────────────────────────────────────────────
+# Google Gmail — Gmail Trash Message
+# Tier 1: Auto-generated from Google Discovery doc.
+# Review and adjust descriptions/examples before use.
+# ──────────────────────────────────────────────────────────────────────
+
+name: gmail_trash_message
+app: google
+version: '1'
+description: Moves the specified message to the trash.
+method: POST
+path: /gmail/v1/users/{userId}/messages/{id}/trash
+base_url: https://gmail.googleapis.com
+auth:
+  type: oauth2
+  scopes:
+  - https://www.googleapis.com/auth/gmail.modify
+  header: 'Authorization: Bearer {access_token}'
+response:
+  success_codes:
+  - 200
+  body_schema:
+    type: object
+    properties:
+      id:
+        type: string
+        description: The immutable ID of the message.
+      threadId:
+        type: string
+        description: 'The ID of the thread the message belongs to. To add a message or draft to a thread, the following criteria
+          must be met: 1. The requested `threadId` must be specified on the `Message` or `Draft.Message` you supply with your
+          request. 2. The `References` and `In-Reply-To` headers must be set in compliance with the [RFC 2822](https://tools.ietf.org/html/rfc2822)
+          standard. 3. The `Subject` headers must match. '
+      labelIds:
+        type: array
+        items:
+          type: string
+        description: List of IDs of labels applied to this message.
+    description: An email message.
+tags:
+- google
+- gmail
+examples:
+- name: Basic gmail trash message
+  request:
+    userId: <userId>
+    id: <id>
+  response:
+    status: success

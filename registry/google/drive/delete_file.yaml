@@ -1,0 +1,49 @@
+# ──────────────────────────────────────────────────────────────────────
+# Google Drive — Drive Delete File
+# Tier 1: Auto-generated from Google Discovery doc.
+# Review and adjust descriptions/examples before use.
+# ──────────────────────────────────────────────────────────────────────
+
+name: drive_delete_file
+app: google
+version: '1'
+description: Permanently deletes a file owned by the user without moving it to the trash. For more information, see [Trash
+  or delete files and folders](https://developers.google.com/workspace/drive/api/guides/delete). If the file belongs to a
+  shared drive, the user must be an `organizer` on the parent folder. If the target is a folder, all descendants owned by
+  the user are also deleted.
+method: DELETE
+path: /files/{fileId}
+base_url: https://www.googleapis.com
+auth:
+  type: oauth2
+  scopes:
+  - https://www.googleapis.com/auth/drive
+  header: 'Authorization: Bearer {access_token}'
+request:
+  query_params:
+    supportsAllDrives:
+      type: boolean
+      description: Whether the requesting application supports both My Drives and shared drives.
+      default: 'false'
+    supportsTeamDrives:
+      type: boolean
+      description: 'Deprecated: Use `supportsAllDrives` instead.'
+      default: 'false'
+    enforceSingleParent:
+      type: boolean
+      description: 'Deprecated: If an item isn''t in a shared drive and its last parent is deleted but the item itself isn''t,
+        the item will be placed under its owner''s root.'
+      default: 'false'
+response:
+  success_codes:
+  - 200
+  - 204
+tags:
+- google
+- drive
+examples:
+- name: Basic drive delete file
+  request:
+    fileId: <fileId>
+  response:
+    status: success

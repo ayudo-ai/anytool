@@ -1,0 +1,48 @@
+# ──────────────────────────────────────────────────────────────────────
+# Google Calendar — Calendar Delete Event
+# Tier 1: Auto-generated from Google Discovery doc.
+# Review and adjust descriptions/examples before use.
+# ──────────────────────────────────────────────────────────────────────
+
+name: calendar_delete_event
+app: google
+version: '1'
+description: Deletes an event.
+method: DELETE
+path: /calendars/{calendarId}/events/{eventId}
+base_url: https://www.googleapis.com
+auth:
+  type: oauth2
+  scopes:
+  - https://www.googleapis.com/auth/calendar
+  header: 'Authorization: Bearer {access_token}'
+request:
+  query_params:
+    sendNotifications:
+      type: boolean
+      description: 'Deprecated. Please use sendUpdates instead.
+
+
+        Whether to send notifications about the deletion of the event. Note that some emails might still be sent even if you
+        set the value to false. The default is false.'
+    sendUpdates:
+      type: string
+      description: Guests who should receive notifications about the deletion of the event.
+      enum:
+      - all
+      - externalOnly
+      - none
+response:
+  success_codes:
+  - 200
+  - 204
+tags:
+- google
+- calendar
+examples:
+- name: Basic calendar delete event
+  request:
+    calendarId: primary
+    eventId: <eventId>
+  response:
+    status: success

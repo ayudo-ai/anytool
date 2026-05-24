@@ -1,0 +1,699 @@
+# ──────────────────────────────────────────────────────────────────────
+# Google Docs — Docs Create Document
+# Tier 1: Auto-generated from Google Discovery doc.
+# Review and adjust descriptions/examples before use.
+# ──────────────────────────────────────────────────────────────────────
+
+name: docs_create_document
+app: google
+version: '1'
+description: Creates a blank document using the title given in the request. Other fields in the request, including any provided
+  content, are ignored. Returns the created document.
+method: POST
+path: /v1/documents
+base_url: https://docs.googleapis.com
+auth:
+  type: oauth2
+  scopes:
+  - https://www.googleapis.com/auth/documents
+  header: 'Authorization: Bearer {access_token}'
+request:
+  content_type: application/json
+  body_schema:
+    type: object
+    properties:
+      documentId:
+        type: string
+        description: Output only. The ID of the document.
+      title:
+        type: string
+        description: The title of the document.
+      tabs:
+        type: array
+        items:
+          type: object
+          properties:
+            tabProperties:
+              type: object
+              properties:
+                tabId:
+                  type: object
+                  description: Nested object (depth limit reached)
+                title:
+                  type: object
+                  description: Nested object (depth limit reached)
+                parentTabId:
+                  type: object
+                  description: Nested object (depth limit reached)
+                index:
+                  type: object
+                  description: Nested object (depth limit reached)
+                nestingLevel:
+                  type: object
+                  description: Nested object (depth limit reached)
+                iconEmoji:
+                  type: object
+                  description: Nested object (depth limit reached)
+              description: Properties of a tab.
+            childTabs:
+              type: array
+              items:
+                type: object
+                description: Nested object (depth limit reached)
+              description: The child tabs nested within this tab.
+            documentTab:
+              type: object
+              properties:
+                body:
+                  type: object
+                  description: Nested object (depth limit reached)
+                headers:
+                  type: object
+                  description: Nested object (depth limit reached)
+                footers:
+                  type: object
+                  description: Nested object (depth limit reached)
+                footnotes:
+                  type: object
+                  description: Nested object (depth limit reached)
+                documentStyle:
+                  type: object
+                  description: Nested object (depth limit reached)
+                suggestedDocumentStyleChanges:
+                  type: object
+                  description: Nested object (depth limit reached)
+                namedStyles:
+                  type: object
+                  description: Nested object (depth limit reached)
+                suggestedNamedStylesChanges:
+                  type: object
+                  description: Nested object (depth limit reached)
+                lists:
+                  type: object
+                  description: Nested object (depth limit reached)
+                namedRanges:
+                  type: object
+                  description: Nested object (depth limit reached)
+                inlineObjects:
+                  type: object
+                  description: Nested object (depth limit reached)
+                positionedObjects:
+                  type: object
+                  description: Nested object (depth limit reached)
+              description: A tab with document contents.
+          description: A tab in a document.
+        description: Tabs that are part of a document. Tabs can contain child tabs, a tab nested within another tab. Child
+          tabs are represented by the Tab.childTabs field.
+      revisionId:
+        type: string
+        description: Output only. The revision ID of the document. Can be used in update requests to specify which revision
+          of a document to apply updates to and how the request should behave if the document has been edited since that revision.
+          Only populated if the user has edit access to the document. The revision ID is not a sequential number but an opaque
+          string. The format of the revision ID might change over time. A returned revision ID is only guaranteed to be valid
+          for 24 hours after it has been returned and cannot be shared across users. If the revision ID is unchanged between
+          calls, then the document has not changed. Conversely, a changed ID (for the same document and user) usually means
+          the document has been updated. However, a changed ID can also be due to internal factors such as ID format changes.
+      suggestionsViewMode:
+        type: string
+        enum:
+        - DEFAULT_FOR_CURRENT_ACCESS
+        - SUGGESTIONS_INLINE
+        - PREVIEW_SUGGESTIONS_ACCEPTED
+        - PREVIEW_WITHOUT_SUGGESTIONS
+        description: 'Output only. The suggestions view mode applied to the document. Note: When editing a document, changes
+          must be based on a document with SUGGESTIONS_INLINE.'
+      body:
+        type: object
+        properties:
+          content:
+            type: array
+            items:
+              type: object
+              properties:
+                startIndex:
+                  type: object
+                  description: Nested object (depth limit reached)
+                endIndex:
+                  type: object
+                  description: Nested object (depth limit reached)
+                paragraph:
+                  type: object
+                  description: Nested object (depth limit reached)
+                sectionBreak:
+                  type: object
+                  description: Nested object (depth limit reached)
+                table:
+                  type: object
+                  description: Nested object (depth limit reached)
+                tableOfContents:
+                  type: object
+                  description: Nested object (depth limit reached)
+              description: A StructuralElement describes content that provides structure to the document.
+            description: The contents of the body. The indexes for the body's content begin at zero.
+        description: The document body. The body typically contains the full document contents except for headers, footers,
+          and footnotes.
+      headers:
+        type: object
+        additionalProperties:
+          type: object
+          properties:
+            headerId:
+              type: string
+              description: The ID of the header.
+            content:
+              type: array
+              items:
+                type: object
+                description: Nested object (depth limit reached)
+              description: The contents of the header. The indexes for a header's content begin at zero.
+          description: A document header.
+        description: 'Output only. The headers in the document, keyed by header ID. Legacy field: Instead, use Document.tabs.documentTab.headers,
+          which exposes the actual document content from all tabs when the includeTabsContent parameter is set to `true`.
+          If `false` or unset, this field contains information about the first tab in the document.'
+      footers:
+        type: object
+        additionalProperties:
+          type: object
+          properties:
+            footerId:
+              type: string
+              description: The ID of the footer.
+            content:
+              type: array
+              items:
+                type: object
+                description: Nested object (depth limit reached)
+              description: The contents of the footer. The indexes for a footer's content begin at zero.
+          description: A document footer.
+        description: 'Output only. The footers in the document, keyed by footer ID. Legacy field: Instead, use Document.tabs.documentTab.footers,
+          which exposes the actual document content from all tabs when the includeTabsContent parameter is set to `true`.
+          If `false` or unset, this field contains information about the first tab in the document.'
+      footnotes:
+        type: object
+        additionalProperties:
+          type: object
+          properties:
+            footnoteId:
+              type: string
+              description: The ID of the footnote.
+            content:
+              type: array
+              items:
+                type: object
+                description: Nested object (depth limit reached)
+              description: The contents of the footnote. The indexes for a footnote's content begin at zero.
+          description: A document footnote.
+        description: 'Output only. The footnotes in the document, keyed by footnote ID. Legacy field: Instead, use Document.tabs.documentTab.footnotes,
+          which exposes the actual document content from all tabs when the includeTabsContent parameter is set to `true`.
+          If `false` or unset, this field contains information about the first tab in the document.'
+      documentStyle:
+        type: object
+        properties:
+          background:
+            type: object
+            properties:
+              color:
+                type: object
+                description: Nested object (depth limit reached)
+            description: Represents the background of a document.
+          defaultHeaderId:
+            type: string
+            description: The ID of the default header. If not set, there's no default header. If DocumentMode is PAGELESS,
+              this property will not be rendered. This property is read-only.
+          defaultFooterId:
+            type: string
+            description: The ID of the default footer. If not set, there's no default footer. If DocumentMode is PAGELESS,
+              this property will not be rendered. This property is read-only.
+          evenPageHeaderId:
+            type: string
+            description: The ID of the header used only for even pages. The value of use_even_page_header_footer determines
+              whether to use the default_header_id or this value for the header on even pages. If not set, there's no even
+              page header. If DocumentMode is PAGELESS, this property will not be rendered. This property is read-only.
+          evenPageFooterId:
+            type: string
+            description: The ID of the footer used only for even pages. The value of use_even_page_header_footer determines
+              whether to use the default_footer_id or this value for the footer on even pages. If not set, there's no even
+              page footer. If DocumentMode is PAGELESS, this property will not be rendered. This property is read-only.
+          firstPageHeaderId:
+            type: string
+            description: The ID of the header used only for the first page. If not set then a unique header for the first
+              page does not exist. The value of use_first_page_header_footer determines whether to use the default_header_id
+              or this value for the header on the first page. If not set, there's no first page header. If DocumentMode is
+              PAGELESS, this property will not be rendered. This property is read-only.
+          firstPageFooterId:
+            type: string
+            description: The ID of the footer used only for the first page. If not set then a unique footer for the first
+              page does not exist. The value of use_first_page_header_footer determines whether to use the default_footer_id
+              or this value for the footer on the first page. If not set, there's no first page footer. If DocumentMode is
+              PAGELESS, this property will not be rendered. This property is read-only.
+          useFirstPageHeaderFooter:
+            type: boolean
+            description: Indicates whether to use the first page header / footer IDs for the first page. If DocumentMode is
+              PAGELESS, this property will not be rendered.
+          useEvenPageHeaderFooter:
+            type: boolean
+            description: Indicates whether to use the even page header / footer IDs for the even pages. If DocumentMode is
+              PAGELESS, this property will not be rendered.
+          pageNumberStart:
+            type: integer
+            format: int32
+            description: The page number from which to start counting the number of pages. If DocumentMode is PAGELESS, this
+              property will not be rendered.
+          marginTop:
+            type: object
+            properties:
+              magnitude:
+                type: number
+                description: The magnitude.
+              unit:
+                type: string
+                enum: &id001
+                - UNIT_UNSPECIFIED
+                - PT
+                description: The units for magnitude.
+            description: A magnitude in a single direction in the specified units.
+          marginBottom:
+            type: object
+            properties:
+              magnitude:
+                type: number
+                description: The magnitude.
+              unit:
+                type: string
+                enum: *id001
+                description: The units for magnitude.
+            description: A magnitude in a single direction in the specified units.
+          marginRight:
+            type: object
+            properties:
+              magnitude:
+                type: number
+                description: The magnitude.
+              unit:
+                type: string
+                enum: *id001
+                description: The units for magnitude.
+            description: A magnitude in a single direction in the specified units.
+          marginLeft:
+            type: object
+            properties:
+              magnitude:
+                type: number
+                description: The magnitude.
+              unit:
+                type: string
+                enum: *id001
+                description: The units for magnitude.
+            description: A magnitude in a single direction in the specified units.
+          pageSize:
+            type: object
+            properties:
+              height:
+                type: object
+                description: Nested object (depth limit reached)
+              width:
+                type: object
+                description: Nested object (depth limit reached)
+            description: A width and height.
+          marginHeader:
+            type: object
+            properties:
+              magnitude:
+                type: number
+                description: The magnitude.
+              unit:
+                type: string
+                enum: *id001
+                description: The units for magnitude.
+            description: A magnitude in a single direction in the specified units.
+          marginFooter:
+            type: object
+            properties:
+              magnitude:
+                type: number
+                description: The magnitude.
+              unit:
+                type: string
+                enum: *id001
+                description: The units for magnitude.
+            description: A magnitude in a single direction in the specified units.
+          useCustomHeaderFooterMargins:
+            type: boolean
+            description: Indicates whether DocumentStyle margin_header, SectionStyle margin_header and DocumentStyle margin_footer,
+              SectionStyle margin_footer are respected. When false, the default values in the Docs editor for header and footer
+              margin is used. If DocumentMode is PAGELESS, this property will not be rendered. This property is read-only.
+          flipPageOrientation:
+            type: boolean
+            description: Optional. Indicates whether to flip the dimensions of the page_size, which allows changing the page
+              orientation between portrait and landscape. If DocumentMode is PAGELESS, this property will not be rendered.
+          documentFormat:
+            type: object
+            properties:
+              documentMode:
+                type: string
+                enum:
+                - DOCUMENT_MODE_UNSPECIFIED
+                - PAGES
+                - PAGELESS
+                description: Whether the document has pages or is pageless.
+            description: Represents document-level format settings.
+        description: The style of the document.
+      suggestedDocumentStyleChanges:
+        type: object
+        additionalProperties:
+          type: object
+          properties:
+            documentStyle:
+              type: object
+              properties:
+                background:
+                  type: object
+                  description: Nested object (depth limit reached)
+                defaultHeaderId:
+                  type: object
+                  description: Nested object (depth limit reached)
+                defaultFooterId:
+                  type: object
+                  description: Nested object (depth limit reached)
+                evenPageHeaderId:
+                  type: object
+                  description: Nested object (depth limit reached)
+                evenPageFooterId:
+                  type: object
+                  description: Nested object (depth limit reached)
+                firstPageHeaderId:
+                  type: object
+                  description: Nested object (depth limit reached)
+                firstPageFooterId:
+                  type: object
+                  description: Nested object (depth limit reached)
+                useFirstPageHeaderFooter:
+                  type: object
+                  description: Nested object (depth limit reached)
+                useEvenPageHeaderFooter:
+                  type: object
+                  description: Nested object (depth limit reached)
+                pageNumberStart:
+                  type: object
+                  description: Nested object (depth limit reached)
+                marginTop:
+                  type: object
+                  description: Nested object (depth limit reached)
+                marginBottom:
+                  type: object
+                  description: Nested object (depth limit reached)
+                marginRight:
+                  type: object
+                  description: Nested object (depth limit reached)
+                marginLeft:
+                  type: object
+                  description: Nested object (depth limit reached)
+                pageSize:
+                  type: object
+                  description: Nested object (depth limit reached)
+                marginHeader:
+                  type: object
+                  description: Nested object (depth limit reached)
+                marginFooter:
+                  type: object
+                  description: Nested object (depth limit reached)
+                useCustomHeaderFooterMargins:
+                  type: object
+                  description: Nested object (depth limit reached)
+                flipPageOrientation:
+                  type: object
+                  description: Nested object (depth limit reached)
+                documentFormat:
+                  type: object
+                  description: Nested object (depth limit reached)
+              description: The style of the document.
+            documentStyleSuggestionState:
+              type: object
+              properties:
+                backgroundSuggestionState:
+                  type: object
+                  description: Nested object (depth limit reached)
+                defaultHeaderIdSuggested:
+                  type: object
+                  description: Nested object (depth limit reached)
+                defaultFooterIdSuggested:
+                  type: object
+                  description: Nested object (depth limit reached)
+                evenPageHeaderIdSuggested:
+                  type: object
+                  description: Nested object (depth limit reached)
+                evenPageFooterIdSuggested:
+                  type: object
+                  description: Nested object (depth limit reached)
+                firstPageHeaderIdSuggested:
+                  type: object
+                  description: Nested object (depth limit reached)
+                firstPageFooterIdSuggested:
+                  type: object
+                  description: Nested object (depth limit reached)
+                useFirstPageHeaderFooterSuggested:
+                  type: object
+                  description: Nested object (depth limit reached)
+                useEvenPageHeaderFooterSuggested:
+                  type: object
+                  description: Nested object (depth limit reached)
+                pageNumberStartSuggested:
+                  type: object
+                  description: Nested object (depth limit reached)
+                marginTopSuggested:
+                  type: object
+                  description: Nested object (depth limit reached)
+                marginBottomSuggested:
+                  type: object
+                  description: Nested object (depth limit reached)
+                marginRightSuggested:
+                  type: object
+                  description: Nested object (depth limit reached)
+                marginLeftSuggested:
+                  type: object
+                  description: Nested object (depth limit reached)
+                pageSizeSuggestionState:
+                  type: object
+                  description: Nested object (depth limit reached)
+                marginHeaderSuggested:
+                  type: object
+                  description: Nested object (depth limit reached)
+                marginFooterSuggested:
+                  type: object
+                  description: Nested object (depth limit reached)
+                useCustomHeaderFooterMarginsSuggested:
+                  type: object
+                  description: Nested object (depth limit reached)
+                flipPageOrientationSuggested:
+                  type: object
+                  description: Nested object (depth limit reached)
+              description: A mask that indicates which of the fields on the base DocumentStyle have been changed in this suggestion.
+                For any field set to true, there's a new suggested value.
+          description: A suggested change to the DocumentStyle.
+        description: 'Output only. The suggested changes to the style of the document, keyed by suggestion ID. Legacy field:
+          Instead, use Document.tabs.documentTab.suggestedDocumentStyleChanges, which exposes the actual document content
+          from all tabs when the includeTabsContent parameter is set to `true`. If `false` or unset, this field contains information
+          about the first tab in the document.'
+      namedStyles:
+        type: object
+        properties:
+          styles:
+            type: array
+            items:
+              type: object
+              properties:
+                namedStyleType:
+                  type: object
+                  description: Nested object (depth limit reached)
+                textStyle:
+                  type: object
+                  description: Nested object (depth limit reached)
+                paragraphStyle:
+                  type: object
+                  description: Nested object (depth limit reached)
+              description: A named style. Paragraphs in the document can inherit their TextStyle and ParagraphStyle from this
+                named style when they have the same named style type.
+            description: The named styles. There's an entry for each of the possible named style types.
+        description: The named styles. Paragraphs in the document can inherit their TextStyle and ParagraphStyle from these
+          named styles.
+      suggestedNamedStylesChanges:
+        type: object
+        additionalProperties:
+          type: object
+          properties:
+            namedStyles:
+              type: object
+              properties:
+                styles:
+                  type: object
+                  description: Nested object (depth limit reached)
+              description: The named styles. Paragraphs in the document can inherit their TextStyle and ParagraphStyle from
+                these named styles.
+            namedStylesSuggestionState:
+              type: object
+              properties:
+                stylesSuggestionStates:
+                  type: object
+                  description: Nested object (depth limit reached)
+              description: The suggestion state of a NamedStyles message.
+          description: A suggested change to the NamedStyles.
+        description: 'Output only. The suggested changes to the named styles of the document, keyed by suggestion ID. Legacy
+          field: Instead, use Document.tabs.documentTab.suggestedNamedStylesChanges, which exposes the actual document content
+          from all tabs when the includeTabsContent parameter is set to `true`. If `false` or unset, this field contains information
+          about the first tab in the document.'
+      lists:
+        type: object
+        additionalProperties:
+          type: object
+          properties:
+            listProperties:
+              type: object
+              properties:
+                nestingLevels:
+                  type: object
+                  description: Nested object (depth limit reached)
+              description: The properties of a list that describe the look and feel of bullets belonging to paragraphs associated
+                with a list.
+            suggestedListPropertiesChanges:
+              type: object
+              additionalProperties:
+                type: object
+                description: Nested object (depth limit reached)
+              description: The suggested changes to the list properties, keyed by suggestion ID.
+            suggestedInsertionId:
+              type: string
+              description: The suggested insertion ID. If empty, then this is not a suggested insertion.
+            suggestedDeletionIds:
+              type: array
+              items:
+                type: string
+              description: The suggested deletion IDs. If empty, then there are no suggested deletions of this list.
+          description: A List represents the list attributes for a group of paragraphs that all belong to the same list. A
+            paragraph that's part of a list has a reference to the list's ID in its bullet.
+        description: 'Output only. The lists in the document, keyed by list ID. Legacy field: Instead, use Document.tabs.documentTab.lists,
+          which exposes the actual document content from all tabs when the includeTabsContent parameter is set to `true`.
+          If `false` or unset, this field contains information about the first tab in the document.'
+      namedRanges:
+        type: object
+        additionalProperties:
+          type: object
+          properties:
+            name:
+              type: string
+              description: The name that all the named ranges share.
+            namedRanges:
+              type: array
+              items:
+                type: object
+                description: Nested object (depth limit reached)
+              description: The NamedRanges that share the same name.
+          description: A collection of all the NamedRanges in the document that share a given name.
+        description: 'Output only. The named ranges in the document, keyed by name. Legacy field: Instead, use Document.tabs.documentTab.namedRanges,
+          which exposes the actual document content from all tabs when the includeTabsContent parameter is set to `true`.
+          If `false` or unset, this field contains information about the first tab in the document.'
+      inlineObjects:
+        type: object
+        additionalProperties:
+          type: object
+          properties:
+            objectId:
+              type: string
+              description: The ID of this inline object. Can be used to update an object’s properties.
+            inlineObjectProperties:
+              type: object
+              properties:
+                embeddedObject:
+                  type: object
+                  description: Nested object (depth limit reached)
+              description: Properties of an InlineObject.
+            suggestedInlineObjectPropertiesChanges:
+              type: object
+              additionalProperties:
+                type: object
+                description: Nested object (depth limit reached)
+              description: The suggested changes to the inline object properties, keyed by suggestion ID.
+            suggestedInsertionId:
+              type: string
+              description: The suggested insertion ID. If empty, then this is not a suggested insertion.
+            suggestedDeletionIds:
+              type: array
+              items:
+                type: string
+              description: The suggested deletion IDs. If empty, then there are no suggested deletions of this content.
+          description: An object that appears inline with text. An InlineObject contains an EmbeddedObject such as an image.
+        description: 'Output only. The inline objects in the document, keyed by object ID. Legacy field: Instead, use Document.tabs.documentTab.inlineObjects,
+          which exposes the actual document content from all tabs when the includeTabsContent parameter is set to `true`.
+          If `false` or unset, this field contains information about the first tab in the document.'
+      positionedObjects:
+        type: object
+        additionalProperties:
+          type: object
+          properties:
+            objectId:
+              type: string
+              description: The ID of this positioned object.
+            positionedObjectProperties:
+              type: object
+              properties:
+                positioning:
+                  type: object
+                  description: Nested object (depth limit reached)
+                embeddedObject:
+                  type: object
+                  description: Nested object (depth limit reached)
+              description: Properties of a PositionedObject.
+            suggestedPositionedObjectPropertiesChanges:
+              type: object
+              additionalProperties:
+                type: object
+                description: Nested object (depth limit reached)
+              description: The suggested changes to the positioned object properties, keyed by suggestion ID.
+            suggestedInsertionId:
+              type: string
+              description: The suggested insertion ID. If empty, then this is not a suggested insertion.
+            suggestedDeletionIds:
+              type: array
+              items:
+                type: string
+              description: The suggested deletion IDs. If empty, then there are no suggested deletions of this content.
+          description: An object that's tethered to a Paragraph and positioned relative to the beginning of the paragraph.
+            A PositionedObject contains an EmbeddedObject such as an image.
+        description: 'Output only. The positioned objects in the document, keyed by object ID. Legacy field: Instead, use
+          Document.tabs.documentTab.positionedObjects, which exposes the actual document content from all tabs when the includeTabsContent
+          parameter is set to `true`. If `false` or unset, this field contains information about the first tab in the document.'
+    description: A Google Docs document.
+response:
+  success_codes:
+  - 200
+  body_schema:
+    type: object
+    properties:
+      documentId:
+        type: string
+        description: Output only. The ID of the document.
+      title:
+        type: string
+        description: The title of the document.
+      revisionId:
+        type: string
+        description: Output only. The revision ID of the document. Can be used in update requests to specify which revision
+          of a document to apply updates to and how the request should behave if the document has been edited since that revision.
+          Only populated if the user has edit access to the document. The revision ID is not a sequential number but an opaque
+          string. The format of the revision ID might change over time. A returned revision ID is only guaranteed to be valid
+          for 24 hours after it has been returned and cannot be shared across users. If the revision ID is unchanged between
+          calls, then the document has not changed. Conversely, a changed ID (for the same document and user) usually means
+          the document has been updated. However, a changed ID can also be due to internal factors such as ID format changes.
+      body:
+        type: object
+        properties: {}
+        description: The document body. The body typically contains the full document contents except for headers, footers,
+          and footnotes.
+    description: A Google Docs document.
+tags:
+- google
+- docs
+examples:
+- name: Basic docs create document
+  request: {}
+  response:
+    status: success

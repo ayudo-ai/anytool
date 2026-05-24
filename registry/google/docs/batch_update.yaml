@@ -1,0 +1,611 @@
+# ──────────────────────────────────────────────────────────────────────
+# Google Docs — Docs Batch Update
+# Tier 1: Auto-generated from Google Discovery doc.
+# Review and adjust descriptions/examples before use.
+# ──────────────────────────────────────────────────────────────────────
+
+name: docs_batch_update
+app: google
+version: '1'
+description: 'Applies one or more updates to the document. Each request is validated before being applied. If any request
+  is not valid, then the entire request will fail and nothing will be applied. Some requests have replies to give you some
+  information about how they are applied. Other requests do not need to return information; these each return an empty reply.
+  The order of replies matches that of the requests. For example, suppose you call batchUpdate with four updates, and only
+  the third one returns information. The response would have two empty replies, the reply to the third request, and another
+  empty reply, in that order. Because other users may be editing the document, the document might not exactly reflect your
+  changes: your changes may be altered with respect to collaborator changes. If there are no collaborators, the document should
+  reflect your changes. In any case, the updates in your request are guaranteed to be applied together atomically.'
+method: POST
+path: /v1/documents/{documentId}:batchUpdate
+base_url: https://docs.googleapis.com
+auth:
+  type: oauth2
+  scopes:
+  - https://www.googleapis.com/auth/documents
+  header: 'Authorization: Bearer {access_token}'
+request:
+  content_type: application/json
+  body_schema:
+    type: object
+    properties:
+      requests:
+        type: array
+        items:
+          type: object
+          properties:
+            replaceAllText:
+              type: object
+              properties:
+                replaceText:
+                  type: object
+                  description: Nested object (depth limit reached)
+                containsText:
+                  type: object
+                  description: Nested object (depth limit reached)
+                tabsCriteria:
+                  type: object
+                  description: Nested object (depth limit reached)
+              description: Replaces all instances of text matching a criteria with replace text.
+            insertText:
+              type: object
+              properties:
+                location:
+                  type: object
+                  description: Nested object (depth limit reached)
+                endOfSegmentLocation:
+                  type: object
+                  description: Nested object (depth limit reached)
+                text:
+                  type: object
+                  description: Nested object (depth limit reached)
+              description: Inserts text at the specified location.
+            updateTextStyle:
+              type: object
+              properties:
+                range:
+                  type: object
+                  description: Nested object (depth limit reached)
+                textStyle:
+                  type: object
+                  description: Nested object (depth limit reached)
+                fields:
+                  type: object
+                  description: Nested object (depth limit reached)
+              description: Update the styling of text.
+            createParagraphBullets:
+              type: object
+              properties:
+                range:
+                  type: object
+                  description: Nested object (depth limit reached)
+                bulletPreset:
+                  type: object
+                  description: Nested object (depth limit reached)
+              description: Creates bullets for all of the paragraphs that overlap with the given range. The nesting level
+                of each paragraph will be determined by counting leading tabs in front of each paragraph. To avoid excess
+                space between the bullet and the corresponding paragraph, these leading tabs are removed by this request.
+                This may change the indices of parts of the text. If the paragraph immediately before paragraphs being updated
+                is in a list with a matching preset, the paragraphs being updated are added to that preceding list.
+            deleteParagraphBullets:
+              type: object
+              properties:
+                range:
+                  type: object
+                  description: Nested object (depth limit reached)
+              description: Deletes bullets from all of the paragraphs that overlap with the given range. The nesting level
+                of each paragraph will be visually preserved by adding indent to the start of the corresponding paragraph.
+            createNamedRange:
+              type: object
+              properties:
+                name:
+                  type: object
+                  description: Nested object (depth limit reached)
+                range:
+                  type: object
+                  description: Nested object (depth limit reached)
+              description: Creates a NamedRange referencing the given range.
+            deleteNamedRange:
+              type: object
+              properties:
+                namedRangeId:
+                  type: object
+                  description: Nested object (depth limit reached)
+                name:
+                  type: object
+                  description: Nested object (depth limit reached)
+                tabsCriteria:
+                  type: object
+                  description: Nested object (depth limit reached)
+              description: Deletes a NamedRange.
+            updateParagraphStyle:
+              type: object
+              properties:
+                range:
+                  type: object
+                  description: Nested object (depth limit reached)
+                paragraphStyle:
+                  type: object
+                  description: Nested object (depth limit reached)
+                fields:
+                  type: object
+                  description: Nested object (depth limit reached)
+              description: Update the styling of all paragraphs that overlap with the given range.
+            deleteContentRange:
+              type: object
+              properties:
+                range:
+                  type: object
+                  description: Nested object (depth limit reached)
+              description: Deletes content from the document.
+            insertInlineImage:
+              type: object
+              properties:
+                location:
+                  type: object
+                  description: Nested object (depth limit reached)
+                endOfSegmentLocation:
+                  type: object
+                  description: Nested object (depth limit reached)
+                uri:
+                  type: object
+                  description: Nested object (depth limit reached)
+                objectSize:
+                  type: object
+                  description: Nested object (depth limit reached)
+              description: Inserts an InlineObject containing an image at the given location.
+            insertTable:
+              type: object
+              properties:
+                location:
+                  type: object
+                  description: Nested object (depth limit reached)
+                endOfSegmentLocation:
+                  type: object
+                  description: Nested object (depth limit reached)
+                rows:
+                  type: object
+                  description: Nested object (depth limit reached)
+                columns:
+                  type: object
+                  description: Nested object (depth limit reached)
+              description: Inserts a table at the specified location. A newline character will be inserted before the inserted
+                table.
+            insertTableRow:
+              type: object
+              properties:
+                tableCellLocation:
+                  type: object
+                  description: Nested object (depth limit reached)
+                insertBelow:
+                  type: object
+                  description: Nested object (depth limit reached)
+              description: Inserts an empty row into a table.
+            insertTableColumn:
+              type: object
+              properties:
+                tableCellLocation:
+                  type: object
+                  description: Nested object (depth limit reached)
+                insertRight:
+                  type: object
+                  description: Nested object (depth limit reached)
+              description: Inserts an empty column into a table.
+            deleteTableRow:
+              type: object
+              properties:
+                tableCellLocation:
+                  type: object
+                  description: Nested object (depth limit reached)
+              description: Deletes a row from a table.
+            deleteTableColumn:
+              type: object
+              properties:
+                tableCellLocation:
+                  type: object
+                  description: Nested object (depth limit reached)
+              description: Deletes a column from a table.
+            insertPageBreak:
+              type: object
+              properties:
+                location:
+                  type: object
+                  description: Nested object (depth limit reached)
+                endOfSegmentLocation:
+                  type: object
+                  description: Nested object (depth limit reached)
+              description: Inserts a page break followed by a newline at the specified location.
+            deletePositionedObject:
+              type: object
+              properties:
+                objectId:
+                  type: object
+                  description: Nested object (depth limit reached)
+                tabId:
+                  type: object
+                  description: Nested object (depth limit reached)
+              description: Deletes a PositionedObject from the document.
+            updateTableColumnProperties:
+              type: object
+              properties:
+                tableStartLocation:
+                  type: object
+                  description: Nested object (depth limit reached)
+                columnIndices:
+                  type: object
+                  description: Nested object (depth limit reached)
+                tableColumnProperties:
+                  type: object
+                  description: Nested object (depth limit reached)
+                fields:
+                  type: object
+                  description: Nested object (depth limit reached)
+              description: Updates the TableColumnProperties of columns in a table.
+            updateTableCellStyle:
+              type: object
+              properties:
+                tableRange:
+                  type: object
+                  description: Nested object (depth limit reached)
+                tableStartLocation:
+                  type: object
+                  description: Nested object (depth limit reached)
+                tableCellStyle:
+                  type: object
+                  description: Nested object (depth limit reached)
+                fields:
+                  type: object
+                  description: Nested object (depth limit reached)
+              description: Updates the style of a range of table cells.
+            updateTableRowStyle:
+              type: object
+              properties:
+                tableStartLocation:
+                  type: object
+                  description: Nested object (depth limit reached)
+                rowIndices:
+                  type: object
+                  description: Nested object (depth limit reached)
+                tableRowStyle:
+                  type: object
+                  description: Nested object (depth limit reached)
+                fields:
+                  type: object
+                  description: Nested object (depth limit reached)
+              description: Updates the TableRowStyle of rows in a table.
+            replaceImage:
+              type: object
+              properties:
+                imageObjectId:
+                  type: object
+                  description: Nested object (depth limit reached)
+                uri:
+                  type: object
+                  description: Nested object (depth limit reached)
+                imageReplaceMethod:
+                  type: object
+                  description: Nested object (depth limit reached)
+                tabId:
+                  type: object
+                  description: Nested object (depth limit reached)
+              description: Replaces an existing image with a new image. Replacing an image removes some image effects from
+                the existing image in order to mirror the behavior of the Docs editor.
+            updateDocumentStyle:
+              type: object
+              properties:
+                documentStyle:
+                  type: object
+                  description: Nested object (depth limit reached)
+                fields:
+                  type: object
+                  description: Nested object (depth limit reached)
+                tabId:
+                  type: object
+                  description: Nested object (depth limit reached)
+              description: Updates the DocumentStyle.
+            mergeTableCells:
+              type: object
+              properties:
+                tableRange:
+                  type: object
+                  description: Nested object (depth limit reached)
+              description: Merges cells in a Table.
+            unmergeTableCells:
+              type: object
+              properties:
+                tableRange:
+                  type: object
+                  description: Nested object (depth limit reached)
+              description: Unmerges cells in a Table.
+            createHeader:
+              type: object
+              properties:
+                type:
+                  type: object
+                  description: Nested object (depth limit reached)
+                sectionBreakLocation:
+                  type: object
+                  description: Nested object (depth limit reached)
+              description: Creates a Header. The new header is applied to the SectionStyle at the location of the SectionBreak
+                if specified, otherwise it is applied to the DocumentStyle. If a header of the specified type already exists,
+                a 400 bad request error is returned.
+            createFooter:
+              type: object
+              properties:
+                type:
+                  type: object
+                  description: Nested object (depth limit reached)
+                sectionBreakLocation:
+                  type: object
+                  description: Nested object (depth limit reached)
+              description: Creates a Footer. The new footer is applied to the SectionStyle at the location of the SectionBreak
+                if specified, otherwise it is applied to the DocumentStyle. If a footer of the specified type already exists,
+                a 400 bad request error is returned.
+            createFootnote:
+              type: object
+              properties:
+                location:
+                  type: object
+                  description: Nested object (depth limit reached)
+                endOfSegmentLocation:
+                  type: object
+                  description: Nested object (depth limit reached)
+              description: Creates a Footnote segment and inserts a new FootnoteReference to it at the given location. The
+                new Footnote segment will contain a space followed by a newline character.
+            replaceNamedRangeContent:
+              type: object
+              properties:
+                text:
+                  type: object
+                  description: Nested object (depth limit reached)
+                namedRangeId:
+                  type: object
+                  description: Nested object (depth limit reached)
+                namedRangeName:
+                  type: object
+                  description: Nested object (depth limit reached)
+                tabsCriteria:
+                  type: object
+                  description: Nested object (depth limit reached)
+              description: Replaces the contents of the specified NamedRange or NamedRanges with the given replacement content.
+                Note that an individual NamedRange may consist of multiple discontinuous ranges. In this case, only the content
+                in the first range will be replaced. The other ranges and their content will be deleted. In cases where replacing
+                or deleting any ranges would result in an invalid document structure, a 400 bad request error is returned.
+            updateSectionStyle:
+              type: object
+              properties:
+                range:
+                  type: object
+                  description: Nested object (depth limit reached)
+                sectionStyle:
+                  type: object
+                  description: Nested object (depth limit reached)
+                fields:
+                  type: object
+                  description: Nested object (depth limit reached)
+              description: Updates the SectionStyle.
+            insertSectionBreak:
+              type: object
+              properties:
+                location:
+                  type: object
+                  description: Nested object (depth limit reached)
+                endOfSegmentLocation:
+                  type: object
+                  description: Nested object (depth limit reached)
+                sectionType:
+                  type: object
+                  description: Nested object (depth limit reached)
+              description: Inserts a section break at the given location. A newline character will be inserted before the
+                section break.
+            deleteHeader:
+              type: object
+              properties:
+                headerId:
+                  type: object
+                  description: Nested object (depth limit reached)
+                tabId:
+                  type: object
+                  description: Nested object (depth limit reached)
+              description: Deletes a Header from the document.
+            deleteFooter:
+              type: object
+              properties:
+                footerId:
+                  type: object
+                  description: Nested object (depth limit reached)
+                tabId:
+                  type: object
+                  description: Nested object (depth limit reached)
+              description: Deletes a Footer from the document.
+            pinTableHeaderRows:
+              type: object
+              properties:
+                tableStartLocation:
+                  type: object
+                  description: Nested object (depth limit reached)
+                pinnedHeaderRowsCount:
+                  type: object
+                  description: Nested object (depth limit reached)
+              description: Updates the number of pinned table header rows in a table.
+            addDocumentTab:
+              type: object
+              properties:
+                tabProperties:
+                  type: object
+                  description: Nested object (depth limit reached)
+              description: Adds a document tab. When a tab is added at a given index, all subsequent tabs' indexes are incremented.
+            deleteTab:
+              type: object
+              properties:
+                tabId:
+                  type: object
+                  description: Nested object (depth limit reached)
+              description: Deletes a tab. If the tab has child tabs, they are deleted as well.
+            updateDocumentTabProperties:
+              type: object
+              properties:
+                tabProperties:
+                  type: object
+                  description: Nested object (depth limit reached)
+                fields:
+                  type: object
+                  description: Nested object (depth limit reached)
+              description: Update the properties of a document tab.
+            insertPerson:
+              type: object
+              properties:
+                location:
+                  type: object
+                  description: Nested object (depth limit reached)
+                endOfSegmentLocation:
+                  type: object
+                  description: Nested object (depth limit reached)
+                personProperties:
+                  type: object
+                  description: Nested object (depth limit reached)
+              description: Inserts a person mention.
+            updateNamedStyle:
+              type: object
+              properties:
+                namedStyle:
+                  type: object
+                  description: Nested object (depth limit reached)
+                fields:
+                  type: object
+                  description: Nested object (depth limit reached)
+                tabId:
+                  type: object
+                  description: Nested object (depth limit reached)
+              description: Updates a named style.
+            insertRichLink:
+              type: object
+              properties:
+                location:
+                  type: object
+                  description: Nested object (depth limit reached)
+                endOfSegmentLocation:
+                  type: object
+                  description: Nested object (depth limit reached)
+                richLinkProperties:
+                  type: object
+                  description: Nested object (depth limit reached)
+              description: Inserts a RichLink at the specified location.
+            insertDate:
+              type: object
+              properties:
+                location:
+                  type: object
+                  description: Nested object (depth limit reached)
+                endOfSegmentLocation:
+                  type: object
+                  description: Nested object (depth limit reached)
+                dateElementProperties:
+                  type: object
+                  description: Nested object (depth limit reached)
+              description: Inserts a date at the specified location.
+          description: A single update to apply to a document.
+        description: A list of updates to apply to the document.
+      writeControl:
+        type: object
+        properties:
+          requiredRevisionId:
+            type: string
+            description: The optional revision ID of the document the write request is applied to. If this is not the latest
+              revision of the document, the request is not processed and returns a 400 bad request error. When a required
+              revision ID is returned in a response, it indicates the revision ID of the document after the request was applied.
+          targetRevisionId:
+            type: string
+            description: The optional target revision ID of the document the write request is applied to. If collaborator
+              changes have occurred after the document was read using the API, the changes produced by this write request
+              are applied against the collaborator changes. This results in a new revision of the document that incorporates
+              both the collaborator changes and the changes in the request, with the Docs server resolving conflicting changes.
+              When using target revision ID, the API client can be thought of as another collaborator of the document. The
+              target revision ID can only be used to write to recent versions of a document. If the target revision is too
+              far behind the latest revision, the request is not processed and returns a 400 bad request error. The request
+              should be tried again after retrieving the latest version of the document. Usually a revision ID remains valid
+              for use as a target revision for several minutes after it's read, but for frequently edited documents this window
+              might be shorter.
+        description: Provides control over how write requests are executed.
+    description: Request message for BatchUpdateDocument.
+response:
+  success_codes:
+  - 200
+  body_schema:
+    type: object
+    properties:
+      documentId:
+        type: string
+        description: The ID of the document to which the updates were applied to.
+      replies:
+        type: array
+        items:
+          type: object
+          properties:
+            replaceAllText:
+              type: object
+              properties:
+                occurrencesChanged:
+                  type: object
+                  description: Nested object (depth limit reached)
+              description: The result of replacing text.
+            createNamedRange:
+              type: object
+              properties:
+                namedRangeId:
+                  type: object
+                  description: Nested object (depth limit reached)
+              description: The result of creating a named range.
+            insertInlineImage:
+              type: object
+              properties:
+                objectId:
+                  type: object
+                  description: Nested object (depth limit reached)
+              description: The result of inserting an inline image.
+            insertInlineSheetsChart:
+              type: object
+              properties:
+                objectId:
+                  type: object
+                  description: Nested object (depth limit reached)
+              description: The result of inserting an embedded Google Sheets chart.
+            createHeader:
+              type: object
+              properties:
+                headerId:
+                  type: object
+                  description: Nested object (depth limit reached)
+              description: The result of creating a header.
+            createFooter:
+              type: object
+              properties:
+                footerId:
+                  type: object
+                  description: Nested object (depth limit reached)
+              description: The result of creating a footer.
+            createFootnote:
+              type: object
+              properties:
+                footnoteId:
+                  type: object
+                  description: Nested object (depth limit reached)
+              description: The result of creating a footnote.
+            addDocumentTab:
+              type: object
+              properties:
+                tabProperties:
+                  type: object
+                  description: Nested object (depth limit reached)
+              description: The result of adding a document tab.
+          description: A single response from an update.
+        description: The reply of the updates. This maps 1:1 with the updates, although replies to some requests may be empty.
+    description: Response message from a BatchUpdateDocument request.
+tags:
+- google
+- docs
+examples:
+- name: Basic docs batch update
+  request:
+    documentId: <documentId>
+  response:
+    status: success
