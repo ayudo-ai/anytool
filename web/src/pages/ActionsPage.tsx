@@ -29,7 +29,6 @@ import {
 import { cn } from '@/lib/utils'
 
 const CDN_BASE = 'https://assets.ayudo.ai'
-const LOGO_FALLBACK = 'https://logo.clearbit.com'  // Fallback: clearbit logo API
 
 const METHOD_COLORS: Record<string, string> = {
   GET: 'bg-emerald-50 text-emerald-700 border-emerald-200',
@@ -150,22 +149,12 @@ export function ActionsPage() {
     a.slug.toLowerCase().includes(search.toLowerCase())
   )
 
-  // Map app slug to company domain for Clearbit fallback
-  const LOGO_DOMAINS: Record<string, string> = {
-    airtable: 'airtable.com', asana: 'asana.com', calendly: 'calendly.com',
-    clickup: 'clickup.com', intercom: 'intercom.com', jira: 'atlassian.com',
-    linear: 'linear.app', monday: 'monday.com', notion: 'notion.so',
-    salesforce: 'salesforce.com', shopify: 'shopify.com', stripe: 'stripe.com',
-    trello: 'trello.com', twilio: 'twilio.com',
-  }
-
   const iconUrl = (path: string, appSlug?: string) => {
     if (path && path.startsWith('http')) return path
     if (path) return `${CDN_BASE}/${path}`
-    // Fallback to Clearbit logo
-    const slug = appSlug?.toLowerCase() || ''
-    const domain = LOGO_DOMAINS[slug]
-    if (domain) return `${LOGO_FALLBACK}/${domain}`
+    // Fallback: Composio's public logo API (has every app)
+    const slug = appSlug?.toLowerCase().replace('_', '') || ''
+    if (slug) return `https://logos.composio.dev/api/${slug}`
     return ''
   }
 
