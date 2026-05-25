@@ -256,6 +256,92 @@ APPS: Dict[str, AppConfig] = {
         api_base_url="https://graph.microsoft.com/v1.0",
         scope_separator=" ",
     ),
+    "jira": AppConfig(
+        name="Jira",
+        slug="jira",
+        api_base_url="https://{domain}.atlassian.net",
+        icon_url="app_icons/app_mArhw1.svg",
+    ),
+    "salesforce": AppConfig(
+        name="Salesforce",
+        slug="salesforce",
+        api_base_url="https://{domain}.my.salesforce.com",
+        icon_url="app_icons/app_OrZhD7.png",
+    ),
+    "notion": AppConfig(
+        name="Notion",
+        slug="notion",
+        api_base_url="https://api.notion.com",
+        icon_url="app_icons/app_X7Lhxr.svg",
+    ),
+    "stripe": AppConfig(
+        name="Stripe",
+        slug="stripe",
+        auth_type="api_key",
+        api_base_url="https://api.stripe.com",
+        icon_url="app_icons/app_OD5hrX.png",
+    ),
+    "asana": AppConfig(
+        name="Asana",
+        slug="asana",
+        api_base_url="https://app.asana.com/api/1.0",
+        icon_url="app_icons/app_OVWhPX.png",
+    ),
+    "trello": AppConfig(
+        name="Trello",
+        slug="trello",
+        api_base_url="https://api.trello.com/1",
+        icon_url="app_icons/app_168hnX.png",
+    ),
+    "airtable": AppConfig(
+        name="Airtable",
+        slug="airtable",
+        api_base_url="https://api.airtable.com/v0",
+        icon_url="app_icons/app_XBxhAl.png",
+    ),
+    "intercom": AppConfig(
+        name="Intercom",
+        slug="intercom",
+        api_base_url="https://api.intercom.io",
+        icon_url="app_icons/app_1pbh0B.svg",
+    ),
+    "twilio": AppConfig(
+        name="Twilio",
+        slug="twilio",
+        auth_type="api_key",
+        api_base_url="https://api.twilio.com/2010-04-01",
+        icon_url="app_icons/app_mE7hqO.png",
+    ),
+    "shopify": AppConfig(
+        name="Shopify",
+        slug="shopify",
+        api_base_url="https://{domain}.myshopify.com",
+        icon_url="app_icons/app_X7Lhpm.svg",
+    ),
+    "linear": AppConfig(
+        name="Linear",
+        slug="linear",
+        api_base_url="https://api.linear.app",
+        icon_url="app_icons/app_XaLh08.png",
+    ),
+    "monday": AppConfig(
+        name="Monday",
+        slug="monday",
+        api_base_url="https://api.monday.com/v2",
+        icon_url="app_icons/app_mqeh5Q.png",
+    ),
+    "clickup": AppConfig(
+        name="ClickUp",
+        slug="clickup",
+        api_base_url="https://api.clickup.com/api/v2",
+        icon_url="app_icons/app_1NohVg.png",
+    ),
+    "calendly": AppConfig(
+        name="Calendly",
+        slug="calendly",
+        api_base_url="https://api.calendly.com",
+        icon_url="",  # TODO: upload to S3
+    ),
 }
 
 
