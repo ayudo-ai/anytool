@@ -14,22 +14,30 @@ pip install anytool
 
 ### 1. Hosted Platform (Recommended)
 
-Use anytool's hosted platform for managed OAuth, encrypted token storage, and zero auth headaches. Sign up at [anytool.dev](https://anytool.dev) to get your API key.
+Use anytool's hosted platform for managed OAuth, encrypted token storage, and zero auth headaches. Get your free API key at [anytool.ayudo.ai](https://anytool.ayudo.ai) — 1,000 API calls/month free.
 
 ```python
 from anytool import AnyTool
 
-at = AnyTool(api_key="at_your_api_key", base_url="https://api.anytool.dev/v1")
+at = AnyTool(api_key="at_your_api_key")
 
 # ── Connect a user (OAuth) ──────────────────────────────────────────
+# Generate an OAuth URL — redirect your user to this
 auth_url = await at.get_auth_url(
-    provider="google",
-    connection_id="user-123",
+    provider="google",         # see list below
+    connection_id="user-123",  # your user's ID in your system
 )
 # → "https://accounts.google.com/o/oauth2/v2/auth?..."
 # After user authorizes, tokens are stored encrypted on the platform.
 
+# ── List available apps ──────────────────────────────────────────────
+# Available providers: google, slack, github, hubspot, docusign,
+# freshdesk, zendesk, whatsapp, jira, stripe, salesforce, notion,
+# asana, trello, airtable, intercom, twilio, shopify, linear,
+# monday, clickup, calendly
+
 # ── Execute actions ──────────────────────────────────────────────────
+# Send an email
 result = await at.call(
     "gmail_send_email",
     connection_id="user-123",
@@ -39,7 +47,7 @@ result = await at.call(
 )
 # {"successful": true, "data": {"id": "msg-18f4a5b2c3d4e5f6", "threadId": "..."}}
 
-# Slack
+# Send a Slack message
 result = await at.call(
     "slack_send_message",
     connection_id="user-123",
@@ -47,7 +55,7 @@ result = await at.call(
     text="Hello from anytool! :wave:",
 )
 
-# Jira
+# Create a Jira issue
 result = await at.call(
     "jira_create_issue",
     connection_id="user-123",
@@ -58,7 +66,7 @@ result = await at.call(
     },
 )
 
-# Stripe
+# Create a Stripe customer
 result = await at.call(
     "stripe_create_customer",
     connection_id="user-123",
@@ -66,7 +74,7 @@ result = await at.call(
     name="Sarah Chen",
 )
 
-# Salesforce
+# Search Salesforce
 result = await at.call(
     "salesforce_query",
     connection_id="user-123",
@@ -76,7 +84,7 @@ result = await at.call(
 # Check connection status
 connected = await at.is_connected("google", "user-123")
 
-# List all connections
+# List all connections for a user
 connections = await at.list_connections("user-123")
 ```
 
@@ -89,6 +97,7 @@ from anytool import AnyTool, MemoryTokenStore, AppCredentials
 
 at = AnyTool(token_store=MemoryTokenStore())
 
+# Register your own OAuth app credentials
 at.register_app(AppCredentials(
     app="google",
     client_id="your-google-client-id",
@@ -96,13 +105,14 @@ at.register_app(AppCredentials(
     scopes=["https://www.googleapis.com/auth/gmail.send"],
 ))
 
+# Start OAuth flow
 auth_url = await at.get_auth_url(
     provider="google",
     connection_id="user-123",
     callback_url="http://localhost:3000/callback",
 )
 
-# After callback:
+# After callback with auth code:
 await at.handle_callback("google", code="4/0Adeu5B...", state="...")
 
 # Same API as hosted mode
@@ -221,16 +231,6 @@ agent = create_react_agent(ChatOpenAI(model="gpt-4o"), tools)
 | Monday | 6 | Bearer | Calendly | 6 | Bearer |
 | Shopify | 4 | OAuth2 | Docs | 3 | OAuth2 |
 
-## Why Not Composio?
-
-| | Composio | anytool |
-|---|---------|---------|
-| **Architecture** | Wrapper models over APIs | YAML specs → pass-through execution |
-| **Nested payloads** | Corrupted (DocuSign, HubSpot) | Preserved — body goes through AS-IS |
-| **Reliability** | Third-party dependency | Self-hosted or hosted, you control uptime |
-| **Adding an app** | Request from vendor, wait | Write a YAML spec in 10 minutes |
-| **Open source** | Partial | Full — ELv2 license |
-
 ## Adding a New App
 
 ```bash
@@ -262,6 +262,8 @@ anytool/
 ├── apps/registry.py    # OAuth configs per provider
 └── client.py           # High-level client (AnyTool class)
 
+server/                 # Platform server (FastAPI)
+web/                    # Dashboard (React + shadcn)
 registry/               # 225 YAML action specs
 scripts/spec_builder.py # Generate specs from OpenAPI / Google Discovery
 ```

@@ -38,7 +38,7 @@ class AnyTool:
     def __init__(
         self,
         api_key: str = "",
-        base_url: str = "http://localhost:8000/v1",
+        base_url: str = "https://api-anytool.ayudo.ai/v1",
         token_store=None,
     ):
         self._oauth = None
