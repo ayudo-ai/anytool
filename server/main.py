@@ -113,12 +113,10 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "https://anytool.ayudo.ai",
-        "https://api-anytool.ayudo.ai",
         "http://localhost:5173",      # Vite dev
         "http://localhost:3000",
         "http://localhost:8100",
-        "*",                          # fallback for SDK users
+        "*",                          # Allow all origins (SDK users, self-hosted dashboards)
     ],
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],

@@ -243,7 +243,7 @@ class Executor:
                 value = auth.metadata.get(placeholder, "")
             if value:
                 # Prevent double-suffix: if base_url has "{domain}.freshdesk.com"
-                # and value is already "ayudo.freshdesk.com", strip the suffix
+                # and value is already "example.freshdesk.com", strip the suffix
                 suffix_after = base_url.split(f"{{{placeholder}}}", 1)[-1].split("/")[0]
                 if suffix_after and value.endswith(suffix_after):
                     value = value[: -len(suffix_after)]

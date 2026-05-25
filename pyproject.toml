@@ -4,19 +4,19 @@ build-backend = "hatchling.build"
 
 [project]
 name = "anytool"
-version = "0.2.0"
+version = "0.3.0"
 description = "Agent-native API integration SDK. Curated specs. Direct execution. Zero wrappers."
 readme = "README.md"
-license = "MIT"
+license = "Elastic-2.0"
 requires-python = ">=3.10"
 authors = [
-    { name = "Ayudo", email = "hi@ayudo.ai" },
+    { name = "Anytool", email = "hello@anytool.dev" },
 ]
 keywords = ["ai", "agent", "api", "oauth", "integrations", "langchain"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
-    "License :: OSI Approved :: MIT License",
+    "License :: Other/Proprietary License",
     "Programming Language :: Python :: 3",
     "Topic :: Software Development :: Libraries",
 ]
@@ -43,8 +43,8 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/ayudo-ai/anytool"
-Documentation = "https://github.com/ayudo-ai/anytool#readme"
+Homepage = "https://github.com/anytool-dev/anytool"
+Documentation = "https://github.com/anytool-dev/anytool#readme"
 
 [tool.hatch.build.targets.wheel]
 packages = ["anytool"]

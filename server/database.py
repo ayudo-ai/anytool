@@ -1,8 +1,8 @@
 """
 Database — PostgreSQL with MetaObject + MetaField + MetaRecord pattern.
 
-Same architecture as Ayudo's meta tables but in 'anytool' schema.
-Fully isolated from Ayudo's public schema.
+Meta-table architecture for the anytool platform.
+All tables live in the 'anytool' schema.
 
 Tables:
 - meta_object: Defines object types (account, workspace, trigger, etc.)
@@ -55,7 +55,7 @@ class Base(DeclarativeBase):
 class MetaObject(Base):
     """Defines object types — account, workspace, trigger, etc.
 
-    Same pattern as Ayudo's MetaObject. Each object type gets one row.
+    Schema definition for an object type. Each object type gets one row.
     Seeded by seed_system_objects.py before first use.
     """
 
@@ -83,7 +83,7 @@ class MetaObject(Base):
 class MetaField(Base):
     """Defines individual fields within a MetaObject.
 
-    Same pattern as Ayudo's MetaField. Typed, validated, ordered.
+    Field definition for an object type. Typed, validated, ordered.
     Seeded alongside MetaObject by seed_system_objects.py.
     """
 
@@ -123,7 +123,7 @@ class MetaField(Base):
 class MetaRecord(Base):
     """Stores actual data for any MetaObject type.
 
-    Same pattern as Ayudo's MetaRecord:
+    Data record:
     - object_id: FK to MetaObject
     - object_slug: denormalized for fast queries
     - custom_data: JSONB — the actual record data

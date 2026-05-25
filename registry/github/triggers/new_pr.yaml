@@ -26,7 +26,7 @@ config:
     owner:
       type: string
       title: Repository Owner
-      description: GitHub organization or username (e.g. ayudo-ai).
+      description: GitHub organization or username (e.g. octocat).
     repo:
       type: string
       title: Repository Name

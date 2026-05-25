@@ -32,7 +32,7 @@ async def test_refresh():
     api = get_api()
 
     # Find a connected user
-    user_id = os.environ.get("TEST_CONNECTION_ID", "nitin")
+    user_id = os.environ.get("TEST_CONNECTION_ID", "test-user")
     app = "google"
 
     print(f"\n=== Token Refresh Test ===")

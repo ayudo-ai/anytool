@@ -1,234 +1,271 @@
 # anytool
 
-**Agent-native API integration SDK. Curated specs. Direct execution. Zero wrappers.**
+**Spec-first API execution for AI agents. No wrappers. No data loss.**
 
-Give your AI agent curated API specs + OAuth tokens — it calls any API directly.
-
-## Quick Start
-
-```python
-from anytool import AnyTool, MemoryTokenStore, AppCredentials
-
-api = AnyTool(token_store=MemoryTokenStore())
-
-api.register_app(AppCredentials(
-    app="google",
-    client_id="xxx.apps.googleusercontent.com",
-    client_secret="GOCSPX-xxx",
-    scopes=["https://www.googleapis.com/auth/gmail.send"],
-    redirect_uri="http://localhost:8000/oauth/callback",
-))
-
-# 1. Start OAuth → redirect user to this URL
-auth_url = await api.get_auth_url("google", connection_id="user-123")
-
-# 2. Handle callback → tokens stored + auto-refreshed
-tokens = await api.handle_callback("google", code="xxx", state="xxx")
-
-# 3. Call any API by action name
-result = await api.call(
-    "gmail_send_email",
-    connection_id="user-123",
-    to="vendor@example.com",
-    subject="Invoice Follow-up",
-    body="Hi, please send the updated invoice.",
-)
-# → {"data": {"id": "msg-123", "threadId": "thread-456"}, "successful": True}
-
-# Get LangChain tools for an app
-tools = api.get_tools("google", connection_id="user-123")
-# → [gmail_send_email, gmail_search, sheets_append_row, ...]
-
-# Or get tools for ALL apps at once
-all_tools = api.get_all_tools(connection_id="user-123")
-# → 98 tools across 8 apps, ready for llm.bind_tools()
-```
-
-## The Problem
-
-Existing integration platforms pre-build wrappers for each API action. These wrappers:
-
-- **Drop nested data** — complex payloads like `templateRoles: [{roleName, email, name}]` arrive at the API as `[{}]`
-- **Break across versions** — SDK updates introduce Python version incompatibilities that crash your production server
-- **Return non-standard formats** — responses come back as Python repr strings instead of JSON, requiring custom parsing
-- **Silently limit results** — only 20 tools returned by default, with no indication that actions are missing
-- **Add unnecessary latency** — every request routes through a third-party proxy before reaching the actual API
-
-## How anytool Works
-
-| Layer | What | How |
-|-------|------|-----|
-| **Auth** | OAuth, token refresh, storage | **Built-in** OAuth manager with pluggable token store |
-| **Knowledge** | Curated API specs — params, paths, descriptions | **anytool specs** (~15 lines per action) |
-| **Execution** | Build HTTP request, handle API quirks, parse response | **anytool executor** (direct HTTP) |
-
-No intermediate wrappers. No serialization layers. No third-party proxy. What the LLM constructs is what the API receives.
+anytool lets AI agents call any API through curated YAML specs. The LLM sees the real API schema, constructs the exact request body, and anytool sends it through unchanged. No intermediate models. No serialization bugs. No corrupted payloads.
 
 ## Install
 
 ```bash
-pip install anytool                    # Core (httpx + pydantic + loguru)
-pip install anytool[langchain]         # + LangChain tool generation
+pip install anytool
 ```
 
-## Supported Apps — 98 Actions
+## Two Ways to Use
 
-| App | Actions | Auth |
-|-----|---------|------|
-| **Gmail** | 7 — send, search, get, thread, reply, labels, modify | OAuth2 |
-| **Google Sheets** | 2 — append row, read range | OAuth2 |
-| **Google Drive** | 2 — list files, get file | OAuth2 |
-| **Google Calendar** | 6 — list/get/create/update/delete events, list calendars | OAuth2 |
-| **Google Docs** | 5 — get/create doc, batch update, insert/replace text | OAuth2 |
-| **DocuSign** | 6 — create envelope, get status, list, recipients, void, resend | OAuth2 |
-| **Freshdesk** | 10 — create/get/update/delete ticket, reply, note, list, search, conversations, agents | API Key |
-| **Slack** | 7 — send/update message, channels, history, thread, reaction, lookup user | OAuth2 |
-| **HubSpot** | 15 — contacts, companies, deals (CRUD + search), notes, associations, owners | OAuth2 |
-| **GitHub** | 16 — issues, PRs, repos, commits, workflows, branches, search | OAuth2 |
-| **Zendesk** | 13 — tickets (CRUD), comments, search, agents, groups, users | OAuth2 |
-| **WhatsApp** | 9 — send template/text/image/document, reactions, read receipts | Bearer Token |
+### 1. Hosted Platform (Recommended)
 
-## Usage
+Use anytool's hosted platform for managed OAuth, encrypted token storage, and zero auth headaches. Sign up at [anytool.dev](https://anytool.dev) to get your API key.
 
-### Standalone Mode (Recommended)
+```python
+from anytool import AnyTool
 
-Full control. Manage OAuth yourself. No third-party dependencies.
+at = AnyTool(api_key="at_your_api_key", base_url="https://api.anytool.dev/v1")
+
+# ── Connect a user (OAuth) ──────────────────────────────────────────
+auth_url = await at.get_auth_url(
+    provider="google",
+    connection_id="user-123",
+)
+# → "https://accounts.google.com/o/oauth2/v2/auth?..."
+# After user authorizes, tokens are stored encrypted on the platform.
+
+# ── Execute actions ──────────────────────────────────────────────────
+result = await at.call(
+    "gmail_send_email",
+    connection_id="user-123",
+    to="sarah@example.com",
+    subject="Invoice Follow-up",
+    body="Hi Sarah, please send the updated invoice.",
+)
+# {"successful": true, "data": {"id": "msg-18f4a5b2c3d4e5f6", "threadId": "..."}}
+
+# Slack
+result = await at.call(
+    "slack_send_message",
+    connection_id="user-123",
+    channel="C0123456789",
+    text="Hello from anytool! :wave:",
+)
+
+# Jira
+result = await at.call(
+    "jira_create_issue",
+    connection_id="user-123",
+    fields={
+        "project": {"key": "ENG"},
+        "summary": "Bug: Login page broken",
+        "issuetype": {"name": "Bug"},
+    },
+)
+
+# Stripe
+result = await at.call(
+    "stripe_create_customer",
+    connection_id="user-123",
+    email="sarah@example.com",
+    name="Sarah Chen",
+)
+
+# Salesforce
+result = await at.call(
+    "salesforce_query",
+    connection_id="user-123",
+    q="SELECT Id, Name FROM Contact WHERE Email = 'sarah@example.com'",
+)
+
+# Check connection status
+connected = await at.is_connected("google", "user-123")
+
+# List all connections
+connections = await at.list_connections("user-123")
+```
+
+### 2. Self-Hosted (Full Control)
+
+Run everything locally. You manage OAuth tokens yourself.
 
 ```python
 from anytool import AnyTool, MemoryTokenStore, AppCredentials
 
-api = AnyTool(token_store=MemoryTokenStore())
+at = AnyTool(token_store=MemoryTokenStore())
 
-api.register_app(AppCredentials(
+at.register_app(AppCredentials(
     app="google",
-    client_id="xxx.apps.googleusercontent.com",
-    client_secret="GOCSPX-xxx",
+    client_id="your-google-client-id",
+    client_secret="your-google-client-secret",
     scopes=["https://www.googleapis.com/auth/gmail.send"],
-    redirect_uri="http://localhost:8000/oauth/callback",
 ))
 
-# Start OAuth flow
-auth_url = await api.get_auth_url("google", connection_id="user-123")
-
-# Handle callback (after user authorizes)
-tokens = await api.handle_callback("google", code="xxx", state="xxx")
-
-# Call APIs — tokens auto-refresh when expired
-result = await api.call("gmail_send_email", connection_id="user-123", to="...", subject="...", body="...")
-```
-
-### LangChain Integration
-
-```python
-from anytool import AnyTool, MemoryTokenStore
-
-api = AnyTool(token_store=MemoryTokenStore())
-# ... register apps ...
-
-# Get tools for one app
-gmail_tools = api.get_tools("google", connection_id="user-123")
-
-# Get tools for specific actions only
-send_tools = api.get_tools("google", connection_id="user-123", actions=["gmail_send_email", "gmail_search"])
-
-# Get tools for multiple apps
-all_tools = api.get_all_tools(connection_id="user-123", apps=["google", "slack", "freshdesk"])
-
-# Use with LangChain
-from langchain_openai import ChatOpenAI
-llm = ChatOpenAI(model="gpt-4o")
-llm_with_tools = llm.bind_tools(all_tools)
-```
-
-### Triggers (Event Detection)
-
-Poll-based triggers that detect new events and POST to your webhook:
-
-```python
-from anytool import AnyTool, MemoryTokenStore, TriggerEngine, MemoryTriggerStore, TriggerConfig
-
-api = AnyTool(token_store=MemoryTokenStore())
-# ... register apps ...
-
-engine = TriggerEngine(api=api, store=MemoryTriggerStore())
-
-await engine.register(TriggerConfig(
-    id="t1",
-    trigger_type="gmail_new_message",
+auth_url = await at.get_auth_url(
     provider="google",
     connection_id="user-123",
-    webhook_url="https://your-app.com/api/webhook/trigger",
-    filters={"from_contains": "vendor@example.com"},
-    poll_interval_seconds=90,
-))
+    callback_url="http://localhost:3000/callback",
+)
 
-await engine.start()
+# After callback:
+await at.handle_callback("google", code="4/0Adeu5B...", state="...")
+
+# Same API as hosted mode
+result = await at.call(
+    "gmail_send_email",
+    connection_id="user-123",
+    to="sarah@example.com",
+    subject="Hello",
+    body="Sent via self-hosted anytool!",
+)
 ```
 
-### Custom Token Store
+## Use the Engine Directly
 
-Implement `TokenStore` for your database:
+For maximum control — no auth management, just specs and execution:
 
 ```python
-from anytool.auth.token_store import TokenStore
-from anytool.auth.models import UserTokens, OAuthState
+from anytool import Engine, AuthTokens
 
-class PostgresTokenStore(TokenStore):
-    async def save_tokens(self, tokens: UserTokens) -> None:
-        # Encrypt and store in your DB
-        ...
+engine = Engine(registry_path="registry/")
 
-    async def get_tokens(self, app: str, user_id: str) -> Optional[UserTokens]:
-        # Decrypt and return from your DB
-        ...
+# Discover
+engine.list_apps()            # ['google', 'slack', 'jira', 'stripe', ...]
+engine.list_actions("slack")  # [{"name": "slack_send_message", ...}, ...]
 
-    async def delete_tokens(self, app: str, user_id: str) -> None: ...
-    async def list_connected(self, user_id: str) -> list[UserTokens]: ...
-    async def save_oauth_state(self, state: OAuthState) -> None: ...
-    async def get_oauth_state(self, state_key: str) -> Optional[OAuthState]: ...
+# Get OpenAI tool definitions
+tools = engine.get_openai_tools(app="slack")
+# Pass directly to openai.chat.completions.create(tools=tools)
+
+# Get MCP tool definitions
+mcp_tools = engine.get_mcp_tools(app="github")
+
+# Execute
+result = await engine.execute(
+    "slack_send_message",
+    body={"channel": "C0123456789", "text": "Hello!"},
+    auth=AuthTokens(access_token="xoxb-your-token"),
+)
+print(result.successful)   # True
+print(result.data)         # {"ok": true, "ts": "1716300000.000100"}
+print(result.status_code)  # 200
 ```
+
+## Use with OpenAI
+
+```python
+import json
+import openai
+from anytool import Engine, AuthTokens
+
+engine = Engine()
+client = openai.OpenAI()
+
+tools = engine.get_openai_tools(actions=[
+    "gmail_send_email",
+    "slack_send_message",
+    "jira_create_issue",
+])
+
+response = client.chat.completions.create(
+    model="gpt-4o",
+    messages=[{"role": "user", "content": "Send Sarah an email about the invoice"}],
+    tools=tools,
+)
+
+if response.choices[0].message.tool_calls:
+    call = response.choices[0].message.tool_calls[0]
+    result = await engine.execute(
+        call.function.name,
+        body=json.loads(call.function.arguments),
+        auth=AuthTokens(access_token="ya29.a0..."),
+    )
+```
+
+## Use with LangChain
+
+```python
+from anytool import Engine, AuthTokens
+from langchain_core.tools import StructuredTool
+from langchain_openai import ChatOpenAI
+from langgraph.prebuilt import create_react_agent
+
+engine = Engine()
+auth = AuthTokens(access_token="xoxb-...")
+
+def make_tool(tool_def):
+    func = tool_def["function"]
+    async def execute(**kwargs):
+        result = await engine.execute(func["name"], body=kwargs, auth=auth)
+        return result.data if result.successful else f"Error: {result.error}"
+    return StructuredTool.from_function(
+        coroutine=execute,
+        name=func["name"],
+        description=func["description"],
+    )
+
+tools = [make_tool(t) for t in engine.get_openai_tools(app="slack")]
+agent = create_react_agent(ChatOpenAI(model="gpt-4o"), tools)
+```
+
+## 225 Specs Across 26 Apps
+
+| App | Actions | Auth | App | Actions | Auth |
+|-----|---------|------|-----|---------|------|
+| GitHub | 18 | OAuth2 | Stripe | 16 | API Key |
+| HubSpot | 15 | OAuth2 | Zendesk | 13 | API Key |
+| Jira | 11 | OAuth2 | Freshdesk | 10 | API Key |
+| Salesforce | 10 | OAuth2 | Intercom | 10 | Bearer |
+| Asana | 9 | OAuth2 | WhatsApp | 9 | API Key |
+| Trello | 9 | OAuth | Notion | 8 | Bearer |
+| ClickUp | 8 | Bearer | Gmail | 7 | OAuth2 |
+| Calendar | 7 | OAuth2 | Drive | 7 | OAuth2 |
+| Slack | 7 | OAuth2 | Linear | 7 | Bearer |
+| Airtable | 7 | Bearer | Sheets | 6 | OAuth2 |
+| DocuSign | 6 | OAuth2 | Twilio | 6 | Basic |
+| Monday | 6 | Bearer | Calendly | 6 | Bearer |
+| Shopify | 4 | OAuth2 | Docs | 3 | OAuth2 |
+
+## Why Not Composio?
+
+| | Composio | anytool |
+|---|---------|---------|
+| **Architecture** | Wrapper models over APIs | YAML specs → pass-through execution |
+| **Nested payloads** | Corrupted (DocuSign, HubSpot) | Preserved — body goes through AS-IS |
+| **Reliability** | Third-party dependency | Self-hosted or hosted, you control uptime |
+| **Adding an app** | Request from vendor, wait | Write a YAML spec in 10 minutes |
+| **Open source** | Partial | Full — ELv2 license |
 
 ## Adding a New App
 
-1. **`apps/registry.py`** — Add `AppConfig` (OAuth URLs, base URL)
-2. **`specs/newapp.py`** — Write `ActionSpec` per endpoint (~15 lines each)
-3. **`client.py`** — Import and register specs
-4. **`executor.py`** — Add `_build_*` method only if the API has payload quirks
-5. **`tests/test_core.py`** — Add tests
+```bash
+# From OpenAPI
+python scripts/spec_builder.py openapi https://api.example.com/openapi.json --app myapp --all
+
+# From Google Discovery
+python scripts/spec_builder.py google calendar --all
+
+# Validate all specs
+python scripts/spec_builder.py validate
+```
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the full guide.
 
 ## Architecture
 
 ```
-┌─────────────────────────────────────────────┐
-│  Your AI Agent (LangChain / CrewAI / raw)   │
-│                                             │
-│  tools = api.get_tools("google", conn_id)   │
-│  result = await api.call("gmail_send_email")│
-└──────────────────┬──────────────────────────┘
-                   │
-         ┌─────────▼─────────┐
-         │  anytool client   │
-         │                   │
-         │  Spec Registry    │  ← 98 curated ActionSpecs
-         │  OAuth Manager    │  ← token refresh, CSRF
-         └─────────┬─────────┘
-                   │
-         ┌─────────▼─────────┐
-         │   API Executor    │
-         │                   │
-         │  Build URL/path   │
-         │  Build query      │
-         │  Build body       │  ← request transforms for quirky APIs
-         │  Extract IDs      │  ← response_ids mapping
-         └─────────┬─────────┘
-                   │
-         ┌─────────▼─────────┐
-         │  Direct HTTP      │────────▶  Gmail, Slack,
-         │  (auto-injects    │◀────────  HubSpot, etc.
-         │   OAuth tokens)   │
-         └───────────────────┘
+anytool/
+├── core/
+│   ├── engine.py       # Load specs, execute, generate tool definitions
+│   ├── executor.py     # HTTP execution, URL building, type coercion, retries
+│   ├── loader.py       # YAML spec loading
+│   ├── models.py       # ActionSpec, RequestSpec, ResponseSpec
+│   ├── encoders/       # Tier 3 encoders (gmail_mime)
+│   └── adapters/       # OpenAI + MCP tool format adapters
+├── auth/               # OAuth flows, token storage
+├── triggers/           # Polling + webhook triggers
+├── apps/registry.py    # OAuth configs per provider
+└── client.py           # High-level client (AnyTool class)
+
+registry/               # 225 YAML action specs
+scripts/spec_builder.py # Generate specs from OpenAPI / Google Discovery
 ```
 
 ## License
 
-MIT
+[Elastic License 2.0 (ELv2)](LICENSE) — free to use, self-host, and modify. Cannot be offered as a competing hosted service.

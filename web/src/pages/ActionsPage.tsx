@@ -28,7 +28,7 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
-const CDN_BASE = 'https://assets.ayudo.ai'
+const CDN_BASE = import.meta.env.VITE_CDN_BASE || ''
 
 const METHOD_COLORS: Record<string, string> = {
   GET: 'bg-emerald-50 text-emerald-700 border-emerald-200',

@@ -18,12 +18,11 @@ class PlatformConfig:
     # Token encryption key (Fernet — generate with: python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())")
     token_encryption_key: str = ""
 
-    # PostgreSQL — uses 'anytool' schema in the same Postgres instance
-    # Fully isolated from Ayudo's tables (different schema)
+    # PostgreSQL — uses 'anytool' schema
     db_host: str = "localhost"
     db_port: str = "5432"
-    db_name: str = "metadb"  # same DB instance, different schema
-    db_user: str = "ayudo"
+    db_name: str = "anytool"
+    db_user: str = "anytool"
     db_password: str = "password"
     db_schema: str = "anytool"  # all tables live here
 
@@ -53,7 +52,7 @@ class PlatformConfig:
             db_host=os.environ.get("ANYTOOL_DB_HOST", os.environ.get("DB_HOST", "localhost")),
             db_port=os.environ.get("ANYTOOL_DB_PORT", os.environ.get("DB_PORT", "5432")),
             db_name=os.environ.get("ANYTOOL_DB_NAME", "metadb"),
-            db_user=os.environ.get("ANYTOOL_DB_USER", os.environ.get("DB_USER", "ayudo")),
+            db_user=os.environ.get("ANYTOOL_DB_USER", os.environ.get("DB_USER", "anytool")),
             db_password=os.environ.get("ANYTOOL_DB_PASSWORD", os.environ.get("DB_PASSWORD", "password")),
             db_schema=os.environ.get("ANYTOOL_DB_SCHEMA", "anytool"),
             google_client_id=os.environ.get("GOOGLE_OAUTH_CLIENT_ID", ""),

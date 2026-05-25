@@ -6,7 +6,7 @@
 
 set -e
 
-BUCKET="ayudo-dev"
+BUCKET="${ANYTOOL_S3_BUCKET:-anytool-assets}"
 PREFIX="app_icons"
 TMP_DIR=$(mktemp -d)
 

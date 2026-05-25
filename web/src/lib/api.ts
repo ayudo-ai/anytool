@@ -15,7 +15,7 @@ const getApiBase = () => {
   if (isDevelopment) {
     return '/v1'; // Vite proxy handles this
   }
-  return 'https://api-anytool.ayudo.ai/v1';
+  return import.meta.env.VITE_API_URL || 'http://localhost:8100/v1';
 };
 
 const API_BASE = getApiBase();

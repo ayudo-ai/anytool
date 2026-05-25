@@ -1,3 +1,4 @@
+# Python
 __pycache__/
 *.py[cod]
 *.egg-info/
@@ -7,15 +8,40 @@ build/
 *.egg
 .venv/
 venv/
-.env
-.env.*
-!.env.production.example
 .ruff_cache/
 .pytest_cache/
 .mypy_cache/
+
+# Environment (NEVER commit secrets)
+.env
+.env.local
+.env.*.local
+!.env.example
+!.env.production.example
+
+# Node
 node_modules/
-sdk/
 web/dist/
+
+# Database
 *.db
 *.sqlite3
-*.md
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Deployment-specific
+nginx/
+
+# Internal strategy docs
+PLAN.md
+RESEARCH.md
+TEST_PLAN.md
