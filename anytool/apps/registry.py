@@ -336,12 +336,7 @@ APPS: Dict[str, AppConfig] = {
         api_base_url="https://api.clickup.com/api/v2",
         icon_url="app_icons/app_1NohVg.png",
     ),
-    "calendly": AppConfig(
-        name="Calendly",
-        slug="calendly",
-        api_base_url="https://api.calendly.com",
-        icon_url="",  # TODO: upload to S3
-    ),
+
 }
 
 
