@@ -88,16 +88,19 @@ connected = await at.is_connected("google", "user-123")
 connections = await at.list_connections("user-123")
 ```
 
-### 2. Self-Hosted (Full Control)
+### 2. Self-Hosted
 
-Run everything locally. You manage OAuth tokens yourself.
+> **Note:** Self-hosting requires you to manage OAuth credentials, token refresh, encrypted storage, and callback endpoints yourself. The hosted platform handles all of this out of the box — battle-tested with production traffic. We recommend starting with the hosted platform.
+
+<details>
+<summary>Self-hosted setup</summary>
 
 ```python
 from anytool import AnyTool, MemoryTokenStore, AppCredentials
 
 at = AnyTool(token_store=MemoryTokenStore())
 
-# Register your own OAuth app credentials
+# Register your own OAuth app credentials for each provider
 at.register_app(AppCredentials(
     app="google",
     client_id="your-google-client-id",
@@ -105,7 +108,7 @@ at.register_app(AppCredentials(
     scopes=["https://www.googleapis.com/auth/gmail.send"],
 ))
 
-# Start OAuth flow
+# Start OAuth flow — you handle the callback endpoint
 auth_url = await at.get_auth_url(
     provider="google",
     connection_id="user-123",
@@ -124,6 +127,10 @@ result = await at.call(
     body="Sent via self-hosted anytool!",
 )
 ```
+
+For self-hosting the full platform server and dashboard, see [server/](server/) and [web/](web/).
+
+</details>
 
 ## Use the Engine Directly
 

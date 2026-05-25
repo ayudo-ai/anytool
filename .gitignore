@@ -41,7 +41,8 @@ Thumbs.db
 # Deployment-specific
 nginx/
 
-# Internal strategy docs
+# Internal
 PLAN.md
 RESEARCH.md
 TEST_PLAN.md
+scripts/
