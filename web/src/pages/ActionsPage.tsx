@@ -149,12 +149,10 @@ export function ActionsPage() {
     a.slug.toLowerCase().includes(search.toLowerCase())
   )
 
-  const iconUrl = (path: string, appSlug?: string) => {
-    if (path && path.startsWith('http')) return path
-    if (path) return `${CDN_BASE}/${path}`
-    // Fallback: Composio's public logo API (has every app)
-    const slug = appSlug?.toLowerCase().replace('_', '') || ''
-    if (slug) return `https://logos.composio.dev/api/${slug}`
+  const iconUrl = (path: string) => {
+    if (!path) return ''
+    if (path.startsWith('http')) return path
+    if (CDN_BASE) return `${CDN_BASE}/${path}`
     return ''
   }
 
@@ -174,7 +172,7 @@ export function ActionsPage() {
             <ArrowLeft className="size-5" />
           </Button>
           <img
-            src={iconUrl(selectedApp.icon_path, selectedApp.slug)}
+            src={iconUrl(selectedApp.icon_path)}
             alt={selectedApp.name}
             className="size-10 rounded-lg object-contain"
             onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
@@ -323,7 +321,7 @@ export function ActionsPage() {
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between">
                   <img
-                    src={iconUrl(app.icon_path, app.slug)}
+                    src={iconUrl(app.icon_path)}
                     alt={app.name}
                     className="size-12 rounded-lg object-contain"
                     onError={(e) => {
