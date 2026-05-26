@@ -80,7 +80,7 @@ export function TriggersPage() {
   const queryClient = useQueryClient()
   const [open, setOpen] = useState(false)
   const apiKey = getStoredApiKey() || 'YOUR_API_KEY'
-  const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:8100/v1'
+  const apiBase = 'https://api-anytool.ayudo.ai/v1'
 
   const { data, isLoading } = useQuery({
     queryKey: ['triggers'],
@@ -98,10 +98,11 @@ export function TriggersPage() {
 at = AnyTool(api_key="${apiKey.slice(0, 12)}...")
 
 # Deploy a trigger — polls Gmail for new emails every 60s
+# webhook_url is YOUR server endpoint where events will be POSTed
 trigger = await at.deploy_trigger(
     trigger_type="gmail_new_message",
     user_id="customer-123",
-    webhook_url="https://myapp.com/webhooks/inbox",
+    webhook_url="https://YOUR-APP.com/webhooks/inbox",  # ← your endpoint
     poll_interval_seconds=60,
     filters={
         "from_contains": "vendor@example.com",
@@ -125,7 +126,7 @@ curl -X POST ${apiBase}/triggers \\
   -d '{
     "trigger_type": "gmail_new_message",
     "user_id": "customer-123",
-    "webhook_url": "https://myapp.com/webhooks/inbox",
+    "webhook_url": "https://YOUR-APP.com/webhooks/inbox",
     "poll_interval_seconds": 60,
     "filters": {
       "from_contains": "vendor@example.com"
@@ -149,7 +150,7 @@ curl -X DELETE ${apiBase}/triggers/TRIGGER_ID \\
   body: JSON.stringify({
     trigger_type: "gmail_new_message",
     user_id: "customer-123",
-    webhook_url: "https://myapp.com/webhooks/inbox",
+    webhook_url: "https://YOUR-APP.com/webhooks/inbox",  // ← your endpoint
     poll_interval_seconds: 60,
     filters: {
       from_contains: "vendor@example.com",
