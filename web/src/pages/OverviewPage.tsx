@@ -144,7 +144,8 @@ export function OverviewPage() {
 
 function WebhookTestUrlCard({ workspaceId }: { workspaceId: string }) {
   const [copied, setCopied] = useState(false)
-  const webhookUrl = `${window.location.origin}/v1/webhook-test/${workspaceId}`
+  const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:8100/v1'
+  const webhookUrl = `${apiBase.replace('/v1', '')}/v1/webhook-test/${workspaceId}`
 
   const handleCopy = () => {
     navigator.clipboard.writeText(webhookUrl)
