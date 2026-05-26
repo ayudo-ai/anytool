@@ -32,6 +32,9 @@ jobs:
         run: |
           export NODE_OPTIONS="--max-old-space-size=4096"
           npm run build
+        env:
+          VITE_API_URL: https://api-anytool.ayudo.ai/v1
+          VITE_CDN_BASE: https://assets.ayudo.ai
 
       - name: Install AWS CLI
         run: |
