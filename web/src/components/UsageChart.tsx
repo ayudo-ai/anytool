@@ -1,6 +1,6 @@
 import {
-  AreaChart,
-  Area,
+  BarChart,
+  Bar,
   XAxis,
   YAxis,
   Tooltip,
@@ -20,17 +20,7 @@ export function UsageChart({ data }: { data: UsageDay[] }) {
 
   return (
     <ResponsiveContainer width="100%" height={240}>
-      <AreaChart data={sorted}>
-        <defs>
-          <linearGradient id="successGrad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#10b981" stopOpacity={0.2} />
-            <stop offset="100%" stopColor="#10b981" stopOpacity={0} />
-          </linearGradient>
-          <linearGradient id="failGrad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#ef4444" stopOpacity={0.15} />
-            <stop offset="100%" stopColor="#ef4444" stopOpacity={0} />
-          </linearGradient>
-        </defs>
+      <BarChart data={sorted} barGap={2}>
         <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
         <XAxis
           dataKey="date"
@@ -55,26 +45,9 @@ export function UsageChart({ data }: { data: UsageDay[] }) {
           }}
           labelFormatter={(v: string) => v.slice(5)}
         />
-        <Area
-          type="monotone"
-          dataKey="successful"
-          stroke="#10b981"
-          strokeWidth={2}
-          fill="url(#successGrad)"
-          dot={false}
-          activeDot={{ r: 4, fill: '#10b981', strokeWidth: 0 }}
-        />
-        <Area
-          type="monotone"
-          dataKey="failed"
-          stroke="#ef4444"
-          strokeWidth={1.5}
-
-          fill="url(#failGrad)"
-          dot={false}
-          activeDot={{ r: 4, fill: '#ef4444', strokeWidth: 0 }}
-        />
-      </AreaChart>
+        <Bar dataKey="successful" stackId="a" fill="#10b981" radius={[0, 0, 0, 0]} />
+        <Bar dataKey="failed" stackId="a" fill="#ef4444" radius={[4, 4, 0, 0]} />
+      </BarChart>
     </ResponsiveContainer>
   )
 }
