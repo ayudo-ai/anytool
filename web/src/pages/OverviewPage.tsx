@@ -6,7 +6,6 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { getDashboardOverview, getDashboardUsage, getMe } from '@/lib/api'
 import { Plug, Zap, Activity, AlertTriangle, ArrowRight, BookOpen, Wrench, Key, Copy, Check } from 'lucide-react'
@@ -36,7 +35,7 @@ function MetricCard({
   )
 }
 
-import { cn } from '@/lib/utils'
+
 
 export function OverviewPage() {
   const { data: overview, isLoading } = useQuery({

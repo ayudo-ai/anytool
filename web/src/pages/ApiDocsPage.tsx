@@ -9,7 +9,7 @@ import {
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { Copy, Check, ExternalLink } from 'lucide-react'
+import { Copy, Check } from 'lucide-react'
 import { getStoredApiKey } from '@/lib/api'
 import { cn } from '@/lib/utils'
 

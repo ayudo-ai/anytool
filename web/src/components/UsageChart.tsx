@@ -43,7 +43,7 @@ export function UsageChart({ data }: { data: UsageDay[] }) {
             fontSize: '0.75rem',
             boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
           }}
-          labelFormatter={(v: string) => v.slice(5)}
+          labelFormatter={(v) => String(v).slice(5)}
         />
         <Bar dataKey="successful" stackId="a" fill="#10b981" radius={[0, 0, 0, 0]} />
         <Bar dataKey="failed" stackId="a" fill="#ef4444" radius={[4, 4, 0, 0]} />
