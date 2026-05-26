@@ -43,8 +43,8 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/anytool-dev/anytool"
-Documentation = "https://github.com/anytool-dev/anytool#readme"
+Homepage = "https://github.com/ayudo-ai/anytool"
+Documentation = "https://github.com/ayudo-ai/anytool#readme"
 
 [tool.hatch.build.targets.wheel]
 packages = ["anytool"]

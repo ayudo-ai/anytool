@@ -42,6 +42,7 @@ def _parse_request(raw: dict) -> RequestSpec:
     return RequestSpec(
         content_type=raw.get("content_type", "application/json"),
         body_schema=raw.get("body_schema", {}),
+        query_params=raw.get("query_params", {}),
         note=raw.get("note", ""),
     )
 

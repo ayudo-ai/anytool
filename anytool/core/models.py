@@ -26,6 +26,7 @@ class RequestSpec:
     """Request specification."""
     content_type: str = "application/json"
     body_schema: Dict[str, Any] = field(default_factory=dict)  # Full JSON Schema
+    query_params: Dict[str, Any] = field(default_factory=dict)  # Query param schema
     note: str = ""
 
 
@@ -115,12 +116,20 @@ class ActionSpec:
     def llm_schema(self) -> Dict[str, Any]:
         """The schema the LLM should use to construct the payload.
 
-        For Tier 1/2: request.body_schema
+        For Tier 1/2: request.body_schema merged with query_params
         For Tier 3: agent_params
         """
         if self.encoder and self.agent_params:
             return self.agent_params
-        return self.request.body_schema
+        schema = dict(self.request.body_schema) if self.request.body_schema else {}
+        qp = self.request.query_params
+        if qp:
+            # Merge query_params into the schema so the LLM sees all fields
+            props = dict(schema.get("properties", {}))
+            props.update(qp)
+            schema["properties"] = props
+            # Don't mark query params as required
+        return schema
 
     @property
     def required_fields(self) -> List[str]:

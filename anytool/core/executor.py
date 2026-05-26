@@ -259,24 +259,29 @@ class Executor:
     ) -> Tuple[Dict[str, Any], Dict[str, Any]]:
         """Separate query params from body params based on the spec schema.
 
-        For GET/DELETE: everything becomes query params.
-        For POST/PUT/PATCH: only fields explicitly in query_param_names go to query.
-
-        We detect query params by checking if the spec's body_schema
-        has top-level properties — anything NOT in those properties
-        and present in the body goes to query.
-
-        But a simpler rule: for most APIs, the body IS the body.
-        Query params are rare in POST requests. We handle the common
-        case of GET endpoints where everything is query.
+        Uses spec.request.query_params to know which fields go as URL params.
+        For GET/DELETE without explicit query_params: everything becomes query.
+        For POST/PUT/PATCH: only fields in query_params go to query.
         """
+        qp_schema = spec.request.query_params
+
+        if qp_schema:
+            # Spec explicitly declares query params — split by name
+            qp_names = set(qp_schema.keys())
+            query = {k: v for k, v in body.items() if k in qp_names}
+            remaining = {k: v for k, v in body.items() if k not in qp_names}
+
+            if spec.method in ("GET", "DELETE"):
+                # For GET/DELETE: remaining also goes as query params
+                query.update(remaining)
+                return query, {}
+            return query, remaining
+
         if spec.method in ("GET", "DELETE"):
-            # For GET/DELETE: everything goes as query params
+            # No explicit query_params, GET/DELETE: everything as query
             return body, {}
 
-        # For POST/PUT/PATCH: body stays as body
-        # Query params would need to be explicitly separated in the spec
-        # For now, send everything as body (covers 99% of cases)
+        # POST/PUT/PATCH without query_params: everything as body
         return {}, body
 
     def _coerce_types(self, spec: ActionSpec, body: Dict[str, Any]) -> Dict[str, Any]:
@@ -289,7 +294,10 @@ class Executor:
         if body is None:
             body = {}
         schema = spec.request.body_schema or {}
-        props = schema.get("properties", {})
+        props = dict(schema.get("properties", {}))
+        # Merge query_params into props so their types get coerced too
+        if spec.request.query_params:
+            props.update(spec.request.query_params)
         if not props:
             return body
 
