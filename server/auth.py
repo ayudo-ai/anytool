@@ -29,8 +29,8 @@ class AuthContext:
 
 
 PLAN_LIMITS = {
-    "free": {"max_calls": 1000, "max_connections": 10, "max_triggers": 5},
-    "pro": {"max_calls": 100_000, "max_connections": 100, "max_triggers": 50},
+    "free": {"max_calls": -1, "max_connections": -1, "max_triggers": -1},
+    "pro": {"max_calls": -1, "max_connections": -1, "max_triggers": -1},
     "enterprise": {"max_calls": -1, "max_connections": -1, "max_triggers": -1},
 }
 
