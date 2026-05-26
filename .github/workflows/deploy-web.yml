@@ -36,6 +36,7 @@ jobs:
       - name: Install AWS CLI
         run: |
           if ! command -v aws &> /dev/null; then
+            sudo apt-get update -qq && sudo apt-get install -y -qq unzip
             curl -fsSL "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o /tmp/awscliv2.zip
             unzip -qo /tmp/awscliv2.zip -d /tmp
             sudo /tmp/aws/install --update
