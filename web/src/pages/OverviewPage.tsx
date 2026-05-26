@@ -17,15 +17,12 @@ import { Button } from '@/components/ui/button'
 function MetricCard({
   title,
   value,
-  max,
   icon: Icon,
 }: {
   title: string
   value: number
-  max: number
   icon: React.ElementType
 }) {
-  const pct = max > 0 ? Math.round((value / max) * 100) : 0
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -34,26 +31,6 @@ function MetricCard({
       </CardHeader>
       <CardContent>
         <div className="text-2xl font-bold">{value.toLocaleString()}</div>
-        <div className="flex items-center gap-2 mt-1">
-          {max > 0 ? (
-            <>
-              <div className="h-1.5 flex-1 rounded-full bg-muted">
-                <div
-                  className={cn(
-                    'h-1.5 rounded-full transition-all',
-                    pct > 80 ? 'bg-destructive' : 'bg-primary',
-                  )}
-                  style={{ width: `${Math.min(pct, 100)}%` }}
-                />
-              </div>
-              <span className="text-xs text-muted-foreground">
-                {max === -1 ? '∞' : max.toLocaleString()}
-              </span>
-            </>
-          ) : (
-            <span className="text-xs text-muted-foreground">unlimited</span>
-          )}
-        </div>
       </CardContent>
     </Card>
   )
@@ -99,43 +76,18 @@ export function OverviewPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Your anytool platform at a glance.
-          </p>
-        </div>
-        <Badge variant="secondary" className="uppercase text-xs">
-          {o.plan} plan
-        </Badge>
+      <div>
+        <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
+        <p className="text-sm text-muted-foreground mt-1">
+          Your anytool platform at a glance.
+        </p>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <MetricCard
-          title="API Calls"
-          value={o.calls_this_month}
-          max={o.max_calls}
-          icon={Activity}
-        />
-        <MetricCard
-          title="Connections"
-          value={o.active_connections}
-          max={o.max_connections}
-          icon={Plug}
-        />
-        <MetricCard
-          title="Active Triggers"
-          value={o.active_triggers}
-          max={o.max_triggers}
-          icon={Zap}
-        />
-        <MetricCard
-          title="Trigger Errors"
-          value={o.triggers_with_errors}
-          max={-1}
-          icon={AlertTriangle}
-        />
+        <MetricCard title="API Calls" value={o.calls_this_month} icon={Activity} />
+        <MetricCard title="Connections" value={o.active_connections} icon={Plug} />
+        <MetricCard title="Active Triggers" value={o.active_triggers} icon={Zap} />
+        <MetricCard title="Trigger Errors" value={o.triggers_with_errors} icon={AlertTriangle} />
       </div>
 
       {/* Quick Actions for new users */}
