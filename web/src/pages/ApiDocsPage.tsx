@@ -382,12 +382,7 @@ export function ApiDocsPage() {
             <code className="text-xs bg-muted px-1 py-0.5 rounded">Authorization: Bearer {'<api_key>'}</code>
           </p>
         </div>
-        <Button variant="outline" size="sm" asChild>
-          <a href="/docs" target="_blank" rel="noopener noreferrer">
-            <ExternalLink className="mr-2 size-3" />
-            OpenAPI Docs
-          </a>
-        </Button>
+
       </div>
 
       {/* Base URL */}
