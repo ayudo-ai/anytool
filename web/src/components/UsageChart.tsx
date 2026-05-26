@@ -69,7 +69,7 @@ export function UsageChart({ data }: { data: UsageDay[] }) {
           dataKey="failed"
           stroke="#ef4444"
           strokeWidth={1.5}
-          strokeDasharray="4 4"
+
           fill="url(#failGrad)"
           dot={false}
           activeDot={{ r: 4, fill: '#ef4444', strokeWidth: 0 }}
