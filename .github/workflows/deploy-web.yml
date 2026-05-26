@@ -33,6 +33,16 @@ jobs:
           export NODE_OPTIONS="--max-old-space-size=4096"
           npm run build
 
+      - name: Install AWS CLI
+        run: |
+          if ! command -v aws &> /dev/null; then
+            curl -fsSL "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o /tmp/awscliv2.zip
+            unzip -qo /tmp/awscliv2.zip -d /tmp
+            sudo /tmp/aws/install --update
+            rm -rf /tmp/awscliv2.zip /tmp/aws
+          fi
+          aws --version
+
       - name: Configure AWS
         uses: aws-actions/configure-aws-credentials@v4
         with:
