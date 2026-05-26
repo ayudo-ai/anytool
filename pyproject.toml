@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "anytool"
-version = "0.3.0"
+version = "0.3.1"
 description = "Agent-native API integration SDK. Curated specs. Direct execution. Zero wrappers."
 readme = "README.md"
 license = "Elastic-2.0"
@@ -48,6 +48,9 @@ Documentation = "https://github.com/ayudo-ai/anytool#readme"
 
 [tool.hatch.build.targets.wheel]
 packages = ["anytool"]
+
+[tool.hatch.build.targets.wheel.force-include]
+"registry" = "anytool/registry"
 
 [tool.hatch.build.targets.sdist]
 include = [

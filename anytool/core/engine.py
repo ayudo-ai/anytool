@@ -41,12 +41,33 @@ class Engine:
 
     def __init__(
         self,
-        registry_path: str | Path = "registry/",
+        registry_path: str | Path | None = None,
         timeout: float = 30.0,
         max_retries: int = 3,
     ):
+        if registry_path is None:
+            registry_path = self._find_registry()
         self.registry = SpecRegistry(registry_path)
         self.executor = Executor(timeout=timeout, max_retries=max_retries)
+
+    @staticmethod
+    def _find_registry() -> Path:
+        """Auto-discover the registry directory.
+
+        Search order:
+        1. ./registry/ (local dev / cloned repo)
+        2. Bundled inside the anytool package (pip install)
+        """
+        # Local
+        local = Path("registry")
+        if local.exists() and any(local.rglob("*.yaml")):
+            return local
+        # Bundled in package
+        bundled = Path(__file__).parent.parent / "registry"
+        if bundled.exists() and any(bundled.rglob("*.yaml")):
+            return bundled
+        # Fallback
+        return local
 
         logger.info(
             f"[engine] Initialized | "
