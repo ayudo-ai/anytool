@@ -64,7 +64,7 @@ class WorkspaceResponse(BaseModel):
 async def create_account(body: SignupRequest):
     """Create a new account + default workspace + API key.
 
-    No credit card required. Free tier: 10 connections, 1000 calls/month, 5 triggers per workspace.
+    No credit card required. Unlimited usage.
 
     Example:
         POST /v1/accounts

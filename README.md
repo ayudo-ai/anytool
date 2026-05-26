@@ -14,7 +14,7 @@ pip install anytool
 
 ### 1. Hosted Platform (Recommended)
 
-Use anytool's hosted platform for managed OAuth, encrypted token storage, and zero auth headaches. Get your free API key at [anytool.ayudo.ai](https://anytool.ayudo.ai) — 1,000 API calls/month free.
+Use anytool's hosted platform for managed OAuth, encrypted token storage, and zero auth headaches. Get your API key at [anytool.ayudo.ai](https://anytool.ayudo.ai).
 
 ```python
 from anytool import AnyTool
