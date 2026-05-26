@@ -183,6 +183,17 @@ async def list_apps(
 
     apps = []
     for app_name, actions in app_actions.items():
+        # Only show apps that have auth configured (users can actually connect)
+        app_config = APPS.get(app_name)
+        if not app_config:
+            continue  # No config at all — skip
+        has_auth = (
+            app_config.auth_type in ("api_key", "bearer")
+            or (app_config.authorize_url and app_config.token_url)
+        )
+        if not has_auth:
+            continue  # OAuth not configured yet — hide from users
+
         sub_apps = get_sub_apps_for(app_name)
 
         if sub_apps:
@@ -204,7 +215,6 @@ async def list_apps(
                     })
         else:
             # No sub-apps — emit as a single app
-            app_config = APPS.get(app_name)
             auth_type = app_config.auth_type if app_config else "oauth2"
             auth_fields = []
             if app_config and app_config.auth_fields:
