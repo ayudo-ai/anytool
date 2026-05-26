@@ -12,7 +12,6 @@ import {
   Sun,
   Moon,
   Monitor,
-  Webhook,
   FileText,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -49,14 +48,13 @@ const NAV_SECTIONS = [
     items: [
       { to: '/dashboard/actions', icon: Wrench, label: 'Apps' },
       { to: '/dashboard/triggers', icon: Zap, label: 'Triggers' },
-      { to: '/dashboard/webhook-logs', icon: Webhook, label: 'Webhook Logs' },
       { to: '/dashboard/api-docs', icon: FileText, label: 'API Reference' },
     ],
   },
   {
     label: 'Monitor',
     items: [
-      { to: '/dashboard/logs', icon: ScrollText, label: 'Logs' },
+      { to: '/dashboard/logs', icon: ScrollText, label: 'Logs' },  // includes webhook logs
       { to: '/dashboard/settings', icon: Settings, label: 'Settings' },
       // Auth Configs hidden — Enterprise-only feature
       // { to: '/dashboard/auth-configs', icon: KeyRound, label: 'Auth Configs' },
