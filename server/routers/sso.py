@@ -1,10 +1,8 @@
 """
-Developer authentication — Google SSO + Email/Password.
+Developer authentication — Google SSO only.
 
 POST /v1/auth/google         → exchange Google ID token for session
 GET  /v1/auth/google/config  → return Client ID for frontend
-POST /v1/auth/signup         → email + password signup
-POST /v1/auth/login          → email + password login
 GET  /v1/auth/me             → get current user (from session token)
 """
 
@@ -14,7 +12,6 @@ import secrets
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 
-import bcrypt
 from fastapi import APIRouter, HTTPException, Header
 from pydantic import BaseModel
 import httpx
@@ -29,17 +26,6 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 
 
 # ── Models ───────────────────────────────────────────────────────────
-
-class SignupRequest(BaseModel):
-    name: str
-    email: str
-    password: str  # min 8 chars enforced in frontend
-
-
-class LoginRequest(BaseModel):
-    email: str
-    password: str
-
 
 class GoogleLoginRequest(BaseModel):
     id_token: str
@@ -58,14 +44,6 @@ class AuthResponse(BaseModel):
 
 # ── Helpers ──────────────────────────────────────────────────────────
 
-def _hash_password(password: str) -> str:
-    return bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
-
-
-def _verify_password(password: str, hashed: str) -> bool:
-    return bcrypt.checkpw(password.encode(), hashed.encode())
-
-
 def _generate_session_token() -> str:
     """Generate a short-lived session token for dashboard access."""
     return f"sess_{secrets.token_urlsafe(32)}"
@@ -75,8 +53,7 @@ async def _create_account(
     name: str,
     email: str,
     picture: str = "",
-    auth_provider: str = "email",
-    password_hash: str = "",
+    auth_provider: str = "google",
 ) -> AuthResponse:
     """Create a new account + workspace + API key + session."""
     account_id = new_id()
@@ -95,7 +72,6 @@ async def _create_account(
             "picture": picture,
             "plan": "free",
             "auth_provider": auth_provider,
-            "password_hash": password_hash,
         },
     )
 
@@ -256,50 +232,6 @@ async def google_login(body: GoogleLoginRequest):
         return await _login_existing(existing.primary_field_value, account_data)
 
     return await _create_account(name=name, email=email, picture=picture, auth_provider="google")
-
-
-@router.post("/signup", response_model=AuthResponse)
-async def email_signup(body: SignupRequest):
-    """Create account with email + password."""
-    if len(body.password) < 8:
-        raise HTTPException(400, "Password must be at least 8 characters")
-
-    existing = await get_record_by_field("account", "email", body.email)
-    if existing:
-        raise HTTPException(400, "Account with this email already exists. Try signing in.")
-
-    password_hash = _hash_password(body.password)
-
-    return await _create_account(
-        name=body.name,
-        email=body.email,
-        auth_provider="email",
-        password_hash=password_hash,
-    )
-
-
-@router.post("/login", response_model=AuthResponse)
-async def email_login(body: LoginRequest):
-    """Sign in with email + password."""
-    account = await get_record_by_field("account", "email", body.email)
-    if not account:
-        raise HTTPException(401, "Invalid email or password")
-
-    account_data = account.custom_data or {}
-    password_hash = account_data.get("password_hash", "")
-
-    if not password_hash:
-        # Account was created via Google SSO — no password set
-        provider = account_data.get("auth_provider", "google")
-        raise HTTPException(
-            401,
-            f"This account uses {provider} sign-in. Use the Google button instead."
-        )
-
-    if not _verify_password(body.password, password_hash):
-        raise HTTPException(401, "Invalid email or password")
-
-    return await _login_existing(account.primary_field_value, account_data)
 
 
 @router.get("/me")

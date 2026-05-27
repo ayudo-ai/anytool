@@ -125,20 +125,6 @@ export function googleLogin(idToken: string) {
   });
 }
 
-export function emailSignup(name: string, email: string, password: string) {
-  return publicRequest<AuthResponse>('/auth/signup', {
-    method: 'POST',
-    body: JSON.stringify({ name, email, password }),
-  });
-}
-
-export function emailLogin(email: string, password: string) {
-  return publicRequest<AuthResponse>('/auth/login', {
-    method: 'POST',
-    body: JSON.stringify({ email, password }),
-  });
-}
-
 export function getMe() {
   return request<{
     account_id: string;
