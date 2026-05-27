@@ -3,9 +3,6 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
 } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -38,7 +35,7 @@ import {
 import { listTriggers, removeTrigger, getStoredApiKey } from '@/lib/api'
 import {
   Plus, Zap, Clock, MoreHorizontal, Trash2,
-  Copy, Check, Radio, RefreshCw,
+  Copy, Check, RefreshCw,
 } from 'lucide-react'
 
 function timeAgo(dateStr: string | null): string {
